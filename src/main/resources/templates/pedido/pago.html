@@ -1,0 +1,509 @@
+<!-- ==================== pedido/pago.html ==================== -->
+<!-- Pantalla de procesamiento de pago (simulación) -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesando Pago - CampoLibre</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .payment-simulator {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .payment-simulator::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.05) 10px,
+                rgba(255,255,255,0.05) 20px
+            );
+            animation: slide 20s linear infinite;
+        }
+        @keyframes slide {
+            0% { transform: translate(-50%, -50%); }
+            100% { transform: translate(0%, 0%); }
+        }
+        .spinner-border-lg {
+            width: 4rem;
+            height: 4rem;
+            border-width: 0.4rem;
+        }
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Simulador de pasarela de pago -->
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="payment-simulator">
+                    <div class="text-center position-relative" style="z-index: 1;">
+                        <div class="spinner-border spinner-border-lg mb-4 pulse-animation" role="status">
+                            <span class="visually-hidden">Procesando...</span>
+                        </div>
+                        <h3 class="mb-3">Procesando tu pago...</h3>
+                        <p class="mb-4">Estamos verificando los datos con el banco</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <div class="spinner-grow spinner-grow-sm" role="status"></div>
+                            <div class="spinner-grow spinner-grow-sm" role="status" style="animation-delay: 0.2s;"></div>
+                            <div class="spinner-grow spinner-grow-sm" role="status" style="animation-delay: 0.4s;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen del pedido -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt"></i>
+                        Pedido #<span th:text="${pedido.numero_pedido}">PED-2025-00001</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Datos de Entrega:</h6>
+                            <p class="mb-1">
+                                <i class="fas fa-user"></i>
+                                <strong th:text="${pedido.nombre_contacto}">Nombre</strong>
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-phone"></i>
+                                <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                            </p>
+                            <p class="mb-1">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span th:text="${pedido.direccion_entrega}">Dirección</span>
+                            </p>
+                            <p class="mb-0" th:if="${pedido.ciudad != null}">
+                                <i class="fas fa-city"></i>
+                                <span th:text="${pedido.ciudad}">Ciudad</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <h6 class="text-muted mb-2">Resumen:</h6>
+                            <p class="mb-1">
+                                <span th:text="${pedido.items.size()}">0</span> productos
+                            </p>
+                            <h4 class="text-success mb-0">
+                                Total: <span th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                            </h4>
+                        </div>
+                    </div>
+
+                    <!-- Productos agrupados por tienda -->
+                    <hr>
+                    <h6 class="mb-3">Productos:</h6>
+                    <div th:each="entry : ${itemsPorTienda}" class="mb-3">
+                        <strong class="text-muted">
+                            <i class="fas fa-store"></i>
+                            <span th:text="${entry.value[0].nombre_tienda}">Tienda</span>
+                        </strong>
+                        <div th:each="item : ${entry.value}" class="d-flex align-items-center mt-2 ps-3">
+                            <div class="flex-grow-1">
+                                <span th:text="${item.nombre_producto}">Producto</span>
+                                <small class="text-muted">
+                                    x<span th:text="${item.cantidad}">1</span>
+                                </small>
+                            </div>
+                            <span class="text-success" th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">
+                                    $0
+                                </span>
+                        </div>
+                    </div>
+
+                    <!-- Formulario oculto que se envía automáticamente -->
+                    <form th:action="@{/pagos/procesar/{id}(id=${pedido.id_pedido})}"
+                          method="post"
+                          id="pagoForm">
+                        <input type="hidden" name="metodoPago" th:value="${metodoPago}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Simular procesamiento de 2-3 segundos antes de enviar el formulario
+    setTimeout(function() {
+        document.getElementById('pagoForm').submit();
+    }, 2500);
+</script>
+</body>
+</html>
+
+
+<!-- ==================== pedido/mis_pedidos.html ==================== -->
+<!-- Lista de todos los pedidos del usuario -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Pedidos - CampoLibre</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container my-5">
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-shopping-bag"></i> Mis Pedidos</h2>
+            <p class="text-muted">Historial completo de tus compras</p>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Lista de pedidos -->
+    <div th:if="${pedidos != null and !pedidos.isEmpty()}">
+        <div th:each="pedido : ${pedidos}" class="card shadow-sm mb-4">
+            <div class="card-header"
+                 th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-success text-white' :
+                                     pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-warning' :
+                                     'bg-danger text-white'}">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            <i class="fas fa-receipt"></i>
+                            Pedido: <strong th:text="${pedido.numero_pedido}">PED-2025-00001</strong>
+                        </h5>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                            <span class="badge"
+                                  th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-light text-success' :
+                                                  pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-dark' :
+                                                  'bg-light text-danger'}">
+                                <i class="fas"
+                                   th:classappend="${pedido.estado.name() == 'PAGADO' ? 'fa-check-circle' :
+                                                   pedido.estado.name() == 'PENDIENTE_PAGO' ? 'fa-clock' :
+                                                   'fa-times-circle'}"></i>
+                                <span th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
+                                               pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente de Pago' :
+                                               'Cancelado'}">Estado</span>
+                            </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Información del pedido -->
+                    <div class="col-md-8">
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar"></i>
+                                    <strong>Fecha:</strong>
+                                    <span th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-box"></i>
+                                    <strong>Productos:</strong>
+                                    <span th:text="${pedido.items.size()}">0</span> item(s)
+                                </p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="mb-1" th:if="${pedido.fecha_pago != null}">
+                                    <i class="fas fa-check"></i>
+                                    <strong>Pagado:</strong>
+                                    <span th:text="${#temporals.format(pedido.fecha_pago, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-phone"></i>
+                                    <strong>Contacto:</strong>
+                                    <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Productos del pedido (primeros 3) -->
+                        <div class="mb-2">
+                            <strong class="text-muted">Productos:</strong>
+                        </div>
+                        <div th:each="item, iterStat : ${pedido.items}"
+                             th:if="${iterStat.index < 3}"
+                             class="d-flex align-items-center mb-2">
+                            <img th:if="${item.imagen_producto != null}"
+                                 th:src="@{${item.imagen_producto}}"
+                                 alt="Producto"
+                                 class="me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                            <img th:unless="${item.imagen_producto != null}"
+                                 src="/images/no-image.png"
+                                 alt="Sin imagen"
+                                 class="me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                            <small>
+                                <span th:text="${item.nombre_producto}">Producto</span>
+                                <span class="text-muted">x<span th:text="${item.cantidad}">1</span></span>
+                            </small>
+                        </div>
+                        <small class="text-muted" th:if="${pedido.items.size() > 3}">
+                            + <span th:text="${pedido.items.size() - 3}">0</span> producto(s) más...
+                        </small>
+                    </div>
+
+                    <!-- Total y acciones -->
+                    <div class="col-md-4 text-md-end">
+                        <h4 class="text-success mb-3"
+                            th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                            $0
+                        </h4>
+
+                        <div class="btn-group-vertical gap-2 w-100" role="group">
+                            <a th:href="@{/pedidos/ver/{id}(id=${pedido.id_pedido})}"
+                               class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-eye"></i> Ver Detalle
+                            </a>
+
+                            <a th:if="${pedido.estado.name() == 'PENDIENTE_PAGO'}"
+                               th:href="@{/pedidos/pagar/{id}(id=${pedido.id_pedido})}"
+                               class="btn btn-warning btn-sm">
+                                <i class="fas fa-credit-card"></i> Pagar Ahora
+                            </a>
+
+                            <a th:if="${pedido.estado.name() == 'PENDIENTE_PAGO'}"
+                               th:href="@{/pedidos/cancelar/{id}(id=${pedido.id_pedido})}"
+                               class="btn btn-outline-danger btn-sm"
+                               onclick="return confirm('¿Cancelar este pedido?')">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sin pedidos -->
+    <div th:if="${pedidos == null or pedidos.isEmpty()}" class="text-center py-5">
+        <i class="fas fa-shopping-bag fa-5x text-muted mb-4"></i>
+        <h3>No tienes pedidos aún</h3>
+        <p class="text-muted">¡Comienza a comprar productos del campo!</p>
+        <a th:href="@{/productos}" class="btn btn-success btn-lg mt-3">
+            <i class="fas fa-shopping-cart"></i> Explorar Productos
+        </a>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+<!-- ==================== pedido/ventas.html ==================== -->
+<!-- Panel de ventas para proveedores -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Ventas - CampoLibre</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container my-5">
+    <!-- Título -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-chart-line"></i> Panel de Ventas</h2>
+            <p class="text-muted">Gestiona las ventas de tus productos</p>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-dollar-sign fa-3x text-success mb-3"></i>
+                    <h3 class="text-success mb-2" th:text="'$' + ${#numbers.formatDecimal(gananciasTotales, 0, 'COMMA', 0, 'POINT')}">
+                        $0
+                    </h3>
+                    <p class="text-muted mb-0">Ganancias Totales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-bag fa-3x text-primary mb-3"></i>
+                    <h3 class="text-primary mb-2" th:text="${totalVentas}">0</h3>
+                    <p class="text-muted mb-0">Ventas Realizadas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-store fa-3x text-info mb-3"></i>
+                    <h3 class="text-info mb-2" th:text="${misTiendas.size()}">0</h3>
+                    <p class="text-muted mb-0">Tiendas Activas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis Tiendas -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-store"></i> Mis Tiendas</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${misTiendas != null and !misTiendas.isEmpty()}">
+                <div class="row">
+                    <div th:each="tienda : ${misTiendas}" class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-store-alt"></i>
+                                    <span th:text="${tienda.nombre}">Tienda</span>
+                                </h6>
+                                <p class="card-text text-muted small" th:text="${tienda.descripcion}">
+                                    Descripción
+                                </p>
+                                <a th:href="@{/pedidos/ventas/tienda/{id}(id=${tienda.id_tienda})}"
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-chart-bar"></i> Ver Ventas
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${misTiendas == null or misTiendas.isEmpty()}" class="text-center py-4">
+                <p class="text-muted mb-3">No tienes tiendas registradas</p>
+                <a th:href="@{/tiendas/nueva}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Crear Mi Primera Tienda
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Pedidos -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-list"></i> Pedidos Recibidos</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${pedidos != null and !pedidos.isEmpty()}">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th class="text-center">Productos</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="pedido : ${pedidos}">
+                            <td>
+                                <strong th:text="${pedido.numero_pedido}">PED-2025-00001</strong>
+                            </td>
+                            <td>
+                                <span th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</span>
+                            </td>
+                            <td>
+                                <span th:text="${pedido.nombre_usuario}">Cliente</span>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-phone"></i>
+                                    <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary" th:text="${pedido.items.size()}">0</span>
+                            </td>
+                            <td class="text-end">
+                                <strong class="text-success"
+                                        th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                                    $0
+                                </strong>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/pedidos/ver/{id}(id=${pedido.id_pedido})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div th:if="${pedidos == null or pedidos.isEmpty()}" class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay ventas registradas</h5>
+                <p class="text-muted">Los pedidos que incluyan tus productos aparecerán aquí</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

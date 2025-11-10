@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Registro - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="register-container">
+        <h3>
+            <span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; color: var(--color-primary);">
+                eco
+            </span>
+            Regístrate en Campo Libre
+        </h3>
+
+        <p class="text-center text-muted mb-4">
+            Crea tu cuenta y comienza a descubrir productos frescos del campo
+        </p>
+
+        <!-- Mensaje de error -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en el registro</span>
+        </div>
+
+        <!-- Mensaje de éxito -->
+        <div th:if="${success}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${success}">Registro exitoso</span>
+        </div>
+
+        <form th:action="@{/register}" th:object="${usuario}" method="post">
+            <!-- Nombre -->
+            <div class="mb-3">
+                <label for="nombre" class="form-label">
+                    <i class="bi bi-person"></i> Nombre Completo
+                </label>
+                <input type="text"
+                       th:field="*{nombre}"
+                       class="form-control"
+                       id="nombre"
+                       placeholder="Ej: Juan Pérez"
+                       required>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope"></i> Correo Electrónico
+                </label>
+                <input type="email"
+                       th:field="*{email}"
+                       class="form-control"
+                       id="email"
+                       placeholder="correo@ejemplo.com"
+                       required>
+            </div>
+
+            <!-- Contraseña -->
+            <div class="mb-3">
+                <label for="contrasena" class="form-label">
+                    <i class="bi bi-lock"></i> Contraseña
+                </label>
+                <input type="password"
+                       th:field="*{contrasena}"
+                       class="form-control"
+                       id="contrasena"
+                       placeholder="Mínimo 6 caracteres"
+                       minlength="6"
+                       required>
+                <small class="form-text text-muted">
+                    La contraseña debe tener al menos 6 caracteres
+                </small>
+            </div>
+
+            <!-- Teléfono -->
+            <div class="mb-3">
+                <label for="telefono" class="form-label">
+                    <i class="bi bi-telephone"></i> Teléfono
+                </label>
+                <input type="tel"
+                       th:field="*{telefono}"
+                       class="form-control"
+                       id="telefono"
+                       placeholder="Ej: 3001234567"
+                       pattern="[0-9]{10}"
+                       required>
+                <small class="form-text text-muted">
+                    Ingresa 10 dígitos sin espacios
+                </small>
+            </div>
+
+            <!-- Tipo de Documento -->
+            <div class="mb-3">
+                <label for="tipo_documento" class="form-label">
+                    <i class="bi bi-card-text"></i> Tipo de Documento
+                </label>
+                <select th:field="*{tipo_documento}"
+                        class="form-select"
+                        id="tipo_documento"
+                        required>
+                    <option value="">Seleccione...</option>
+                    <option value="CC">Cédula de Ciudadanía</option>
+                    <option value="CE">Cédula de Extranjería</option>
+                    <option value="TI">Tarjeta de Identidad</option>
+                    <option value="NIT">NIT (Para negocios)</option>
+                    <option value="PASAPORTE">Pasaporte</option>
+                </select>
+            </div>
+
+            <!-- Documento -->
+            <div class="mb-4">
+                <label for="documento" class="form-label">
+                    <i class="bi bi-card-heading"></i> Número de Documento
+                </label>
+                <input type="text"
+                       th:field="*{documento}"
+                       class="form-control"
+                       id="documento"
+                       placeholder="Ej: 1234567890"
+                       required>
+            </div>
+
+            <!-- Rol -->
+            <div class="mb-3">
+                <label for="rolSeleccionado" class="form-label">
+                    <i class="bi bi-tag"></i> Rol Principal
+                </label>
+                <select th:field="*{rolSeleccionado}"
+                        class="form-select"
+                        id="rolSeleccionado"
+                        required>
+                    <option value="">Selecciona tu rol...</option>
+
+                    <option th:value="${T(com.example.campolibre.Enum.NombreRol).CONSUMIDOR}">
+                        Consumidor (Solo comprar productos)
+                    </option>
+                    <option th:value="${T(com.example.campolibre.Enum.NombreRol).PROVEEDOR}">
+                        Proveedor (Vender productos y ser Consumidor)
+                    </option>
+                </select>
+            </div>
+
+            <!-- Botón de registro -->
+            <div class="d-grid gap-2 mb-3">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-person-plus"></i> Crear Cuenta
+                </button>
+            </div>
+        </form>
+
+        <!-- Link a login -->
+        <div class="text-login">
+            <p>
+                ¿Ya tienes una cuenta?
+                <a th:href="@{/login}">
+                    <i class="bi bi-box-arrow-in-right"></i> Inicia sesión
+                </a>
+            </p>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="text-center mt-4" style="padding-top: 1.5rem; border-top: 1px solid #ddd;">
+            <p class="text-muted" style="font-size: 0.85rem;">
+                <i class="bi bi-shield-check"></i>
+                Tus datos están protegidos y solo se usarán para mejorar tu experiencia en Campo Libre.
+            </p>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mi Perfil - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-person-circle"></i>
+                Mi Perfil
+            </h2>
+            <p>Gestiona tu información personal</p>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Perfil actualizado correctamente</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error al actualizar</span>
+        </div>
+
+        <!-- Información Personal (Vista) -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-person"></i>
+                    Información Personal
+                </h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <!-- Nombre -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-person"></i> Nombre Completo
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--color-text-dark);"
+                       th:text="${usuario.nombre}">Usuario</p>
+                </div>
+
+                <!-- Email -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-envelope"></i> Correo Electrónico
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${usuario.email}">email@ejemplo.com</p>
+                </div>
+
+                <!-- Documento -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-card-text"></i> Documento
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);">
+                        <span th:text="${usuario.tipo_documento}">CC</span>:
+                        <span th:text="${usuario.documento}">123456789</span>
+                    </p>
+                </div>
+
+                <!-- Teléfono -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-telephone"></i> Teléfono
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${usuario.telefono ?: 'No registrado'}">3001234567</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mis Roles -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-shield-check"></i>
+                    Mis Roles
+                </h2>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div th:each="rol : ${roles}"
+                     style="padding: 1rem 1.5rem; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); border-radius: 8px; color: white;">
+                    <i class="bi bi-shield-lock" style="font-size: 1.5rem;"></i>
+                    <span style="margin-left: 0.5rem; font-weight: 600;">
+                        [[${rol.id_rol == 1 ? 'ADMINISTRADOR' : (rol.id_rol == 2 ? 'PROVEEDOR' : 'CONSUMIDOR')}]]
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Actualización -->
+        <form th:action="@{/usuarios/perfil/actualizar}" th:object="${usuario}" method="post">
+
+            <input type="hidden" th:field="*{id_usuario}">
+            <input type="hidden" th:field="*{email}">
+            <input type="hidden" th:field="*{documento}">
+            <input type="hidden" th:field="*{tipo_documento}">
+
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-pencil"></i>
+                    Actualizar Información
+                </h3>
+
+                <!-- Nombre -->
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="bi bi-person"></i>
+                        Nombre Completo
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{nombre}"
+                           class="form-control"
+                           id="nombre"
+                           required>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group">
+                    <label for="telefono">
+                        <i class="bi bi-telephone"></i>
+                        Teléfono
+                    </label>
+                    <input type="tel"
+                           th:field="*{telefono}"
+                           class="form-control"
+                           id="telefono"
+                           pattern="[0-9]{10}">
+                </div>
+
+                <!-- Nueva Contraseña -->
+                <div class="form-group">
+                    <label for="contrasena">
+                        <i class="bi bi-lock"></i>
+                        Nueva Contraseña
+                        <small style="font-weight: normal;">(Dejar en blanco para no cambiar)</small>
+                    </label>
+                    <input type="password"
+                           th:field="*{contrasena}"
+                           class="form-control"
+                           id="contrasena"
+                           placeholder="Solo si deseas cambiarla"
+                           minlength="6">
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Mínimo 6 caracteres. Solo completa si deseas cambiar tu contraseña.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+
+    </div>
+</main>
+
+</body>
+</html>

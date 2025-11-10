@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Pedido - CampoLibre</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container my-5">
+    <!-- Encabezado -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-receipt"></i>
+                Pedido <span th:text="${pedido.numero_pedido}">PED-2025-00001</span>
+            </h2>
+            <p class="text-muted">
+                Realizado el <span th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</span>
+                a las <span th:text="${#temporals.format(pedido.fecha_pedido, 'HH:mm')}">10:00</span>
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+                <span class="badge fs-5"
+                      th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-success' :
+                                      pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-warning text-dark' :
+                                      'bg-danger'}">
+                    <i class="fas"
+                       th:classappend="${pedido.estado.name() == 'PAGADO' ? 'fa-check-circle' :
+                                       pedido.estado.name() == 'PENDIENTE_PAGO' ? 'fa-clock' :
+                                       'fa-times-circle'}"></i>
+                    <span th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
+                                   pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente de Pago' :
+                                   'Cancelado'}">Estado</span>
+                </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información principal -->
+        <div class="col-lg-8">
+            <!-- Productos -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-box"></i> Productos del Pedido</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Precio</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-center">Subtotal</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item : ${pedido.items}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img th:if="${item.imagen_producto != null}"
+                                             th:src="@{${item.imagen_producto}}"
+                                             alt="Producto"
+                                             class="me-3"
+                                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                        <img th:unless="${item.imagen_producto != null}"
+                                             src="/images/no-image.png"
+                                             alt="Sin imagen"
+                                             class="me-3"
+                                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                        <div>
+                                            <strong th:text="${item.nombre_producto}">Producto</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-store"></i>
+                                                <span th:text="${item.nombre_tienda}">Tienda</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center align-middle">
+                                            <span th:text="'$' + ${#numbers.formatDecimal(item.precio_unitario, 0, 'COMMA', 0, 'POINT')}">
+                                                $0
+                                            </span>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <span th:text="${item.cantidad}">1</span>
+                                </td>
+                                <td class="text-center align-middle">
+                                    <strong class="text-success"
+                                            th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">
+                                        $0
+                                    </strong>
+                                </td>
+                            </tr>
+                            </tbody>
+                            <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td class="text-center">
+                                    <h5 class="text-success mb-0"
+                                        th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                                        $0
+                                    </h5>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos de entrega -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-truck"></i> Información de Entrega</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="fas fa-user text-muted"></i>
+                                <strong>Contacto:</strong>
+                                <span th:text="${pedido.nombre_contacto}">Nombre</span>
+                            </p>
+                            <p class="mb-2">
+                                <i class="fas fa-phone text-muted"></i>
+                                <strong>Teléfono:</strong>
+                                <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="fas fa-map-marker-alt text-muted"></i>
+                                <strong>Dirección:</strong>
+                                <span th:text="${pedido.direccion_entrega}">Dirección</span>
+                            </p>
+                            <p class="mb-2" th:if="${pedido.ciudad != null}">
+                                <i class="fas fa-city text-muted"></i>
+                                <strong>Ciudad:</strong>
+                                <span th:text="${pedido.ciudad}">Ciudad</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div th:if="${pedido.notas_adicionales != null and !pedido.notas_adicionales.isEmpty()}"
+                         class="alert alert-info mt-3 mb-0">
+                        <strong><i class="fas fa-sticky-note"></i> Notas:</strong>
+                        <p class="mb-0" th:text="${pedido.notas_adicionales}">Notas adicionales</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de pago -->
+            <div th:if="${pedido.pago != null}" class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-credit-card"></i> Información de Pago</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Método:</strong>
+                                <span th:text="${pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).TARJETA_CREDITO ? 'Tarjeta de Crédito' :
+                                                   pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).TARJETA_DEBITO ? 'Tarjeta Débito' :
+                                                   pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).PSE ? 'PSE' :
+                                                   'Efectivo'}">Método</span>
+                            </p>
+                            <p class="mb-2">
+                                <strong>Transacción:</strong>
+                                <code th:text="${pedido.pago.numero_transaccion}">TRX-202501-XXXX</code>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Fecha de Pago:</strong>
+                                <span th:text="${#temporals.format(pedido.pago.fecha_pago, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Estado:</strong>
+                                <span class="badge"
+                                      th:classappend="${pedido.pago.estado.name() == 'EXITOSO' ? 'bg-success' :
+                                                          pedido.pago.estado.name() == 'PENDIENTE' ? 'bg-warning text-dark' :
+                                                          'bg-danger'}">
+                                        <span th:text="${pedido.pago.estado.name() == 'EXITOSO' ? 'Exitoso' :
+                                                       pedido.pago.estado.name() == 'PENDIENTE' ? 'Pendiente' :
+                                                       'Fallido'}">Estado</span>
+                                    </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen lateral -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Resumen</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Estado:</span>
+                        <strong th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
+                                             pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente' :
+                                             'Cancelado'}">Estado</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Productos:</span>
+                        <strong th:text="${pedido.items.size()}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Fecha:</span>
+                        <strong th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <h5>Total:</h5>
+                        <h5 class="text-success" th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                            $0
+                        </h5>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div th:if="${pedido.estado.name() == 'PENDIENTE_PAGO'}" class="d-grid gap-2">
+                        <a th:href="@{/pedidos/pagar/{id}(id=${pedido.id_pedido})}"
+                           class="btn btn-warning">
+                            <i class="fas fa-credit-card"></i> Pagar Ahora
+                        </a>
+                        <a th:href="@{/pedidos/cancelar/{id}(id=${pedido.id_pedido})}"
+                           class="btn btn-outline-danger"
+                           onclick="return confirm('¿Cancelar este pedido?')">
+                            <i class="fas fa-times"></i> Cancelar Pedido
+                        </a>
+                    </div>
+
+                    <a th:href="@{/pedidos/mis-pedidos}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left"></i> Volver a Mis Pedidos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Dashboard Proveedor - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content" class="dashboard-container">
+
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+        <div class="dashboard-welcome">
+            <div class="user-greeting">
+                <h1>
+                    <i class="bi bi-shop"></i>
+                    Bienvenido, <span th:text="${usuario.nombre}">Proveedor</span>
+                </h1>
+                <p>Gestiona tus tiendas, productos y eventos desde un solo lugar</p>
+            </div>
+            <div class="quick-actions">
+                <a th:href="@{/tiendas/nueva}" class="btn">
+                    <i class="bi bi-plus-circle"></i> Nueva Tienda
+                </a>
+                <a th:href="@{/eventos/crear}" class="btn">
+                    <i class="bi bi-calendar-plus"></i> Crear Evento
+                </a>
+                <a th:href="@{/pqrs/crear}" class="btn">
+                    <i class="bi bi-chat-dots"></i> Nueva PQRS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas importantes -->
+    <div th:if="${eventosPendientes > 0}" class="dashboard-alert warning">
+        <i class="bi bi-clock-history"></i>
+        <div>
+            <strong>Eventos Pendientes:</strong>
+            Tienes <span th:text="${eventosPendientes}">0</span> evento(s) esperando aprobación del administrador.
+            <a th:href="@{/eventos/mis-eventos}">Ver mis eventos</a>
+        </div>
+    </div>
+
+    <div th:if="${eventosAprobados > 0}" class="dashboard-alert info">
+        <i class="bi bi-check-circle"></i>
+        <div>
+            <strong>¡Felicitaciones!</strong>
+            Tienes <span th:text="${eventosAprobados}">0</span> evento(s) aprobado(s) y publicado(s).
+            <a th:href="@{/eventos/mis-eventos}">Ver eventos</a>
+        </div>
+    </div>
+
+    <!-- Grid de Estadísticas -->
+    <div class="stats-grid">
+        <!-- Mis Tiendas -->
+        <div class="stat-card" onclick="window.location.href='/tiendas/mis-tiendas'">
+            <div class="stat-card-header">
+                <h3>Mis Tiendas</h3>
+                <div class="stat-card-icon primary">
+                    <i class="bi bi-shop"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${misTiendas}">0</div>
+                <div class="stat-label">Tiendas registradas</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/tiendas/mis-tiendas}">
+                    <i class="bi bi-arrow-right"></i> Gestionar tiendas
+                </a>
+            </div>
+        </div>
+
+        <!-- Mis Productos -->
+        <div class="stat-card" onclick="window.location.href='/productos'">
+            <div class="stat-card-header">
+                <h3>Mis Productos</h3>
+                <div class="stat-card-icon success">
+                    <i class="bi bi-basket"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${misProductos}">0</div>
+                <div class="stat-label">Productos publicados</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/productos}">
+                    <i class="bi bi-arrow-right"></i> Ver productos
+                </a>
+            </div>
+        </div>
+
+        <!-- Mis Eventos -->
+        <div class="stat-card" onclick="window.location.href='/eventos/mis-eventos'">
+            <div class="stat-card-header">
+                <h3>Mis Eventos</h3>
+                <div class="stat-card-icon info">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${misEventos}">0</div>
+                <div class="stat-label">Eventos creados</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/eventos/mis-eventos}">
+                    <i class="bi bi-arrow-right"></i> Gestionar eventos
+                </a>
+            </div>
+        </div>
+
+        <!-- Eventos Aprobados -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Eventos Aprobados</h3>
+                <div class="stat-card-icon success">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${eventosAprobados}">0</div>
+                <div class="stat-label">Publicados</div>
+            </div>
+        </div>
+
+        <!-- Eventos Pendientes -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Eventos Pendientes</h3>
+                <div class="stat-card-icon warning">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${eventosPendientes}">0</div>
+                <div class="stat-label">En revisión</div>
+            </div>
+        </div>
+
+        <!-- Mis PQRS -->
+        <div class="stat-card" onclick="window.location.href='/pqrs'">
+            <div class="stat-card-header">
+                <h3>Mis PQRS</h3>
+                <div class="stat-card-icon danger">
+                    <i class="bi bi-chat-square-dots"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${misPqrs}">0</div>
+                <div class="stat-label">PQRS enviadas</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/pqrs}">
+                    <i class="bi bi-arrow-right"></i> Ver mis PQRS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secciones del Dashboard -->
+    <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+        <!-- Acciones Principales -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-lightning"></i>
+                    Acciones Principales
+                </h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <!-- Card de acción -->
+                <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-primary); text-align: center;">
+                    <i class="bi bi-shop" style="font-size: 2.5rem; color: var(--color-primary);"></i>
+                    <h4 style="margin: 1rem 0 0.5rem; color: var(--color-primary);">Tiendas</h4>
+                    <a th:href="@{/tiendas/nueva}" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-plus"></i> Crear Tienda
+                    </a>
+                    <a th:href="@{/tiendas/mis-tiendas}" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-list"></i> Mis Tiendas
+                    </a>
+                </div>
+
+                <!-- Card de acción -->
+                <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-success); text-align: center;">
+                    <i class="bi bi-basket" style="font-size: 2.5rem; color: var(--color-success);"></i>
+                    <h4 style="margin: 1rem 0 0.5rem; color: var(--color-success);">Productos</h4>
+                    <a th:href="@{/productos}" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-list"></i> Ver Productos
+                    </a>
+                </div>
+
+                <!-- Card de acción -->
+                <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-info); text-align: center;">
+                    <i class="bi bi-calendar-event" style="font-size: 2.5rem; color: var(--color-info);"></i>
+                    <h4 style="margin: 1rem 0 0.5rem; color: var(--color-info);">Eventos</h4>
+                    <a th:href="@{/eventos/crear}" class="btn btn-info" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-plus"></i> Crear Evento
+                    </a>
+                    <a th:href="@{/eventos/mis-eventos}" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-list"></i> Mis Eventos
+                    </a>
+                </div>
+
+                <!-- Card de acción -->
+                <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-warning); text-align: center;">
+                    <i class="bi bi-chat-square-dots" style="font-size: 2.5rem; color: var(--color-warning);"></i>
+                    <h4 style="margin: 1rem 0 0.5rem; color: var(--color-warning);">PQRS</h4>
+                    <a th:href="@{/pqrs/crear}" class="btn btn-warning" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-plus"></i> Nueva PQRS
+                    </a>
+                    <a th:href="@{/pqrs}" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-list"></i> Mis PQRS
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guía Rápida -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-book"></i>
+                    Guía Rápida
+                </h2>
+            </div>
+            <ul class="simple-list">
+                <li class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">
+                            <i class="bi bi-1-circle" style="color: var(--color-primary);"></i> Crea tu tienda
+                        </div>
+                        <div class="list-item-description">
+                            Registra tu tienda con nombre, descripción y foto
+                        </div>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">
+                            <i class="bi bi-2-circle" style="color: var(--color-primary);"></i> Publica productos
+                        </div>
+                        <div class="list-item-description">
+                            Agrega productos con precios, stock e imágenes
+                        </div>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">
+                            <i class="bi bi-3-circle" style="color: var(--color-primary);"></i> Crea eventos
+                        </div>
+                        <div class="list-item-description">
+                            Solicita eventos que serán revisados por un administrador
+                        </div>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="list-item-content">
+                        <div class="list-item-title">
+                            <i class="bi bi-4-circle" style="color: var(--color-primary);"></i> Gestiona PQRS
+                        </div>
+                        <div class="list-item-description">
+                            Envía preguntas, quejas o sugerencias cuando lo necesites
+                        </div>
+                    </div>
+                </li>
+            </ul>
+
+            <!-- Información adicional -->
+            <div style="margin-top: 1.5rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+                <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                    <i class="bi bi-lightbulb"></i> Consejo
+                </h4>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
+                    Agrega fotos de buena calidad a tus productos y tiendas para atraer más clientes.
+                    Recuerda mantener actualizado el stock de tus productos.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de mi negocio -->
+    <div class="dashboard-section" style="margin-top: 2rem;">
+        <div class="dashboard-section-header">
+            <h2>
+                <i class="bi bi-graph-up"></i>
+                Estado de Mi Negocio
+            </h2>
+        </div>
+
+        <!-- Estado vacío si no tiene tiendas -->
+        <div th:if="${misTiendas == 0}" class="empty-state">
+            <i class="bi bi-shop"></i>
+            <h3>¡Aún no tienes tiendas!</h3>
+            <p>Crea tu primera tienda y comienza a vender tus productos del campo</p>
+            <a th:href="@{/tiendas/nueva}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Crear Mi Primera Tienda
+            </a>
+        </div>
+
+        <!-- Si tiene tiendas, mostrar resumen -->
+        <div th:if="${misTiendas > 0}" class="row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-shop" style="font-size: 2.5rem; color: var(--color-primary);"></i>
+                <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-primary); margin: 0.75rem 0;">
+                    <span th:text="${misTiendas}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Tiendas</p>
+            </div>
+
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-basket" style="font-size: 2.5rem; color: var(--color-success);"></i>
+                <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-success); margin: 0.75rem 0;">
+                    <span th:text="${misProductos}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Productos</p>
+            </div>
+
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-calendar-check" style="font-size: 2.5rem; color: var(--color-info);"></i>
+                <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-info); margin: 0.75rem 0;">
+                    <span th:text="${eventosAprobados}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Eventos Publicados</p>
+            </div>
+
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-chat-square-dots" style="font-size: 2.5rem; color: var(--color-warning);"></i>
+                <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-warning); margin: 0.75rem 0;">
+                    <span th:text="${misPqrs}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">PQRS Enviadas</p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

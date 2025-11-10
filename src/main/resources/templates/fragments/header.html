@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<!-- ==================== HEADER FRAGMENT ==================== -->
+<header th:fragment="header" class="header">
+
+    <!-- Header para usuarios NO autenticados -->
+    <nav class="navbar navbar-expand-lg" sec:authorize="isAnonymous()">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">
+                <span class="material-symbols-outlined icon-leaf">eco</span>
+                <div class="header-info">
+                    <h3>Campo Libre</h3>
+                    <span>Invitado</span>
+                </div>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/register}">
+                            <i class="bi bi-file-earmark-person"></i> Registro
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/login}">
+                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header para usuarios AUTENTICADOS -->
+    <nav class="navbar navbar-expand-lg" sec:authorize="isAuthenticated()">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">
+                <span class="material-symbols-outlined icon-leaf">eco</span>
+                <div class="header-info">
+                    <h3>Campo Libre</h3>
+                    <span sec:authentication="name">usuario@ejemplo.com</span>
+                </div>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+
+                    <!-- ========== MENÚ PARA ADMINISTRADOR ========== -->
+                    <th:block sec:authorize="hasAuthority('ADMINISTRADOR')">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/admin/dashboard}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/usuarios}">
+                                <i class="bi bi-people"></i> Usuarios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/tiendas}">
+                                <i class="bi bi-shop"></i> Tiendas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/eventos/pendientes}">
+                                <i class="bi bi-clock-history"></i> Eventos Pendientes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/pqrs/pendientes}">
+                                <i class="bi bi-chat-square-dots"></i> PQRS Pendientes
+                            </a>
+                        </li>
+                    </th:block>
+
+                    <!-- ========== MENÚ PARA PROVEEDOR ========== -->
+                    <th:block sec:authorize="hasAuthority('PROVEEDOR') and !hasAuthority('ADMINISTRADOR')">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/proveedor/dashboard}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/tiendas/mis-tiendas}">
+                                <i class="bi bi-shop"></i> Mis Tiendas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/eventos/mis-eventos}">
+                                <i class="bi bi-calendar-check"></i> Mis Eventos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/eventos/crear}">
+                                <i class="bi bi-calendar-plus"></i> Crear Evento
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/pqrs}">
+                                <i class="bi bi-chat-square-dots"></i> Mis PQRS
+                            </a>
+                        </li>
+                    </th:block>
+
+                    <!-- ========== MENÚ PARA CONSUMIDOR ========== -->
+                    <th:block sec:authorize="hasAuthority('CONSUMIDOR') and !hasAuthority('PROVEEDOR') and !hasAuthority('ADMINISTRADOR')">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/consumidor/dashboard}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/tiendas}">
+                                <i class="bi bi-shop"></i> Explorar Tiendas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/productos}">
+                                <i class="bi bi-basket"></i> Productos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/eventos}">
+                                <i class="bi bi-calendar-event"></i> Eventos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/mis-eventos}">
+                                <i class="bi bi-bookmark-check"></i> Mis Eventos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/pqrs}">
+                                <i class="bi bi-chat-square-dots"></i> Mis PQRS
+                            </a>
+                        </li>
+                    </th:block>
+
+                    <!-- ========== DROPDOWN DE PERFIL ========== -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="perfilDropdown"
+                           role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> Perfil
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-person"></i>
+                                    <span sec:authentication="principal.username">Usuario</span>
+                                </h6>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Ver perfil -->
+                            <li>
+                                <a class="dropdown-item" th:href="@{/usuarios/perfil}">
+                                    <i class="bi bi-person-badge"></i> Mi Perfil
+                                </a>
+                            </li>
+
+                            <!-- ✨ CARRITO (solo para usuarios autenticados) -->
+                            <li sec:authorize="isAuthenticated()">
+                                <a class="dropdown-item position-relative" th:href="@{/carrito}">
+                                    <i class="bi bi-cart"></i> Mi Carrito
+                                    <span class="badge bg-danger rounded-pill position-absolute"
+                                          style="top: 8px; right: 15px; font-size: 0.7rem;"
+                                          id="cart-count-badge-dropdown"
+                                          th:text="${itemsCarrito != null ? itemsCarrito : 0}">0</span>
+                                </a>
+                            </li>
+
+                            <!-- Mis Pedidos (solo consumidores) -->
+                            <li sec:authorize="hasAuthority('CONSUMIDOR')">
+                                <a class="dropdown-item" th:href="@{/pedidos/mis-pedidos}">
+                                    <i class="bi bi-bag-check"></i> Mis Pedidos
+                                </a>
+                            </li>
+
+                            <!-- Mis Ventas (solo proveedores) -->
+                            <li sec:authorize="hasAuthority('PROVEEDOR')">
+                                <a class="dropdown-item position-relative" th:href="@{/pedidos/ventas}">
+                                    <i class="bi bi-graph-up"></i> Mis Ventas
+                                    <!-- Badge de pedidos pendientes (opcional) -->
+                                    <span th:if="${pedidosPendientes != null and pedidosPendientes > 0}"
+                                          class="badge bg-warning rounded-pill position-absolute"
+                                          style="top: 8px; right: 15px; font-size: 0.7rem;"
+                                          th:text="${pedidosPendientes}">0</span>
+                                </a>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Cambio de rol dinámico -->
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-arrow-left-right"></i> Cambiar Dashboard
+                                </h6>
+                            </li>
+
+                            <!-- Mostrar opciones de dashboard según roles -->
+                            <li sec:authorize="hasAuthority('ADMINISTRADOR')">
+                                <a class="dropdown-item" th:href="@{/admin/dashboard}">
+                                    <i class="bi bi-shield-check"></i> Dashboard Administrador
+                                </a>
+                            </li>
+                            <li sec:authorize="hasAuthority('PROVEEDOR')">
+                                <a class="dropdown-item" th:href="@{/proveedor/dashboard}">
+                                    <i class="bi bi-shop"></i> Dashboard Proveedor
+                                </a>
+                            </li>
+                            <li sec:authorize="hasAuthority('CONSUMIDOR')">
+                                <a class="dropdown-item" th:href="@{/consumidor/dashboard}">
+                                    <i class="bi bi-person"></i> Dashboard Consumidor
+                                </a>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Cerrar sesión -->
+                            <li>
+                                <form th:action="@{/logout}" method="post">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Script para actualizar el contador del carrito dinámicamente -->
+<script>
+    // Actualiza el contador del carrito llamando al endpoint /carrito/contador
+    function updateCartCount() {
+        fetch('/carrito/contador')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
+            .then(countText => {
+                const badge = document.getElementById('cart-count-badge-dropdown');
+                if (badge) {
+                    const count = parseInt(countText) || 0;
+                    badge.textContent = count;
+                    // Ocultar badge si el carrito está vacío
+                    badge.style.display = count > 0 ? 'inline' : 'none';
+                }
+            })
+            .catch(error => {
+                console.log('No se pudo actualizar contador del carrito:', error.message);
+            });
+    }
+
+    // Ejecutar al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartCount();
+        // Actualizar cada 30 segundos
+        setInterval(updateCartCount, 30000);
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Nuevo Usuario - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-person-plus"></i>
+                Crear Nuevo Usuario
+            </h2>
+            <p>Complete todos los campos para registrar un nuevo usuario en el sistema</p>
+        </div>
+
+        <!-- Mensajes de error -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en el formulario</span>
+        </div>
+
+        <!-- Formulario -->
+        <form th:action="@{/usuarios/crear}" th:object="${usuario}" method="post">
+
+            <!-- Sección: Información Personal -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-person"></i>
+                    Información Personal
+                </h3>
+
+                <!-- Nombre -->
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="bi bi-person"></i>
+                        Nombre Completo
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{nombre}"
+                           class="form-control"
+                           id="nombre"
+                           placeholder="Ej: Juan Pérez González"
+                           required>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Ingrese el nombre completo del usuario
+                    </small>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">
+                        <i class="bi bi-envelope"></i>
+                        Correo Electrónico
+                        <span class="required">*</span>
+                    </label>
+                    <input type="email"
+                           th:field="*{email}"
+                           class="form-control"
+                           id="email"
+                           placeholder="correo@ejemplo.com"
+                           required>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        El email se usará para iniciar sesión
+                    </small>
+                </div>
+
+                <!-- Contraseña -->
+                <div class="form-group">
+                    <label for="contrasena">
+                        <i class="bi bi-lock"></i>
+                        Contraseña
+                        <span class="required">*</span>
+                    </label>
+                    <input type="password"
+                           th:field="*{contrasena}"
+                           class="form-control"
+                           id="contrasena"
+                           placeholder="Mínimo 6 caracteres"
+                           minlength="6"
+                           required>
+                    <small class="form-text">
+                        <i class="bi bi-shield-check"></i>
+                        Mínimo 6 caracteres. Será encriptada automáticamente.
+                    </small>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group">
+                    <label for="telefono">
+                        <i class="bi bi-telephone"></i>
+                        Teléfono
+                    </label>
+                    <input type="tel"
+                           th:field="*{telefono}"
+                           class="form-control"
+                           id="telefono"
+                           placeholder="3001234567"
+                           pattern="[0-9]{10}">
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        10 dígitos sin espacios ni guiones
+                    </small>
+                </div>
+            </div>
+
+            <!-- Sección: Documento de Identidad -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-card-text"></i>
+                    Documento de Identidad
+                </h3>
+
+                <div class="form-row form-row-2">
+                    <!-- Tipo de Documento -->
+                    <div class="form-group">
+                        <label for="tipo_documento">
+                            <i class="bi bi-card-list"></i>
+                            Tipo de Documento
+                            <span class="required">*</span>
+                        </label>
+                        <select th:field="*{tipo_documento}"
+                                class="form-select"
+                                id="tipo_documento"
+                                required>
+                            <option value="">Seleccione...</option>
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="TI">Tarjeta de Identidad</option>
+                            <option value="NIT">NIT (Para negocios)</option>
+                            <option value="PASAPORTE">Pasaporte</option>
+                        </select>
+                    </div>
+
+                    <!-- Número de Documento -->
+                    <div class="form-group">
+                        <label for="documento">
+                            <i class="bi bi-card-heading"></i>
+                            Número de Documento
+                            <span class="required">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{documento}"
+                               class="form-control"
+                               id="documento"
+                               placeholder="1234567890"
+                               required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Asignación de Roles -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-shield-lock"></i>
+                    Asignación de Roles
+                </h3>
+
+                <p style="margin-bottom: 1rem; color: var(--color-text-light);">
+                    <i class="bi bi-info-circle"></i>
+                    Seleccione uno o más roles para el usuario. Puede asignar múltiples roles según sea necesario.
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Rol Administrador -->
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="rolesSeleccionados"
+                               value="1"
+                               id="rolAdmin">
+                        <label class="form-check-label" for="rolAdmin">
+                            <strong style="color: var(--color-danger);">
+                                <i class="bi bi-shield-check"></i> Administrador
+                            </strong>
+                            - Acceso total al sistema, gestión de usuarios y aprobación de eventos
+                        </label>
+                    </div>
+
+                    <!-- Rol Proveedor -->
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="rolesSeleccionados"
+                               value="2"
+                               id="rolProveedor">
+                        <label class="form-check-label" for="rolProveedor">
+                            <strong style="color: var(--color-primary);">
+                                <i class="bi bi-shop"></i> Proveedor
+                            </strong>
+                            - Puede crear tiendas, publicar productos y solicitar eventos
+                        </label>
+                    </div>
+
+                    <!-- Rol Consumidor -->
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="rolesSeleccionados"
+                               value="3"
+                               id="rolConsumidor"
+                               checked>
+                        <label class="form-check-label" for="rolConsumidor">
+                            <strong style="color: var(--color-success);">
+                                <i class="bi bi-person"></i> Consumidor
+                            </strong>
+                            - Puede explorar tiendas, ver productos y confirmar asistencia a eventos
+                        </label>
+                    </div>
+                </div>
+
+                <small class="form-text" style="display: block; margin-top: 1rem;">
+                    <i class="bi bi-lightbulb"></i>
+                    <strong>Nota:</strong> Por defecto, todos los usuarios tienen el rol de Consumidor.
+                    Los usuarios con rol Administrador pueden acceder a todos los dashboards.
+                </small>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <a th:href="@{/usuarios}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Crear Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+</body>
+</html>

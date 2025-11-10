@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Editar Evento - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-pencil-square"></i>
+                Editar Evento
+            </h2>
+            <p>Modificar la información de: <strong th:text="${evento.nombre}">Mi Evento</strong></p>
+        </div>
+
+        <!-- Mensajes de error -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en el formulario</span>
+        </div>
+
+        <!-- Alerta según estado -->
+        <div class="dashboard-alert warning"
+             th:if="${evento.estado.name() == 'PENDIENTE'}"
+             style="margin-bottom: 2rem;">
+            <i class="bi bi-clock-history"></i>
+            <div>
+                <strong>Estado Actual: Pendiente</strong>
+                Este evento está esperando aprobación. Puedes editarlo antes de que sea revisado.
+            </div>
+        </div>
+
+        <div class="dashboard-alert danger"
+             th:if="${evento.estado.name() == 'RECHAZADO'}"
+             style="margin-bottom: 2rem;">
+            <i class="bi bi-x-circle"></i>
+            <div>
+                <strong>Estado Actual: Rechazado</strong>
+                Este evento no fue aprobado. Edítalo y vuelve a enviarlo para una nueva revisión.
+            </div>
+        </div>
+
+        <div class="dashboard-alert info"
+             th:if="${evento.estado.name() == 'APROBADO'}"
+             style="margin-bottom: 2rem;">
+            <i class="bi bi-check-circle"></i>
+            <div>
+                <strong>Estado Actual: Aprobado</strong>
+                Este evento está publicado y visible para todos. Los cambios que realices serán inmediatos.
+            </div>
+        </div>
+
+        <!-- Formulario -->
+        <form th:action="@{/eventos/actualizar}" th:object="${evento}" method="post" enctype="multipart/form-data">
+
+            <!-- IDs ocultos -->
+            <input type="hidden" th:field="*{id_evento}">
+            <input type="hidden" th:field="*{creado_por}">
+
+            <!-- Sección: Información Básica -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-info-circle"></i>
+                    Información del Evento
+                </h3>
+
+                <!-- Nombre del Evento -->
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="bi bi-calendar-event"></i>
+                        Nombre del Evento
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{nombre}"
+                           class="form-control"
+                           id="nombre"
+                           maxlength="150"
+                           required>
+                </div>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    <label for="descripcion">
+                        <i class="bi bi-card-text"></i>
+                        Descripción
+                        <span class="required">*</span>
+                    </label>
+                    <textarea th:field="*{descripcion}"
+                              class="form-control"
+                              id="descripcion"
+                              rows="5"
+                              maxlength="1000"
+                              required></textarea>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Máximo 1000 caracteres. <span id="charCount">0</span>/1000
+                    </small>
+                </div>
+
+                <!-- Tipo de Evento -->
+                <div class="form-group">
+                    <label for="tipo_evento">
+                        <i class="bi bi-tag"></i>
+                        Tipo de Evento
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{tipo_evento}"
+                            class="form-select"
+                            id="tipo_evento"
+                            required>
+                        <option value="">Seleccione un tipo...</option>
+                        <option value="FERIA">🎪 Feria</option>
+                        <option value="TALLER">👨‍🏫 Taller</option>
+                        <option value="ACTIVIDAD">🎯 Actividad</option>
+                        <option value="OTRO">📦 Otro</option>
+                    </select>
+                </div>
+
+                <!-- Imagen Actual -->
+                <div class="form-group" th:if="${evento.imagen_evento != null}">
+                    <label>
+                        <i class="bi bi-image"></i>
+                        Imagen Actual
+                    </label>
+                    <div style="position: relative; max-width: 400px;">
+                        <!-- Imagen -->
+                        <img th:src="@{${evento.imagen_evento}}"
+                             alt="Imagen actual"
+                             style="max-width: 400px; width: 100%; border-radius: 8px; border: 2px solid var(--border-color); display: block;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                        <!-- Fallback si falla la carga -->
+                        <div style="display: none; width: 400px; height: 250px; background-color: var(--color-bg-light); border-radius: 8px; align-items: center; justify-content: center; border: 2px solid var(--border-color); flex-direction: column; gap: 0.5rem;">
+                            <i class="bi bi-calendar-event" style="font-size: 3rem; color: var(--color-text-light);"></i>
+                            <small style="color: var(--color-text-light);">Imagen no disponible</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cambiar Imagen -->
+                <div class="form-group">
+                    <label>
+                        <i class="bi bi-image"></i>
+                        Cambiar Imagen
+                        <small style="font-weight: normal;">(Dejar vacío para mantener la actual)</small>
+                    </label>
+                    <div class="file-input-wrapper">
+                        <input type="file"
+                               name="imagen"
+                               id="imagen"
+                               accept="image/*"
+                               onchange="previewImage(event)">
+                        <label for="imagen" class="file-input-label">
+                            <i class="bi bi-cloud-upload"></i>
+                            <span>Seleccionar nueva imagen</span>
+                        </label>
+                    </div>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Solo selecciona una imagen si deseas cambiar la actual
+                    </small>
+                    <div id="imagePreview" class="file-preview" style="display: none;">
+                        <img id="preview" src="" alt="Vista previa">
+                        <span class="file-name" id="fileName"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Fecha y Hora -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-calendar-date"></i>
+                    Fecha y Hora
+                </h3>
+
+                <div class="form-row form-row-2">
+                    <!-- Fecha del Evento -->
+                    <div class="form-group">
+                        <label for="fecha_evento">
+                            <i class="bi bi-calendar3"></i>
+                            Fecha del Evento
+                            <span class="required">*</span>
+                        </label>
+                        <input type="date"
+                               th:field="*{fecha_evento}"
+                               class="form-control"
+                               id="fecha_evento"
+                               required>
+                    </div>
+
+                    <!-- Hora del Evento -->
+                    <div class="form-group">
+                        <label for="hora_evento">
+                            <i class="bi bi-clock"></i>
+                            Hora del Evento
+                            <span class="required">*</span>
+                        </label>
+                        <input type="time"
+                               th:field="*{hora_evento}"
+                               class="form-control"
+                               id="hora_evento"
+                               required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Ubicación -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-geo-alt"></i>
+                    Ubicación
+                </h3>
+
+                <!-- Ubicación -->
+                <div class="form-group">
+                    <label for="ubicacion">
+                        <i class="bi bi-pin-map"></i>
+                        Dirección o Lugar
+                        <span class="required">*</span>
+                    </label>
+                    <input type="text"
+                           th:field="*{ubicacion}"
+                           class="form-control"
+                           id="ubicacion"
+                           maxlength="200"
+                           required>
+                </div>
+            </div>
+
+            <!-- Sección: Información del Sistema -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-info-circle"></i>
+                    Información del Sistema
+                </h3>
+
+                <div class="form-row form-row-2">
+                    <!-- Fecha de Creación -->
+                    <div class="form-group">
+                        <label>
+                            <i class="bi bi-calendar"></i>
+                            Fecha de Creación
+                        </label>
+                        <input type="text"
+                               th:value="${#temporals.format(evento.fecha_creacion, 'dd/MM/yyyy HH:mm')}"
+                               class="form-control" readonly
+                               style="background-color: #f5f5f5;">
+                    </div>
+
+                    <!-- Estado Actual -->
+                    <div class="form-group">
+                        <label>
+                            <i class="bi bi-toggle-on"></i>
+                            Estado Actual
+                        </label>
+                        <div style="padding: 0.75rem; background-color: #f5f5f5; border-radius: 8px;">
+                            <span class="status-badge pending" th:if="${evento.estado.name() == 'PENDIENTE'}">
+                                <i class="bi bi-clock-history"></i> Pendiente
+                            </span>
+                            <span class="status-badge approved" th:if="${evento.estado.name() == 'APROBADO'}">
+                                <i class="bi bi-check-circle"></i> Aprobado
+                            </span>
+                            <span class="status-badge rejected" th:if="${evento.estado.name() == 'RECHAZADO'}">
+                                <i class="bi bi-x-circle"></i> Rechazado
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <a th:href="@{/eventos/mis-eventos}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+                <a th:href="@{/eventos/ver/{id}(id=${evento.id_evento})}" class="btn btn-info">
+                    <i class="bi bi-eye"></i> Ver Detalle
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+
+        <!-- Información adicional -->
+        <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-warning);">
+            <h4 style="color: var(--color-warning); margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-exclamation-triangle"></i> Importante
+            </h4>
+            <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
+                <li>La imagen solo se actualizará si seleccionas una nueva</li>
+                <li th:if="${evento.estado.name() == 'APROBADO'}">Los cambios en eventos aprobados son inmediatos y visibles para todos</li>
+                <li th:if="${evento.estado.name() == 'PENDIENTE'}">Puedes editar el evento mientras está pendiente de revisión</li>
+                <li th:if="${evento.estado.name() == 'RECHAZADO'}">Al guardar cambios, el evento volverá a estado Pendiente para nueva revisión</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Inicializar contador de caracteres
+        window.addEventListener('DOMContentLoaded', function() {
+            const descripcion = document.getElementById('descripcion');
+            const charCount = document.getElementById('charCount');
+            if (descripcion && charCount) {
+                charCount.textContent = descripcion.value.length;
+
+                descripcion.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                });
+            }
+        });
+
+        // Preview de imagen
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('preview');
+            const imagePreview = document.getElementById('imagePreview');
+            const fileName = document.getElementById('fileName');
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    fileName.textContent = file.name;
+                }
+
+                reader.readAsDataURL(file);
+            }
+        }
+        // Validar que la fecha no sea en el pasado
+        const fechaInput = document.getElementById('fecha_evento');
+        const today = new Date().toISOString().split('T')[0];
+        fechaInput.setAttribute('min', today);
+    </script>
+</main>
+
+</body>
+</html>

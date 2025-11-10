@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mis PQRS - Campo Libre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-chat-square-dots"></i>
+                <span th:if="${tipoLista == 'todas'}">Gestión de PQRS</span>
+                <span th:if="${tipoLista == 'mis_pqrs'}">Mis PQRS</span>
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/pqrs/crear}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nueva PQRS
+                </a>
+                <!-- Solo ADMIN ve el toggle -->
+                <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
+                    <button class="view-toggle-btn" th:classappend="${tipoLista == 'todas'} ? 'active' : ''"
+                            th:onclick="'window.location.href=\'/pqrs\''">
+                        <i class="bi bi-list"></i> Todas
+                    </button>
+                    <button class="view-toggle-btn" th:classappend="${tipoLista == 'pendientes'} ? 'active' : ''"
+                            th:onclick="'window.location.href=\'/pqrs/pendientes\''">
+                        <i class="bi bi-clock-history"></i> Pendientes
+                    </button>
+                </div>
+                <!-- Botones de reportes (solo para ADMIN y PROVEEDOR) -->
+                <div sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')"
+                     style="display: flex; gap: 0.5rem;">
+
+                    <button onclick="descargarReporteExcel()" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                    </button>
+
+                    <button onclick="descargarReportePdf()" class="btn btn-danger">
+                        <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por descripción..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterFechaDesde">Desde</label>
+                <input type="date"
+                       id="filterFechaDesde"
+                       class="form-select"
+                       title="Filtrar por fecha desde">
+            </div>
+
+            <div class="filter-group">
+                <label for="filterFechaHasta">Hasta</label>
+                <input type="date"
+                       id="filterFechaHasta"
+                       class="form-select"
+                       title="Filtrar por fecha hasta">
+            </div>
+
+            <div class="filter-group">
+                <label for="filterTipo">Tipo</label>
+                <select id="filterTipo" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="PREGUNTA">Pregunta</option>
+                    <option value="QUEJA">Queja</option>
+                    <option value="SUGERENCIA">Sugerencia</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterEstado">Estado</label>
+                <select id="filterEstado" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Respondida">Respondida</option>
+                </select>
+            </div>
+
+            <div class="filter-group" style="display: flex; align-items: flex-end;">
+                <button onclick="limpiarFiltros()" class="btn btn-secondary" style="width: 100%;">
+                    <i class="bi bi-x-circle"></i> Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Mostrando <strong th:text="${pqrsList.size()}">0</strong> PQRS
+        </div>
+
+        <!-- Tabla de PQRS -->
+        <div class="table-responsive">
+            <table class="data-table" id="pqrsTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Fecha Envío</th>
+                    <th>Estado</th>
+                    <th sec:authorize="hasAuthority('ADMINISTRADOR')">Emisor</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="pqrs : ${pqrsList}">
+                    <td th:text="${pqrs.id_pqrs}" data-label="ID">1</td>
+
+                    <td data-label="Tipo">
+                            <span class="status-badge" th:classappend="${pqrs.tipo.name() == 'PREGUNTA'} ? 'info' : (${pqrs.tipo.name() == 'QUEJA'} ? 'danger' : 'warning')">
+                                <i class="bi" th:classappend="${pqrs.tipo.name() == 'PREGUNTA'} ? 'bi-question-circle' : (${pqrs.tipo.name() == 'QUEJA'} ? 'bi-exclamation-triangle' : 'bi-lightbulb')"></i>
+                                <span th:text="${pqrs.tipo}">PREGUNTA</span>
+                            </span>
+                    </td>
+
+                    <td data-label="Descripción">
+                            <span th:text="${#strings.abbreviate(pqrs.descripcion, 80)}">
+                                Descripción de la PQRS...
+                            </span>
+                    </td>
+
+                    <td th:text="${#temporals.format(pqrs.fecha_envio, 'dd/MM/yyyy HH:mm')}"
+                        data-label="Fecha Envío">01/01/2024 10:00</td>
+
+                    <td data-label="Estado">
+                            <span class="status-badge pending" th:if="${pqrs.estado.name() == 'PENDIENTE'}">
+                                <i class="bi bi-clock-history"></i> Pendiente
+                            </span>
+                        <span class="status-badge approved" th:if="${pqrs.estado.name() == 'RESPONDIDA'}">
+                                <i class="bi bi-check-circle"></i> Respondida
+                            </span>
+                    </td>
+
+                    <!-- Columna Emisor (solo ADMIN) -->
+                    <td sec:authorize="hasAuthority('ADMINISTRADOR')" data-label="Emisor">
+                        ID: <span th:text="${pqrs.id_emisor}">1</span>
+                    </td>
+
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver detalle -->
+                            <a th:href="@{/pqrs/ver/{id}(id=${pqrs.id_pqrs})}"
+                               class="btn-action btn-view"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+
+                            <!-- Ver evento (si está asociada) -->
+                            <a th:if="${pqrs.id_evento != null}"
+                               th:href="@{/eventos/ver/{id}(id=${pqrs.id_evento})}"
+                               class="btn-action btn-info"
+                               title="Ver evento">
+                                <i class="bi bi-calendar-event"></i>
+                            </a>
+
+                            <!-- Ver tienda (si está asociada) -->
+                            <a th:if="${pqrs.id_tienda != null}"
+                               th:href="@{/tiendas/ver/{id}(id=${pqrs.id_tienda})}"
+                               class="btn-action btn-info"
+                               title="Ver tienda">
+                                <i class="bi bi-shop"></i>
+                            </a>
+
+                            <!-- Responder: visible si el servicio marcó que el usuario puede responder y está pendiente -->
+                            <a th:if="${pqrs.puede_responder} and ${pqrs.estado.name()} == 'PENDIENTE'"
+                               th:href="@{/pqrs/responder/{id}(id=${pqrs.id_pqrs})}"
+                               class="btn-action btn-edit"
+                               title="Responder PQRS">
+                                <i class="bi bi-chat-left-text"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${pqrsList.isEmpty()}" class="empty-list">
+            <i class="bi bi-chat-square-dots"></i>
+            <h3>No hay PQRS registradas</h3>
+            <p th:if="${tipoLista == 'mis_pqrs'}">
+                Aún no has enviado ninguna PQRS. Comparte tu opinión sobre tiendas o eventos.
+            </p>
+            <p th:if="${tipoLista == 'todas'}">
+                No hay PQRS en el sistema
+            </p>
+            <a th:href="@{/pqrs/crear}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Crear Primera PQRS
+            </a>
+        </div>
+
+        <!-- Paginación (placeholder) -->
+        <div th:if="${!pqrsList.isEmpty()}" class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <strong th:text="${pqrsList.size()}">10</strong> PQRS
+            </div>
+            <ul class="pagination">
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link active">1</a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para búsqueda y filtrado -->
+    <!-- Script para búsqueda y filtrado -->
+    <script>
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterTipo = document.getElementById('filterTipo').value;
+            const filterEstado = document.getElementById('filterEstado').value;
+            const table = document.getElementById('pqrsTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            let visibleCount = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const descripcion = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+
+                // ✅ EXTRAER TIPO: Obtener solo el texto del <span> dentro del badge
+                const tipoBadgeCell = rows[i].getElementsByTagName('td')[1];
+                const tipoSpan = tipoBadgeCell.querySelector('.status-badge span');
+                const tipoText = tipoSpan ? tipoSpan.textContent.trim() : '';
+
+                // ✅ EXTRAER ESTADO: Obtener el texto limpio sin íconos
+                const estadoBadgeCell = rows[i].getElementsByTagName('td')[4];
+                const estadoBadge = estadoBadgeCell.querySelector('.status-badge');
+                let estadoText = '';
+
+                if (estadoBadge) {
+                    // Clonar el elemento para no modificar el DOM
+                    const clone = estadoBadge.cloneNode(true);
+                    // Eliminar el ícono <i>
+                    const icon = clone.querySelector('i');
+                    if (icon) {
+                        icon.remove();
+                    }
+                    // Obtener texto limpio
+                    estadoText = clone.textContent.trim();
+                }
+
+                console.log('Estado extraído:', estadoText); // Para debug
+
+                const matchSearch = descripcion.includes(searchInput);
+                const matchTipo = filterTipo === '' || tipoText === filterTipo;
+                const matchEstado = filterEstado === '' || estadoText === filterEstado;
+
+                if (matchSearch && matchTipo && matchEstado) {
+                    rows[i].style.display = '';
+                    visibleCount++;
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+
+            // Actualizar contador de resultados
+            actualizarContador(visibleCount);
+        }
+
+        function actualizarContador(count) {
+            const resultsCount = document.querySelector('.results-count strong');
+            if (resultsCount) {
+                resultsCount.textContent = count;
+            }
+        }
+
+        // ✅ Aplicar filtros automáticamente cuando cambian las fechas
+        function aplicarFiltros() {
+            const fechaDesde = document.getElementById('filterFechaDesde')?.value || '';
+            const fechaHasta = document.getElementById('filterFechaHasta')?.value || '';
+            const tipo = document.getElementById('filterTipo').value;
+            const estado = document.getElementById('filterEstado').value;
+
+            let url = '/pqrs?';
+            if (fechaDesde) url += 'fechaDesde=' + fechaDesde + '&';
+            if (fechaHasta) url += 'fechaHasta=' + fechaHasta + '&';
+            if (tipo) url += 'tipo=' + tipo + '&';
+            if (estado) url += 'estado=' + estado + '&';
+
+            window.location.href = url;
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterFechaDesde').value = '';
+            document.getElementById('filterFechaHasta').value = '';
+            document.getElementById('filterTipo').value = '';
+            document.getElementById('filterEstado').value = '';
+
+            // Redirigir a la página sin parámetros
+            window.location.href = '/pqrs';
+        }
+
+        // ✅ Botones de reporte con fechas
+        function descargarReporteExcel() {
+            const fechaDesde = document.getElementById('filterFechaDesde')?.value || '';
+            const fechaHasta = document.getElementById('filterFechaHasta')?.value || '';
+            const filterTipo = document.getElementById('filterTipo').value;
+            const filterEstado = document.getElementById('filterEstado').value;
+
+            let url = '/pqrs/reporte/excel?';
+            if (fechaDesde) url += 'fechaDesde=' + fechaDesde + '&';
+            if (fechaHasta) url += 'fechaHasta=' + fechaHasta + '&';
+            if (filterTipo) url += 'tipo=' + filterTipo + '&';
+            if (filterEstado) url += 'estado=' + filterEstado + '&';
+
+            window.open(url, '_blank');
+        }
+
+        function descargarReportePdf() {
+            const fechaDesde = document.getElementById('filterFechaDesde')?.value || '';
+            const fechaHasta = document.getElementById('filterFechaHasta')?.value || '';
+            const filterTipo = document.getElementById('filterTipo').value;
+            const filterEstado = document.getElementById('filterEstado').value;
+
+            let url = '/pqrs/reporte/pdf?';
+            if (fechaDesde) url += 'fechaDesde=' + fechaDesde + '&';
+            if (fechaHasta) url += 'fechaHasta=' + fechaHasta + '&';
+            if (filterTipo) url += 'tipo=' + filterTipo + '&';
+            if (filterEstado) url += 'estado=' + filterEstado + '&';
+
+            window.open(url, '_blank');
+        }
+
+        // ✅ Event listeners para filtros automáticos
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filtro automático para fechas
+            const filterFechaDesde = document.getElementById('filterFechaDesde');
+            const filterFechaHasta = document.getElementById('filterFechaHasta');
+
+            if (filterFechaDesde) {
+                filterFechaDesde.addEventListener('change', aplicarFiltros);
+            }
+            if (filterFechaHasta) {
+                filterFechaHasta.addEventListener('change', aplicarFiltros);
+            }
+
+            // Cargar valores de filtros desde URL (para mantener estado)
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const fechaDesde = urlParams.get('fechaDesde');
+            const fechaHasta = urlParams.get('fechaHasta');
+            const tipo = urlParams.get('tipo');
+            const estado = urlParams.get('estado');
+
+            if (fechaDesde && filterFechaDesde) {
+                filterFechaDesde.value = fechaDesde;
+            }
+            if (fechaHasta && filterFechaHasta) {
+                filterFechaHasta.value = fechaHasta;
+            }
+            if (tipo) {
+                document.getElementById('filterTipo').value = tipo;
+            }
+            if (estado) {
+                document.getElementById('filterEstado').value = estado;
+            }
+        });
+    </script>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Responder PQRS - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-chat-left-text"></i>
+                Responder PQRS
+            </h2>
+            <p>Proporciona una respuesta clara y útil al usuario</p>
+        </div>
+
+        <!-- Mensajes de error -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error al responder</span>
+        </div>
+
+        <!-- Información importante -->
+        <div class="dashboard-alert info">
+            <i class="bi bi-info-circle"></i>
+            <div>
+                <strong>Importante:</strong>
+                Al responder esta PQRS, el estado cambiará automáticamente a "Respondida"
+                y el usuario recibirá tu mensaje en su perfil.
+            </div>
+        </div>
+
+        <!-- Sección: PQRS Original -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-chat-square-dots"></i>
+                    PQRS Original
+                </h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <!-- ID -->
+                <div style="text-align: center; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <small style="display: block; color: var(--color-text-light); margin-bottom: 0.25rem;">ID PQRS</small>
+                    <strong style="font-size: 1.5rem; color: var(--color-primary);" th:text="${pqrs.id_pqrs}">1</strong>
+                </div>
+
+                <!-- Tipo -->
+                <div style="text-align: center; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <small style="display: block; color: var(--color-text-light); margin-bottom: 0.25rem;">Tipo</small>
+                    <span class="status-badge"
+                          th:classappend="${pqrs.tipo.name() == 'PREGUNTA'} ? 'info' : (${pqrs.tipo.name() == 'QUEJA'} ? 'danger' : 'warning')">
+                        <i class="bi"
+                           th:classappend="${pqrs.tipo.name() == 'PREGUNTA'} ? 'bi-question-circle' : (${pqrs.tipo.name() == 'QUEJA'} ? 'bi-exclamation-triangle' : 'bi-lightbulb')"></i>
+                        <span th:text="${pqrs.tipo}">PREGUNTA</span>
+                    </span>
+                </div>
+
+                <!-- Fecha -->
+                <div style="text-align: center; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <small style="display: block; color: var(--color-text-light); margin-bottom: 0.25rem;">Fecha Envío</small>
+                    <strong style="font-size: 0.95rem; color: var(--color-text-dark);"
+                            th:text="${#temporals.format(pqrs.fecha_envio, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</strong>
+                </div>
+            </div>
+
+            <!-- Descripción original -->
+            <div style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+                <h4 style="color: var(--color-primary); margin-bottom: 1rem; font-size: 1rem;">
+                    <i class="bi bi-chat-left-text"></i> Descripción del Usuario
+                </h4>
+                <p style="margin: 0; font-size: 1rem; line-height: 1.8; color: var(--color-text-dark); white-space: pre-wrap;"
+                   th:text="${pqrs.descripcion}">
+                    Descripción completa de la PQRS...
+                </p>
+            </div>
+
+            <!-- Info del emisor -->
+            <div style="margin-top: 1rem; padding: 0.75rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <small style="color: var(--color-text-light);">
+                    <i class="bi bi-person"></i>
+                    Emisor (ID Usuario): <strong th:text="${pqrs.id_emisor}">1</strong>
+                </small>
+            </div>
+        </div>
+
+        <!-- Formulario de respuesta -->
+        <form th:action="@{/pqrs/responder/{id}(id=${pqrs.id_pqrs})}" method="post">
+
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-chat-right-text"></i>
+                    Tu Respuesta
+                </h3>
+
+                <!-- Campo de respuesta -->
+                <div class="form-group">
+                    <label for="respuesta">
+                        <i class="bi bi-pencil"></i>
+                        Escribe tu respuesta
+                        <span class="required">*</span>
+                    </label>
+                    <textarea name="respuesta"
+                              class="form-control"
+                              id="respuesta"
+                              rows="10"
+                              placeholder="Proporciona una respuesta clara, profesional y útil..."
+                              maxlength="1000"
+                              required></textarea>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Máximo 1000 caracteres. Sé claro y respetuoso en tu respuesta.
+                    </small>
+
+                    <!-- Contador de caracteres -->
+                    <small class="form-text" style="float: right;">
+                        <span id="charCount">0</span>/1000 caracteres
+                    </small>
+                </div>
+
+                <!-- Consejos para responder -->
+                <div style="margin-top: 1.5rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success);">
+                    <h4 style="color: var(--color-success); margin-bottom: 0.75rem; font-size: 1rem;">
+                        <i class="bi bi-lightbulb"></i> Consejos para una buena respuesta
+                    </h4>
+                    <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark); line-height: 1.8;">
+                        <li>Lee cuidadosamente la PQRS antes de responder</li>
+                        <li>Sé específico y proporciona información útil</li>
+                        <li>Si es una queja, agradece el feedback y explica los pasos a seguir</li>
+                        <li>Si es una pregunta, responde de forma clara y completa</li>
+                        <li>Si es una sugerencia, agradece y explica si será implementada</li>
+                        <li>Mantén un tono profesional y amable</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <a th:href="@{/pqrs/pendientes}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+                <a th:href="@{/pqrs/ver/{id}(id=${pqrs.id_pqrs})}" class="btn btn-info">
+                    <i class="bi bi-eye"></i> Ver Detalle Completo
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-send"></i> Enviar Respuesta
+                </button>
+            </div>
+        </form>
+
+        <!-- Advertencia -->
+        <div style="margin-top: 2rem; padding: 1rem; background-color: #fff3cd; border-radius: 8px; border-left: 4px solid var(--color-warning);">
+            <h4 style="color: #856404; margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-exclamation-triangle"></i> Advertencia
+            </h4>
+            <p style="margin: 0; font-size: 0.9rem; color: #856404;">
+                Una vez enviada la respuesta, no podrás editarla. Asegúrate de revisar
+                tu mensaje antes de enviarlo. El usuario recibirá esta respuesta inmediatamente.
+            </p>
+        </div>
+    </div>
+
+    <!-- Script para contador de caracteres -->
+    <script>
+        // Contador de caracteres
+        const respuestaTextarea = document.getElementById('respuesta');
+        const charCount = document.getElementById('charCount');
+
+        if (respuestaTextarea) {
+            respuestaTextarea.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+
+                // Cambiar color si se acerca al límite
+                if (count > 900) {
+                    charCount.style.color = 'var(--color-danger)';
+                    charCount.style.fontWeight = '600';
+                } else if (count > 750) {
+                    charCount.style.color = 'var(--color-warning)';
+                } else {
+                    charCount.style.color = 'var(--color-text-light)';
+                    charCount.style.fontWeight = 'normal';
+                }
+            });
+        }
+
+        // Validación antes de enviar
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const respuesta = respuestaTextarea.value.trim();
+
+            if (respuesta.length < 10) {
+                e.preventDefault();
+                alert('La respuesta debe tener al menos 10 caracteres.');
+                respuestaTextarea.focus();
+                return false;
+            }
+
+            // Confirmación final
+            const confirmar = confirm('¿Estás seguro de enviar esta respuesta? No podrás editarla después.');
+            if (!confirmar) {
+                e.preventDefault();
+                return false;
+            }
+
+            return true;
+        });
+    </script>
+</main>
+
+</body>
+</html>

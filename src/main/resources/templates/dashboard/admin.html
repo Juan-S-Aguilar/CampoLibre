@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Dashboard Administrador - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content" class="dashboard-container">
+
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+        <div class="dashboard-welcome">
+            <div class="user-greeting">
+                <h1>
+                    <i class="bi bi-shield-check"></i>
+                    Panel de Administración
+                </h1>
+                <p>Gestiona y supervisa toda la plataforma Campo Libre</p>
+            </div>
+            <div class="quick-actions">
+                <a th:href="@{/usuarios/nuevo}" class="btn">
+                    <i class="bi bi-person-plus"></i> Nuevo Usuario
+                </a>
+                <a th:href="@{/eventos/pendientes}" class="btn">
+                    <i class="bi bi-clock-history"></i> Eventos Pendientes
+                </a>
+                <a th:href="@{/pqrs/pendientes}" class="btn">
+                    <i class="bi bi-chat-square-dots"></i> PQRS Pendientes
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas importantes -->
+    <div th:if="${eventosPendientes > 0}" class="dashboard-alert warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div>
+            <strong>Atención:</strong>
+            Hay <span th:text="${eventosPendientes}">0</span> evento(s) pendiente(s) de aprobación.
+            <a th:href="@{/eventos/pendientes}">Ver ahora</a>
+        </div>
+    </div>
+
+    <div th:if="${pqrsPendientes > 0}" class="dashboard-alert info">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            <strong>Información:</strong>
+            Hay <span th:text="${pqrsPendientes}">0</span> PQRS pendiente(s) de respuesta.
+            <a th:href="@{/pqrs/pendientes}">Responder</a>
+        </div>
+    </div>
+
+    <!-- Grid de Estadísticas -->
+    <div class="stats-grid">
+        <!-- Total Usuarios -->
+        <div class="stat-card" onclick="window.location.href='/usuarios'">
+            <div class="stat-card-header">
+                <h3>Total Usuarios</h3>
+                <div class="stat-card-icon primary">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${totalUsuarios}">0</div>
+                <div class="stat-label">Usuarios activos</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/usuarios}">
+                    <i class="bi bi-arrow-right"></i> Ver todos los usuarios
+                </a>
+            </div>
+        </div>
+
+        <!-- Total Tiendas -->
+        <div class="stat-card" onclick="window.location.href='/tiendas'">
+            <div class="stat-card-header">
+                <h3>Tiendas Activas</h3>
+                <div class="stat-card-icon success">
+                    <i class="bi bi-shop"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${totalTiendas}">0</div>
+                <div class="stat-label">Tiendas registradas</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/tiendas}">
+                    <i class="bi bi-arrow-right"></i> Ver todas las tiendas
+                </a>
+            </div>
+        </div>
+
+        <!-- Total Productos -->
+        <div class="stat-card" onclick="window.location.href='/productos'">
+            <div class="stat-card-header">
+                <h3>Productos</h3>
+                <div class="stat-card-icon info">
+                    <i class="bi bi-basket"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${totalProductos}">0</div>
+                <div class="stat-label">Productos disponibles</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/productos}">
+                    <i class="bi bi-arrow-right"></i> Ver productos
+                </a>
+            </div>
+        </div>
+
+        <!-- Eventos Aprobados -->
+        <div class="stat-card" onclick="window.location.href='/eventos'">
+            <div class="stat-card-header">
+                <h3>Eventos Aprobados</h3>
+                <div class="stat-card-icon success">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${eventosAprobados}">0</div>
+                <div class="stat-label">Eventos publicados</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/eventos}">
+                    <i class="bi bi-arrow-right"></i> Ver eventos
+                </a>
+            </div>
+        </div>
+
+        <!-- Eventos Pendientes -->
+        <div class="stat-card" onclick="window.location.href='/eventos/pendientes'">
+            <div class="stat-card-header">
+                <h3>Eventos Pendientes</h3>
+                <div class="stat-card-icon warning">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${eventosPendientes}">0</div>
+                <div class="stat-label">Esperan aprobación</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/eventos/pendientes}">
+                    <i class="bi bi-arrow-right"></i> Revisar eventos
+                </a>
+            </div>
+        </div>
+
+        <!-- PQRS Pendientes -->
+        <div class="stat-card" onclick="window.location.href='/pqrs/pendientes'">
+            <div class="stat-card-header">
+                <h3>PQRS Pendientes</h3>
+                <div class="stat-card-icon danger">
+                    <i class="bi bi-chat-square-dots"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${pqrsPendientes}">0</div>
+                <div class="stat-label">Sin responder</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/pqrs/pendientes}">
+                    <i class="bi bi-arrow-right"></i> Responder PQRS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secciones del Dashboard -->
+    <div class="row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+
+        <!-- Actividad Reciente -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-activity"></i>
+                    Actividad Reciente
+                </h2>
+            </div>
+            <ul class="activity-list">
+                <!-- Actividad ejemplo 1 -->
+                <li class="activity-item">
+                    <div class="activity-icon success">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Nuevo usuario registrado</div>
+                        <div class="activity-description">
+                            Un nuevo usuario se ha registrado en la plataforma
+                        </div>
+                        <div class="activity-time">
+                            <i class="bi bi-clock"></i> Hace 5 minutos
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Actividad ejemplo 2 -->
+                <li class="activity-item">
+                    <div class="activity-icon warning">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Evento pendiente de aprobación</div>
+                        <div class="activity-description">
+                            "Feria Agrícola Regional" necesita revisión
+                        </div>
+                        <div class="activity-time">
+                            <i class="bi bi-clock"></i> Hace 1 hora
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Actividad ejemplo 3 -->
+                <li class="activity-item">
+                    <div class="activity-icon info">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">Nueva tienda creada</div>
+                        <div class="activity-description">
+                            "Productos del Valle" ha sido registrada
+                        </div>
+                        <div class="activity-time">
+                            <i class="bi bi-clock"></i> Hace 2 horas
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Si no hay actividad -->
+                <li th:if="${totalUsuarios == 0 and totalTiendas == 0}" class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h3>No hay actividad reciente</h3>
+                    <p>La actividad del sistema aparecerá aquí</p>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-lightning"></i>
+                    Acciones Rápidas
+                </h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <a th:href="@{/usuarios/nuevo}" class="btn btn-primary" style="width: 100%;">
+                    <i class="bi bi-person-plus"></i> Crear Usuario
+                </a>
+                <a th:href="@{/eventos/pendientes}" class="btn btn-warning" style="width: 100%;">
+                    <i class="bi bi-calendar-check"></i> Aprobar Eventos
+                </a>
+                <a th:href="@{/pqrs/pendientes}" class="btn btn-info" style="width: 100%;">
+                    <i class="bi bi-chat-square-dots"></i> Responder PQRS
+                </a>
+                <a th:href="@{/usuarios}" class="btn btn-secondary" style="width: 100%;">
+                    <i class="bi bi-people"></i> Gestionar Usuarios
+                </a>
+            </div>
+
+            <!-- Información adicional -->
+            <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+                <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                    <i class="bi bi-info-circle"></i> Recordatorio
+                </h4>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
+                    Revisa regularmente los eventos y PQRS pendientes para mantener una buena experiencia de usuario.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen por categorías -->
+    <div class="dashboard-section" style="margin-top: 2rem;">
+        <div class="dashboard-section-header">
+            <h2>
+                <i class="bi bi-bar-chart"></i>
+                Resumen del Sistema
+            </h2>
+        </div>
+        <div class="row" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-people" style="font-size: 3rem; color: var(--color-primary);"></i>
+                <h3 style="margin-top: 1rem; color: var(--color-primary);">Usuarios</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--color-primary); margin: 0.5rem 0;">
+                    <span th:text="${totalUsuarios}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light);">Total registrados</p>
+            </div>
+
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-shop" style="font-size: 3rem; color: var(--color-success);"></i>
+                <h3 style="margin-top: 1rem; color: var(--color-success);">Tiendas</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--color-success); margin: 0.5rem 0;">
+                    <span th:text="${totalTiendas}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light);">Activas en la plataforma</p>
+            </div>
+
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-calendar-event" style="font-size: 3rem; color: var(--color-info);"></i>
+                <h3 style="margin-top: 1rem; color: var(--color-info);">Eventos</h3>
+                <p style="font-size: 2rem; font-weight: 700; color: var(--color-info); margin: 0.5rem 0;">
+                    <span th:text="${eventosAprobados}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light);">Eventos publicados</p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

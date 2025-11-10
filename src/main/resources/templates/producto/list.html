@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Productos - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-basket"></i>
+                <span th:if="${tipoLista == 'todos'}">Todos los Productos</span>
+                <span th:if="${tipoLista == 'eliminados'}">Productos Eliminados</span>
+                <span th:if="${tienda != null}">
+                    Productos de: <strong th:text="${tienda.nombre}">Tienda</strong>
+                </span>
+            </h2>
+            <div class="list-header-actions">
+                <!-- Volver a tienda si viene filtrado -->
+                <a th:if="${tienda != null}"
+                   th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}"
+                   class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Tienda
+                </a>
+
+                <!-- Nuevo Producto (solo PROVEEDOR/ADMIN) -->
+                <a th:if="${tienda != null}"
+                   th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
+                   class="btn btn-primary"
+                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                    <i class="bi bi-plus-circle"></i> Nuevo Producto
+                </a>
+
+                <!-- Toggle Eliminados (solo ADMIN) -->
+                <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
+                    <button class="view-toggle-btn"
+                            th:classappend="${tipoLista == 'todos' ? 'active' : ''}"
+                            th:onclick="'window.location.href=\'/productos\''">
+                        <i class="bi bi-list"></i> Activos
+                    </button>
+                    <button class="view-toggle-btn"
+                            th:classappend="${tipoLista == 'eliminados' ? 'active' : ''}"
+                            th:onclick="'window.location.href=\'/productos/eliminados\''">
+                        <i class="bi bi-trash"></i> Eliminados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por nombre, categoría o tienda..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterCategoria">Categoría</label>
+                <select id="filterCategoria" class="form-select" onchange="filterTable()">
+                    <option value="">Todas</option>
+                    <option value="FRUTAS">Frutas</option>
+                    <option value="VERDURAS">Verduras</option>
+                    <option value="LACTEOS">Lácteos</option>
+                    <option value="CARNES">Carnes</option>
+                    <option value="HERRAMIENTAS">Herramientas</option>
+                    <option value="MAQUINARIA">Maquinaria</option>
+                    <option value="OTRO">Otro</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterStock">Stock</label>
+                <select id="filterStock" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="disponible">Disponibles</option>
+                    <option value="bajo">Stock Bajo (< 10)</option>
+                    <option value="agotado">Agotados</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Mostrando <strong th:text="${productos.size()}">0</strong> producto(s)
+        </div>
+
+        <!-- Tabla de productos -->
+        <div class="table-responsive">
+            <table class="data-table" id="productosTable">
+                <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th class="sortable-header" onclick="sortTable(1)">Nombre</th>
+                    <th>Categoría</th>
+                    <th>Tienda</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Fecha</th>
+                    <th th:if="${tipoLista == 'eliminados'}">Estado</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Si hay productos -->
+                <tr th:each="producto : ${productos}">
+                    <!-- Imagen -->
+                    <td data-label="Imagen">
+                        <div style="position: relative; width: 60px; height: 60px;">
+                            <img th:if="${producto.imagen_producto != null}"
+                                 th:src="@{${producto.imagen_producto}}"
+                                 alt="Imagen producto"
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); display: block;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                            <div th:if="${producto.imagen_producto != null}"
+                                 style="display: none; width: 60px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                <i class="bi bi-basket" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                            </div>
+
+                            <div th:if="${producto.imagen_producto == null}"
+                                 style="width: 60px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                <i class="bi bi-basket" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Nombre -->
+                    <td data-label="Nombre">
+                        <strong th:text="${producto.nombre}">Producto</strong>
+                        <br>
+                        <small style="color: var(--color-text-light);"
+                               th:text="${#strings.abbreviate(producto.descripcion, 40)}">
+                            Descripción...
+                        </small>
+                    </td>
+
+                    <!-- Categoría -->
+                    <td data-label="Categoría">
+                        <span class="badge"
+                              th:classappend="${producto.categoria.name() == 'FRUTAS' ? 'badge-danger' :
+                                               (producto.categoria.name() == 'VERDURAS' ? 'badge-success' :
+                                               (producto.categoria.name() == 'LACTEOS' ? 'badge-info' :
+                                               (producto.categoria.name() == 'CARNES' ? 'badge-danger' : 'badge-primary')))}"
+                              th:text="${producto.categoria.name()}">
+                            CATEGORIA
+                        </span>
+                    </td>
+
+                    <!-- Tienda -->
+                    <td data-label="Tienda">
+                        <a th:href="@{/tiendas/ver/{id}(id=${producto.id_tienda})}"
+                           style="color: var(--color-primary); text-decoration: none;">
+                            <i class="bi bi-shop"></i>
+                            <span>Tienda ID: [[${producto.id_tienda}]]</span>
+                        </a>
+                    </td>
+
+                    <!-- Precio -->
+                    <td data-label="Precio">
+                        <strong style="color: var(--color-primary); font-size: 1.1rem;">
+                            $<span th:text="${#numbers.formatDecimal(producto.precio, 0, 'COMMA', 2, 'POINT')}">0.00</span>
+                        </strong>
+                    </td>
+
+                    <!-- Stock -->
+                    <td data-label="Stock">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span th:text="${producto.stock}">0</span>
+                            <span class="badge badge-success" th:if="${producto.stock >= 10}">
+                                <i class="bi bi-check-circle"></i> Disponible
+                            </span>
+                            <span class="badge badge-warning" th:if="${producto.stock > 0 and producto.stock < 10}">
+                                <i class="bi bi-exclamation-triangle"></i> Bajo
+                            </span>
+                            <span class="badge badge-danger" th:if="${producto.stock == 0}">
+                                <i class="bi bi-x-circle"></i> Agotado
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Fecha -->
+                    <td data-label="Fecha" th:text="${#temporals.format(producto.fecha_creacion, 'dd/MM/yyyy')}">
+                        01/01/2024
+                    </td>
+
+                    <!-- Estado (solo en eliminados) -->
+                    <td data-label="Estado" th:if="${tipoLista == 'eliminados'}">
+                        <span class="status-badge inactive">
+                            <i class="bi bi-x-circle"></i> Eliminado
+                        </span>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver (todos) -->
+                            <a th:href="@{/productos/ver/{id}(id=${producto.id_producto})}"
+                               class="btn-action btn-view"
+                               title="Ver producto">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- ✨ BOTÓN AGREGAR AL CARRITO (usuarios autenticados, producto activo y con stock) -->
+                            <form th:if="${producto.estado == 'ACTIVO' and producto.stock > 0}"
+                                  th:action="@{/carrito/agregar}"
+                                  method="post"
+                                  style="display:inline;"
+                                  sec:authorize="isAuthenticated()">
+                                <input type="hidden" name="idProducto" th:value="${producto.id_producto}" />
+                                <input type="hidden" name="cantidad" value="1" />
+                                <button type="submit" class="btn-action"
+                                        style="background-color: var(--color-success); color: white;"
+                                        title="Agregar al carrito">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </form>
+
+                            <!-- Editar (solo dueño/ADMIN si no eliminado) -->
+                            <a th:if="${producto.estado == 'ACTIVO'}"
+                               th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
+                               class="btn-action btn-edit"
+                               title="Editar producto"
+                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- Eliminar (solo dueño/ADMIN si no eliminado) -->
+                            <a th:if="${producto.estado == 'ACTIVO'}"
+                               th:href="@{/productos/eliminar/{id}(id=${producto.id_producto})}"
+                               class="btn-action btn-delete"
+                               title="Eliminar producto"
+                               onclick="return confirm('¿Estás seguro de eliminar este producto?')"
+                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${productos.isEmpty()}" class="empty-list">
+            <i class="bi bi-basket"></i>
+            <h3>No hay productos registrados</h3>
+            <p th:if="${tienda != null}">Esta tienda aún no tiene productos</p>
+            <p th:if="${tienda == null}">Los productos aparecerán aquí</p>
+            <a th:if="${tienda != null}"
+               th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
+               class="btn btn-primary"
+               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                <i class="bi bi-plus-circle"></i> Agregar Primer Producto
+            </a>
+        </div>
+
+        <!-- Paginación -->
+        <div th:if="${!productos.isEmpty()}" class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <strong th:text="${productos.size()}">10</strong> de
+                <strong th:text="${productos.size()}">10</strong> productos
+            </div>
+            <ul class="pagination">
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link active">1</a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para búsqueda y filtrado -->
+    <script>
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterCategoria = document.getElementById('filterCategoria').value;
+            const filterStock = document.getElementById('filterStock').value;
+            const table = document.getElementById('productosTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const categoria = rows[i].getElementsByTagName('td')[2].textContent;
+                const tienda = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
+                const stockText = rows[i].getElementsByTagName('td')[5].textContent;
+                const stockNum = parseInt(stockText.match(/\d+/)[0]);
+
+                const matchSearch = nombre.includes(searchInput) ||
+                                   categoria.toLowerCase().includes(searchInput) ||
+                                   tienda.includes(searchInput);
+                const matchCategoria = filterCategoria === '' || categoria.includes(filterCategoria);
+
+                let matchStock = true;
+                if (filterStock === 'disponible') matchStock = stockNum >= 10;
+                if (filterStock === 'bajo') matchStock = stockNum > 0 && stockNum < 10;
+                if (filterStock === 'agotado') matchStock = stockNum === 0;
+
+                if (matchSearch && matchCategoria && matchStock) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('productosTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+            rows.sort((a, b) => {
+                const aValue = a.getElementsByTagName('td')[columnIndex].textContent;
+                const bValue = b.getElementsByTagName('td')[columnIndex].textContent;
+                return aValue.localeCompare(bValue);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</main>
+
+</body>
+</html>

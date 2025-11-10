@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestión de Usuarios - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-people"></i>
+                Gestión de Usuarios
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/usuarios/nuevo}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Nuevo Usuario
+                </a>
+                <div class="view-toggle">
+                    <button class="view-toggle-btn active" th:onclick="'window.location.href=\'/usuarios\''">
+                        <i class="bi bi-list"></i> Lista
+                    </button>
+                    <button class="view-toggle-btn" th:onclick="'window.location.href=\'/usuarios/eliminados\''">
+                        <i class="bi bi-trash"></i> Eliminados
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes de éxito/error -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por nombre o email..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterEstado">Estado</label>
+                <select id="filterEstado" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="ACTIVO" selected>Activos</option>
+                    <option value="ELIMINADO">Eliminados</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Mostrando <strong th:text="${usuarios.size()}">0</strong> usuario(s)
+            <span th:if="${tipoLista == 'activos'}">(Activos)</span>
+            <span th:if="${tipoLista == 'eliminados'}">(Eliminados)</span>
+        </div>
+
+        <!-- Tabla de usuarios -->
+        <div class="table-responsive">
+            <table class="data-table" id="usuariosTable">
+                <thead>
+                <tr>
+                    <th class="sortable-header" onclick="sortTable(0)">
+                        ID
+                    </th>
+                    <th class="sortable-header" onclick="sortTable(1)">
+                        Nombre
+                    </th>
+                    <th class="sortable-header" onclick="sortTable(2)">
+                        Email
+                    </th>
+                    <th>Documento</th>
+                    <th>Teléfono</th>
+                    <th>Fecha Registro</th>
+                    <th>Estado</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Si hay usuarios -->
+                <tr th:each="usuario : ${usuarios}">
+                    <td th:text="${usuario.id_usuario}" data-label="ID">1</td>
+                    <td th:text="${usuario.nombre}" data-label="Nombre">Juan Pérez</td>
+                    <td th:text="${usuario.email}" data-label="Email">juan@ejemplo.com</td>
+                    <td data-label="Documento">
+                        <span th:text="${usuario.tipo_documento}">CC</span>:
+                        <span th:text="${usuario.documento}">1234567890</span>
+                    </td>
+                    <td th:text="${usuario.telefono}" data-label="Teléfono">3001234567</td>
+                    <td th:text="${#temporals.format(usuario.fecha_registro, 'dd/MM/yyyy HH:mm')}"
+                        data-label="Fecha Registro">01/01/2024 10:00</td>
+                    <td data-label="Estado">
+                            <span class="status-badge active" th:if="${usuario.estado == 'ACTIVO'}">
+                                <i class="bi bi-check-circle"></i> Activo
+                            </span>
+                        <span class="status-badge inactive" th:if="${usuario.estado == 'ELIMINADO'}">
+                                <i class="bi bi-x-circle"></i> Eliminado
+                            </span>
+                    </td>
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver -->
+                            <a th:href="@{/usuarios/ver/{id}(id=${usuario.id_usuario})}"
+                               class="btn-action btn-view"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Editar (solo si está activo) -->
+                            <a th:if="${usuario.estado == 'ACTIVO'}"
+                               th:href="@{/usuarios/editar/{id}(id=${usuario.id_usuario})}"
+                               class="btn-action btn-edit"
+                               title="Editar usuario">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- Eliminar (solo si está activo) -->
+                            <a th:if="${usuario.estado == 'ACTIVO'}"
+                               th:href="@{/usuarios/eliminar/{id}(id=${usuario.id_usuario})}"
+                               class="btn-action btn-delete"
+                               title="Eliminar usuario"
+                               onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${usuarios.isEmpty()}" class="empty-list">
+            <i class="bi bi-people"></i>
+            <h3>No hay usuarios registrados</h3>
+            <p>Comienza agregando el primer usuario al sistema</p>
+            <a th:href="@{/usuarios/nuevo}" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Crear Primer Usuario
+            </a>
+        </div>
+
+        <!-- Paginación (placeholder) -->
+        <div th:if="${!usuarios.isEmpty()}" class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <strong th:text="${usuarios.size()}">10</strong> de
+                <strong th:text="${usuarios.size()}">10</strong> usuarios
+            </div>
+            <ul class="pagination">
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link active">1</a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para búsqueda y filtrado -->
+    <script>
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterEstado = document.getElementById('filterEstado').value;
+            const table = document.getElementById('usuariosTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const email = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                const estadoBadge = rows[i].getElementsByTagName('td')[6].textContent;
+
+                const matchSearch = nombre.includes(searchInput) || email.includes(searchInput);
+                const matchEstado = filterEstado === '' || estadoBadge.includes(filterEstado);
+
+                if (matchSearch && matchEstado) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('usuariosTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+            rows.sort((a, b) => {
+                const aValue = a.getElementsByTagName('td')[columnIndex].textContent;
+                const bValue = b.getElementsByTagName('td')[columnIndex].textContent;
+                return aValue.localeCompare(bValue);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</main>
+
+</body>
+</html>

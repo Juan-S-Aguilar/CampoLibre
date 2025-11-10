@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Pago Fallido - CampoLibre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Mensaje de error -->
+                <div class="card shadow-lg border-0 mb-4 error-animation">
+                    <div class="card-body text-center py-5">
+                        <div class="error-circle mb-4">
+                            <i class="fas fa-times error-icon"></i>
+                        </div>
+                        <h1 class="text-danger mb-3">Pago Rechazado</h1>
+                        <p class="lead text-muted mb-4">
+                            No se pudo procesar tu pago en este momento
+                        </p>
+
+                        <!-- Información del error -->
+                        <div class="row justify-content-center mb-4">
+                            <div class="col-md-8">
+                                <div class="alert alert-danger">
+                                    <h5 class="mb-3">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Pedido: <strong th:text="${pedido.numero_pedido}">PED-2025-00001</strong>
+                                    </h5>
+                                    <p class="mb-2" th:if="${pago != null}">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Motivo:</strong> <span th:text="${pago.mensaje_error}">Error en la transacción</span>
+                                    </p>
+                                    <p class="mb-2" th:unless="${pago != null}">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Motivo:</strong> Transacción rechazada por la entidad financiera
+                                    </p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-calendar"></i>
+                                        Fecha: <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">01/01/2025 10:00</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="d-flex justify-content-center gap-3 mb-4">
+                            <a th:href="@{/pedidos/pagar/{id}(id=${pedido.id_pedido})}"
+                               class="btn btn-danger btn-lg">
+                                <i class="fas fa-redo"></i> Intentar Nuevamente
+                            </a>
+                            <a th:href="@{/pedidos/mis-pedidos}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-list"></i> Ver Mis Pedidos
+                            </a>
+                        </div>
+
+                        <p class="text-muted">
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                Tu pedido ha sido cancelado automáticamente. Puedes volver a intentar el pago.
+                            </small>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Resumen del pedido cancelado -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-times-circle"></i> Pedido Cancelado
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Importante:</strong> Los productos no fueron reservados y el stock permanece disponible.
+                        </div>
+
+                        <!-- Datos del pedido -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Datos de Entrega:</h6>
+                                <p class="mb-1">
+                                    <strong>Contacto:</strong> <span th:text="${pedido.nombre_contacto}">Nombre</span>
+                                </p>
+                                <p class="mb-1">
+                                    <strong>Teléfono:</strong> <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Dirección:</strong> <span th:text="${pedido.direccion_entrega}">Dirección</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <h6 class="text-muted mb-2">Monto:</h6>
+                                <h4 class="text-danger mb-0" th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                                    $0
+                                </h4>
+                                <span class="badge bg-danger mt-2">
+                                    <i class="fas fa-ban"></i> Cancelado
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Productos -->
+                        <hr>
+                        <h6 class="mb-3">Productos del Pedido:</h6>
+                        <div th:each="item : ${pedido.items}" class="d-flex align-items-center mb-3">
+                            <img th:if="${item.imagen_producto != null}"
+                                 th:src="@{${item.imagen_producto}}"
+                                 alt="Producto"
+                                 class="me-3"
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; opacity: 0.6;">
+                            <img th:unless="${item.imagen_producto != null}"
+                                 src="/images/no-image.png"
+                                 alt="Sin imagen"
+                                 class="me-3"
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; opacity: 0.6;">
+
+                            <div class="flex-grow-1">
+                                <span th:text="${item.nombre_producto}">Producto</span>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-store"></i> <span th:text="${item.nombre_tienda}">Tienda</span>
+                                </small>
+                            </div>
+
+                            <div class="text-end">
+                                <span class="text-muted text-decoration-line-through"
+                                      th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">
+                                    $0
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-lightbulb"></i> ¿Qué puedes hacer?</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li class="mb-2">Verifica que tus datos bancarios sean correctos</li>
+                            <li class="mb-2">Asegúrate de tener fondos suficientes en tu cuenta</li>
+                            <li class="mb-2">Intenta con otro método de pago</li>
+                            <li class="mb-0">Si el problema persiste, puedes crear un nuevo pedido</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!-- ==================== pedido/confirmar.html ==================== -->
+<!-- Vista para confirmar el pedido y elegir método de pago -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Confirmar Pedido - CampoLibre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container my-5">
+        <!-- Título -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2><i class="fas fa-clipboard-check"></i> Confirmar Pedido</h2>
+                <p class="text-muted">Revisa tu pedido y completa los datos de entrega</p>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form th:action="@{/pedidos/crear}" method="post" th:object="${datosEntrega}">
+            <div class="row">
+                <!-- Resumen de productos -->
+                <div class="col-lg-8">
+                    <!-- Productos agrupados por tienda -->
+                    <div th:each="entry : ${itemsPorTienda}" class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-store"></i>
+                                <span th:text="${entry.value[0].nombre_tienda}">Tienda</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:each="item : ${entry.value}" class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                <img th:if="${item.imagen_producto != null}"
+                                     th:src="@{${item.imagen_producto}}"
+                                     alt="Producto"
+                                     class="me-3"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                                <img th:unless="${item.imagen_producto != null}"
+                                     src="/images/no-image.png"
+                                     alt="Sin imagen"
+                                     class="me-3"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1" th:text="${item.nombre_producto}">Producto</h6>
+                                    <p class="text-muted mb-1">
+                                        <strong th:text="'$' + ${#numbers.formatDecimal(item.precio_unitario, 0, 'COMMA', 0, 'POINT')}">
+                                            $0
+                                        </strong>
+                                        x <span th:text="${item.cantidad}">1</span> unidad(es)
+                                    </p>
+                                    <small th:if="${item.stock_suficiente}" class="text-success">
+                                        <i class="fas fa-check-circle"></i> Stock disponible
+                                    </small>
+                                    <small th:unless="${item.stock_suficiente}" class="text-danger">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        Stock insuficiente (disponible: <span th:text="${item.stock_disponible}">0</span>)
+                                    </small>
+                                </div>
+
+                                <div class="text-end">
+                                    <h5 class="text-success mb-0"
+                                        th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">
+                                        $0
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos de entrega -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-truck"></i> Datos de Entrega</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nombre de Contacto *</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           th:field="*{nombre_contacto}"
+                                           required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Teléfono de Contacto *</label>
+                                    <input type="tel"
+                                           class="form-control"
+                                           th:field="*{telefono_contacto}"
+                                           required>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Dirección de Entrega *</label>
+                                    <textarea class="form-control"
+                                              th:field="*{direccion_entrega}"
+                                              rows="2"
+                                              placeholder="Ej: Calle 123 #45-67, Barrio Centro"
+                                              required></textarea>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Ciudad</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           th:field="*{ciudad}"
+                                           placeholder="Ej: Fusagasugá, Cundinamarca">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Notas Adicionales (Opcional)</label>
+                                    <textarea class="form-control"
+                                              th:field="*{notas_adicionales}"
+                                              rows="3"
+                                              placeholder="Instrucciones especiales, horarios de entrega, etc."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Método de pago -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-credit-card"></i> Método de Pago</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3" th:each="metodo : ${metodosPago}">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="metodo_pago"
+                                               th:id="${'metodo_' + metodo}"
+                                               th:value="${metodo}"
+                                               th:checked="${metodoStat.first}"
+                                               required>
+                                        <label class="form-check-label" th:for="${'metodo_' + metodo}">
+                                            <i class="fas"
+                                               th:classappend="${metodo == T(com.example.campolibre.Enum.MetodoPago).TARJETA_CREDITO ? 'fa-credit-card' :
+                                                                   metodo == T(com.example.campolibre.Enum.MetodoPago).TARJETA_DEBITO ? 'fa-credit-card' :
+                                                                   metodo == T(com.example.campolibre.Enum.MetodoPago).PSE ? 'fa-university' :
+                                                                   'fa-money-bill'}"></i>
+                                            <span th:text="${metodo == T(com.example.campolibre.Enum.MetodoPago).TARJETA_CREDITO ? 'Tarjeta de Crédito' :
+                                                               metodo == T(com.example.campolibre.Enum.MetodoPago).TARJETA_DEBITO ? 'Tarjeta Débito' :
+                                                               metodo == T(com.example.campolibre.Enum.MetodoPago).PSE ? 'PSE' :
+                                                               'Efectivo'}"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle"></i>
+                                <small>Este es un simulador de pagos. No se procesarán transacciones reales.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen de compra -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm sticky-top" style="top: 20px;">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-receipt"></i> Resumen</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Productos:</span>
+                                <strong th:text="${carrito.cantidad_total_items}">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span th:text="'$' + ${#numbers.formatDecimal(carrito.total, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>Total a Pagar:</h5>
+                                <h5 class="text-success" th:text="'$' + ${#numbers.formatDecimal(carrito.total, 0, 'COMMA', 0, 'POINT')}">
+                                    $0
+                                </h5>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-lg w-100 mb-2">
+                                <i class="fas fa-lock"></i> Proceder al Pago
+                            </button>
+
+                            <a th:href="@{/carrito}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-arrow-left"></i> Volver al Carrito
+                            </a>
+
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <small>
+                                    <i class="fas fa-shield-alt"></i>
+                                    Tus datos están protegidos. El pago es simulado con fines educativos.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

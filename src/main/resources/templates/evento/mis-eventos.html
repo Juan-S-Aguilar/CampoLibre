@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mis Eventos - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-calendar-check"></i>
+                Mis Eventos Creados
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/eventos/crear}" class="btn btn-primary">
+                    <i class="bi bi-calendar-plus"></i> Crear Nuevo Evento
+                </a>
+
+                <a th:href="@{/eventos}" class="btn btn-secondary">
+                    <i class="bi bi-calendar-event"></i> Ver Todos los Eventos
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Resumen de Estados -->
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+            <!-- Total Eventos -->
+            <div class="stat-card" onclick="filterByEstado('')">
+                <div class="stat-card-header">
+                    <h3>Total Eventos</h3>
+                    <div class="stat-card-icon primary">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <div class="stat-number" th:text="${eventos.size()}">0</div>
+                    <div class="stat-label">Eventos creados</div>
+                </div>
+            </div>
+
+            <!-- Pendientes -->
+            <div class="stat-card" onclick="filterByEstado('PENDIENTE')">
+                <div class="stat-card-header">
+                    <h3>Pendientes</h3>
+                    <div class="stat-card-icon warning">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <div class="stat-number" id="countPendiente">0</div>
+                    <div class="stat-label">En revisión</div>
+                </div>
+            </div>
+
+            <!-- Aprobados -->
+            <div class="stat-card" onclick="filterByEstado('APROBADO')">
+                <div class="stat-card-header">
+                    <h3>Aprobados</h3>
+                    <div class="stat-card-icon success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <div class="stat-number" id="countAprobado">0</div>
+                    <div class="stat-label">Publicados</div>
+                </div>
+            </div>
+
+            <!-- Rechazados -->
+            <div class="stat-card" onclick="filterByEstado('RECHAZADO')">
+                <div class="stat-card-header">
+                    <h3>Rechazados</h3>
+                    <div class="stat-card-icon danger">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-card-body">
+                    <div class="stat-number" id="countRechazado">0</div>
+                    <div class="stat-label">No aprobados</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerta informativa -->
+        <div class="dashboard-alert info" style="margin-bottom: 2rem;">
+            <i class="bi bi-info-circle"></i>
+            <div>
+                <strong>Información:</strong>
+                Los eventos que crees estarán en estado <span class="status-badge pending" style="font-size: 0.85rem;">Pendiente</span>
+                hasta que un administrador los apruebe. Una vez aprobados, serán visibles para todos los usuarios.
+            </div>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por nombre, ubicación o descripción..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterEstado">Estado</label>
+                <select id="filterEstado" class="form-select" onchange="filterTable()">
+                    <option value="">Todos los estados</option>
+                    <option value="PENDIENTE">Pendientes</option>
+                    <option value="APROBADO">Aprobados</option>
+                    <option value="RECHAZADO">Rechazados</option>
+                    <option value="ELIMINADO">Eliminados</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterTipo">Tipo de Evento</label>
+                <select id="filterTipo" class="form-select" onchange="filterTable()">
+                    <option value="">Todos los tipos</option>
+                    <option value="FERIA">Feria</option>
+                    <option value="TALLER">Taller</option>
+                    <option value="ACTIVIDAD">Actividad</option>
+                    <option value="OTRO">Otro</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterFecha">Fecha</label>
+                <select id="filterFecha" class="form-select" onchange="filterTable()">
+                    <option value="">Todas las fechas</option>
+                    <option value="futuros">Eventos futuros</option>
+                    <option value="pasados">Eventos pasados</option>
+                    <option value="mes">Este mes</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Mostrando <strong id="visibleCount" th:text="${eventos.size()}">0</strong> de
+            <strong th:text="${eventos.size()}">0</strong> evento(s)
+        </div>
+
+        <!-- Tabla de mis eventos -->
+        <div class="table-responsive">
+            <table class="data-table" id="eventosTable">
+                <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th class="sortable-header" onclick="sortTable(1)">Nombre</th>
+                    <th>Tipo</th>
+                    <th>Fecha Evento</th>
+                    <th>Ubicación</th>
+                    <th>Estado</th>
+                    <th>Fecha Creación</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Si hay eventos -->
+                <tr th:each="evento : ${eventos}">
+                    <!-- Imagen -->
+                    <td data-label="Imagen">
+                        <div style="position: relative; width: 80px; height: 60px;">
+                            <!-- Imagen si existe -->
+                            <img th:if="${evento.imagen_evento != null}"
+                                 th:src="@{${evento.imagen_evento}}"
+                                 alt="Imagen evento"
+                                 style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); display: block;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                            <!-- Fallback cuando falla la imagen -->
+                            <div th:if="${evento.imagen_evento != null}"
+                                 style="display: none; width: 80px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                <i class="bi bi-calendar-event" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                            </div>
+
+                            <!-- Ícono cuando no hay imagen -->
+                            <div th:if="${evento.imagen_evento == null}"
+                                 style="width: 80px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                <i class="bi bi-calendar-event" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Nombre -->
+                    <td data-label="Nombre">
+                        <strong th:text="${evento.nombre}">Feria Agrícola</strong>
+                        <br>
+                        <small style="color: var(--color-text-light);"
+                               th:text="${#strings.abbreviate(evento.descripcion, 50)}">
+                            Descripción...
+                        </small>
+                    </td>
+
+                    <!-- Tipo -->
+                    <td data-label="Tipo">
+                        <span class="badge"
+                              th:classappend="${evento.tipo_evento.name() == 'FERIA' ? 'badge-success' :
+                                               (evento.tipo_evento.name() == 'TALLER' ? 'badge-info' :
+                                               (evento.tipo_evento.name() == 'ACTIVIDAD' ? 'badge-warning' : 'badge-primary'))}"
+                              th:text="${evento.tipo_evento.name()}">
+                            FERIA
+                        </span>
+                    </td>
+
+                    <!-- Fecha Evento -->
+                    <td data-label="Fecha Evento" th:attr="data-fecha=${#temporals.format(evento.fecha_evento, 'yyyy-MM-dd')}">
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <span>
+                                <i class="bi bi-calendar-date" style="color: var(--color-primary);"></i>
+                                <span th:text="${#temporals.format(evento.fecha_evento, 'dd/MM/yyyy')}">01/01/2024</span>
+                            </span>
+                            <span>
+                                <i class="bi bi-clock" style="color: var(--color-primary);"></i>
+                                <span th:text="${#temporals.format(evento.hora_evento, 'HH:mm')}">10:00</span>
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Ubicación -->
+                    <td data-label="Ubicación">
+                        <i class="bi bi-geo-alt" style="color: var(--color-danger);"></i>
+                        <span th:text="${evento.ubicacion}">Bogotá, Colombia</span>
+                    </td>
+
+                    <!-- Estado -->
+                    <td data-label="Estado" th:attr="data-estado=${evento.estado.name()}">
+                        <span class="status-badge pending" th:if="${evento.estado.name() == 'PENDIENTE'}">
+                            <i class="bi bi-clock-history"></i> Pendiente
+                        </span>
+                        <span class="status-badge approved" th:if="${evento.estado.name() == 'APROBADO'}">
+                            <i class="bi bi-check-circle"></i> Aprobado
+                        </span>
+                        <span class="status-badge rejected" th:if="${evento.estado.name() == 'RECHAZADO'}">
+                            <i class="bi bi-x-circle"></i> Rechazado
+                        </span>
+                        <span class="status-badge inactive" th:if="${evento.estado.name() == 'ELIMINADO'}">
+                            <i class="bi bi-trash"></i> Eliminado
+                        </span>
+                    </td>
+
+                    <!-- Fecha Creación -->
+                    <td data-label="Fecha Creación">
+                        <small th:text="${#temporals.format(evento.fecha_creacion, 'dd/MM/yyyy HH:mm')}">
+                            01/01/2024 10:00
+                        </small>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver Detalle (siempre) -->
+                            <a th:href="@{/eventos/ver/{id}(id=${evento.id_evento})}"
+                               class="btn-action btn-view"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Editar (solo PENDIENTE o RECHAZADO) -->
+                            <a th:if="${evento.estado.name() == 'PENDIENTE' or evento.estado.name() == 'RECHAZADO'}"
+                               th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
+                               class="btn-action btn-edit"
+                               title="Editar evento">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- Eliminar (no ELIMINADO) -->
+                            <a th:if="${evento.estado.name() != 'ELIMINADO'}"
+                               th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
+                               class="btn-action btn-delete"
+                               title="Eliminar evento"
+                               onclick="return confirm('¿Estás seguro de eliminar este evento?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+
+                            <!-- Ver en Público (solo APROBADO) -->
+                            <a th:if="${evento.estado.name() == 'APROBADO'}"
+                               th:href="@{/eventos/ver/{id}(id=${evento.id_evento})}"
+                               class="btn btn-success btn-sm"
+                               title="Ver en página pública"
+                               style="padding: 0.5rem 0.75rem; font-size: 0.8rem;">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${eventos.isEmpty()}" class="empty-list">
+            <i class="bi bi-calendar-x"></i>
+            <h3>No has creado eventos aún</h3>
+            <p>Crea tu primer evento y compártelo con la comunidad de Campo Libre</p>
+            <a th:href="@{/eventos/crear}" class="btn btn-primary">
+                <i class="bi bi-calendar-plus"></i> Crear Mi Primer Evento
+            </a>
+        </div>
+
+        <!-- Paginación -->
+        <div th:if="${!eventos.isEmpty()}" class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <strong th:text="${eventos.size()}">10</strong> de
+                <strong th:text="${eventos.size()}">10</strong> eventos
+            </div>
+            <ul class="pagination">
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link active">1</a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Guía rápida -->
+        <div th:if="${!eventos.isEmpty()}"
+             style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+            <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-lightbulb"></i> Estados de tus Eventos
+            </h4>
+            <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
+                <li><span class="status-badge pending" style="font-size: 0.8rem;">Pendiente</span> - Tu evento está en revisión por un administrador</li>
+                <li><span class="status-badge approved" style="font-size: 0.8rem;">Aprobado</span> - Tu evento está publicado y visible para todos</li>
+                <li><span class="status-badge rejected" style="font-size: 0.8rem;">Rechazado</span> - Tu evento no fue aprobado. Puedes editarlo y volver a enviarlo</li>
+                <li><span class="status-badge inactive" style="font-size: 0.8rem;">Eliminado</span> - Evento eliminado y ya no visible</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para búsqueda, filtrado y contadores -->
+    <script>
+        // Calcular contadores al cargar la página
+        window.addEventListener('DOMContentLoaded', function() {
+            updateCounters();
+        });
+
+        function updateCounters() {
+            const table = document.getElementById('eventosTable');
+            if (!table) return;
+
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            let countPendiente = 0;
+            let countAprobado = 0;
+            let countRechazado = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const estadoCell = rows[i].querySelector('[data-estado]');
+                if (estadoCell) {
+                    const estado = estadoCell.getAttribute('data-estado');
+                    if (estado === 'PENDIENTE') countPendiente++;
+                    if (estado === 'APROBADO') countAprobado++;
+                    if (estado === 'RECHAZADO') countRechazado++;
+                }
+            }
+
+            document.getElementById('countPendiente').textContent = countPendiente;
+            document.getElementById('countAprobado').textContent = countAprobado;
+            document.getElementById('countRechazado').textContent = countRechazado;
+        }
+
+        function filterByEstado(estado) {
+            const select = document.getElementById('filterEstado');
+            if (select) {
+                select.value = estado;
+                filterTable();
+            }
+        }
+
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterEstado = document.getElementById('filterEstado').value;
+            const filterTipo = document.getElementById('filterTipo').value;
+            const filterFecha = document.getElementById('filterFecha').value;
+            const table = document.getElementById('eventosTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            let visibleCount = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const tipo = rows[i].getElementsByTagName('td')[2].textContent;
+                const ubicacion = rows[i].getElementsByTagName('td')[4].textContent.toLowerCase();
+                const estadoCell = rows[i].querySelector('[data-estado]');
+                const fechaCell = rows[i].querySelector('[data-fecha]');
+
+                const estado = estadoCell ? estadoCell.getAttribute('data-estado') : '';
+                const fechaStr = fechaCell ? fechaCell.getAttribute('data-fecha') : '';
+
+                // Fecha del evento
+                let fechaEvento = null;
+                if (fechaStr) {
+                    fechaEvento = new Date(fechaStr);
+                }
+
+                const matchSearch = nombre.includes(searchInput) || ubicacion.includes(searchInput);
+                const matchEstado = filterEstado === '' || estado === filterEstado;
+                const matchTipo = filterTipo === '' || tipo.includes(filterTipo);
+
+                let matchFecha = true;
+                if (filterFecha && fechaEvento) {
+                    if (filterFecha === 'futuros') {
+                        matchFecha = fechaEvento >= today;
+                    } else if (filterFecha === 'pasados') {
+                        matchFecha = fechaEvento < today;
+                    } else if (filterFecha === 'mes') {
+                        matchFecha = fechaEvento >= today && fechaEvento <= endOfMonth;
+                    }
+                }
+
+                if (matchSearch && matchEstado && matchTipo && matchFecha) {
+                    rows[i].style.display = '';
+                    visibleCount++;
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+
+            // Actualizar contador visible
+            const visibleCountEl = document.getElementById('visibleCount');
+            if (visibleCountEl) {
+                visibleCountEl.textContent = visibleCount;
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('eventosTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+            rows.sort((a, b) => {
+                const aValue = a.getElementsByTagName('td')[columnIndex].textContent;
+                const bValue = b.getElementsByTagName('td')[columnIndex].textContent;
+                return aValue.localeCompare(bValue);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</main>
+
+</body>
+</html>

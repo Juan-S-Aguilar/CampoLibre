@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mis Pedidos - CampoLibre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container my-5">
+        <!-- Título -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2><i class="fas fa-shopping-bag"></i> Mis Pedidos</h2>
+                <p class="text-muted">Historial completo de tus compras</p>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Lista de pedidos -->
+        <div th:if="${pedidos != null and !pedidos.isEmpty()}">
+            <div th:each="pedido : ${pedidos}" class="card shadow-sm mb-4">
+                <div class="card-header"
+                     th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-success text-white' :
+                                         pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-warning' :
+                                         'bg-danger text-white'}">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-0">
+                                <i class="fas fa-receipt"></i>
+                                Pedido: <strong th:text="${pedido.numero_pedido}">PED-2025-00001</strong>
+                            </h5>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                                <span class="badge"
+                                      th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-light text-success' :
+                                                      pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-dark' :
+                                                      'bg-light text-danger'}">
+                                    <i class="fas"
+                                       th:classappend="${pedido.estado.name() == 'PAGADO' ? 'fa-check-circle' :
+                                                       pedido.estado.name() == 'PENDIENTE_PAGO' ? 'fa-clock' :
+                                                       'fa-times-circle'}"></i>
+                                    <span th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
+                                                   pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente de Pago' :
+                                                   'Cancelado'}">Estado</span>
+                                </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Información del pedido -->
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <p class="mb-1">
+                                        <i class="fas fa-calendar"></i>
+                                        <strong>Fecha:</strong>
+                                        <span th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-box"></i>
+                                        <strong>Productos:</strong>
+                                        <span th:text="${pedido.items.size()}">0</span> item(s)
+                                    </p>
+                                </div>
+                                <div class="col-sm-6">
+                                    <p class="mb-1" th:if="${pedido.fecha_pago != null}">
+                                        <i class="fas fa-check"></i>
+                                        <strong>Pagado:</strong>
+                                        <span th:text="${#temporals.format(pedido.fecha_pago, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-phone"></i>
+                                        <strong>Contacto:</strong>
+                                        <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Productos del pedido (primeros 3) -->
+                            <div class="mb-2">
+                                <strong class="text-muted">Productos:</strong>
+                            </div>
+                            <div th:each="item, iterStat : ${pedido.items}"
+                                 th:if="${iterStat.index < 3}"
+                                 class="d-flex align-items-center mb-2">
+                                <img th:if="${item.imagen_producto != null}"
+                                     th:src="@{${item.imagen_producto}}"
+                                     alt="Producto"
+                                     class="me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                                <img th:unless="${item.imagen_producto != null}"
+                                     src="/images/no-image.png"
+                                     alt="Sin imagen"
+                                     class="me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                                <small>
+                                    <span th:text="${item.nombre_producto}">Producto</span>
+                                    <span class="text-muted">x<span th:text="${item.cantidad}">1</span></span>
+                                </small>
+                            </div>
+                            <small class="text-muted" th:if="${pedido.items.size() > 3}">
+                                + <span th:text="${pedido.items.size() - 3}">0</span> producto(s) más...
+                            </small>
+                        </div>
+
+                        <!-- Total y acciones -->
+                        <div class="col-md-4 text-md-end">
+                            <h4 class="text-success mb-3"
+                                th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                                $0
+                            </h4>
+
+                            <div class="btn-group-vertical gap-2 w-100" role="group">
+                                <a th:href="@{/pedidos/ver/{id}(id=${pedido.id_pedido})}"
+                                   class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </a>
+
+                                <a th:if="${pedido.estado.name() == 'PENDIENTE_PAGO'}"
+                                   th:href="@{/pedidos/pagar/{id}(id=${pedido.id_pedido})}"
+                                   class="btn btn-warning btn-sm">
+                                    <i class="fas fa-credit-card"></i> Pagar Ahora
+                                </a>
+
+                                <a th:if="${pedido.estado.name() == 'PENDIENTE_PAGO'}"
+                                   th:href="@{/pedidos/cancelar/{id}(id=${pedido.id_pedido})}"
+                                   class="btn btn-outline-danger btn-sm"
+                                   onclick="return confirm('¿Cancelar este pedido?')">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sin pedidos -->
+        <div th:if="${pedidos == null or pedidos.isEmpty()}" class="text-center py-5">
+            <i class="fas fa-shopping-bag fa-5x text-muted mb-4"></i>
+            <h3>No tienes pedidos aún</h3>
+            <p class="text-muted">¡Comienza a comprar productos del campo!</p>
+            <a th:href="@{/productos}" class="btn btn-success btn-lg mt-3">
+                <i class="fas fa-shopping-cart"></i> Explorar Productos
+            </a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

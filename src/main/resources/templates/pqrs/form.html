@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Crear PQRS - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-chat-square-dots"></i>
+                Crear Nueva PQRS
+            </h2>
+            <p>Comparte tu opinión, pregunta o sugerencia con nosotros</p>
+        </div>
+
+        <!-- Mensajes de error -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error al crear PQRS</span>
+        </div>
+
+        <!-- Información importante -->
+        <div class="dashboard-alert info">
+            <i class="bi bi-info-circle"></i>
+            <div>
+                <strong>¿Qué es una PQRS?</strong>
+                Es un mecanismo para que puedas hacer:
+                <strong>Preguntas</strong>,
+                <strong>Quejas</strong>,
+                <strong>Reclamos</strong> o
+                <strong>Sugerencias</strong> sobre tiendas o eventos.
+            </div>
+        </div>
+
+        <!-- Formulario -->
+        <form th:action="@{/pqrs/crear}" th:object="${pqrs}" method="post">
+
+            <!-- Sección: Tipo de PQRS -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-tag"></i>
+                    Tipo de PQRS
+                </h3>
+
+                <!-- Tipo -->
+                <div class="form-group">
+                    <label for="tipo">
+                        <i class="bi bi-list"></i>
+                        Selecciona el tipo de PQRS
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{tipo}"
+                            class="form-select"
+                            id="tipo"
+                            required
+                            onchange="updateTipoInfo()">
+                        <option value="">Seleccione...</option>
+                        <option value="PREGUNTA">Pregunta</option>
+                        <option value="QUEJA">Queja</option>
+                        <option value="SUGERENCIA">Sugerencia</option>
+                    </select>
+
+                    <!-- Info dinámica según tipo -->
+                    <div id="tipoInfo" style="margin-top: 0.75rem; padding: 0.75rem; background-color: var(--color-bg-light); border-radius: 8px; display: none;">
+                        <small id="tipoInfoText"></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Descripción -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-chat-left-text"></i>
+                    Descripción
+                </h3>
+
+                <!-- Descripción -->
+                <div class="form-group">
+                    <label for="descripcion">
+                        <i class="bi bi-pencil"></i>
+                        Describe tu PQRS
+                        <span class="required">*</span>
+                    </label>
+                    <textarea th:field="*{descripcion}"
+                              class="form-control"
+                              id="descripcion"
+                              rows="8"
+                              placeholder="Describe detalladamente tu pregunta, queja o sugerencia..."
+                              maxlength="1000"
+                              required></textarea>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Máximo 1000 caracteres. Sé específico y claro.
+                    </small>
+
+                    <!-- Contador de caracteres -->
+                    <small class="form-text" style="float: right;">
+                        <span id="charCount">0</span>/1000 caracteres
+                    </small>
+                </div>
+            </div>
+
+            <!-- Sección: Asociar con Tienda o Evento (opcional) -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-link-45deg"></i>
+                    Asociar con (Opcional)
+                </h3>
+
+                <p style="margin-bottom: 1rem; color: var(--color-text-light);">
+                    <i class="bi bi-info-circle"></i>
+                    Si tu PQRS es sobre una tienda o evento específico, selecciónalo aquí.
+                </p>
+
+                <div class="form-row form-row-2">
+                    <!-- Tienda (opcional) -->
+                    <div class="form-group">
+                        <label for="idTienda">
+                            <i class="bi bi-shop"></i>
+                            Tienda (opcional)
+                        </label>
+                        <select name="idTienda"
+                                class="form-select"
+                                id="idTienda"
+                                th:selected="${idTiendaSeleccionada}">
+                            <option value="">-- Sin asociar --</option>
+                            <option th:each="tienda : ${tiendas}"
+                                    th:value="${tienda.id_tienda}"
+                                    th:text="${tienda.nombre}"
+                                    th:selected="${tienda.id_tienda == idTiendaSeleccionada}">
+                                Tienda
+                            </option>
+                        </select>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Selecciona si tu PQRS es sobre una tienda
+                        </small>
+                    </div>
+
+                    <!-- Evento (opcional) -->
+                    <div class="form-group">
+                        <label for="idEvento">
+                            <i class="bi bi-calendar-event"></i>
+                            Evento (opcional)
+                        </label>
+                        <select name="idEvento"
+                                class="form-select"
+                                id="idEvento"
+                                th:selected="${idEventoSeleccionado}">
+                            <option value="">-- Sin asociar --</option>
+                            <option th:each="evento : ${eventos}"
+                                    th:value="${evento.id_evento}"
+                                    th:text="${evento.nombre}"
+                                    th:selected="${evento.id_evento == idEventoSeleccionado}">
+                                Evento
+                            </option>
+                        </select>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Selecciona si tu PQRS es sobre un evento
+                        </small>
+                    </div>
+                </div>
+
+                <small class="form-text" style="display: block; margin-top: 0.5rem;">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Nota:</strong> Solo puedes asociar la PQRS a una tienda O un evento, no a ambos.
+                </small>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <a th:href="@{/pqrs}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-send"></i> Enviar PQRS
+                </button>
+            </div>
+        </form>
+
+        <!-- Información adicional -->
+        <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success);">
+            <h4 style="color: var(--color-success); margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-shield-check"></i> Tu opinión es importante
+            </h4>
+            <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
+                Las PQRS nos ayudan a mejorar Campo Libre. Un administrador revisará
+                tu mensaje y te responderá lo antes posible. Recibirás una respuesta
+                directamente en tu perfil.
+            </p>
+        </div>
+    </div>
+
+    <!-- Script para info dinámica y contador -->
+    <!-- Script para info dinámica y contador -->
+    <script>
+        // Contador de caracteres
+        const descripcionTextarea = document.getElementById('descripcion');
+        const charCount = document.getElementById('charCount');
+
+        if (descripcionTextarea) {
+            descripcionTextarea.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+
+                // Cambiar color si se acerca al límite
+                if (count > 900) {
+                    charCount.style.color = 'var(--color-danger)';
+                    charCount.style.fontWeight = '600';
+                } else if (count > 750) {
+                    charCount.style.color = 'var(--color-warning)';
+                } else {
+                    charCount.style.color = 'var(--color-text-light)';
+                    charCount.style.fontWeight = 'normal';
+                }
+            });
+
+            // Inicializar contador si hay contenido
+            charCount.textContent = descripcionTextarea.value.length;
+        }
+
+        // Información dinámica según tipo de PQRS
+        function updateTipoInfo() {
+            const tipoSelect = document.getElementById('tipo');
+            const tipoInfo = document.getElementById('tipoInfo');
+            const tipoInfoText = document.getElementById('tipoInfoText');
+
+            const selectedValue = tipoSelect.value;
+
+            if (selectedValue === '') {
+                tipoInfo.style.display = 'none';
+                return;
+            }
+
+            tipoInfo.style.display = 'block';
+
+            const infoTexts = {
+                'PREGUNTA': '<i class="bi bi-question-circle" style="color: var(--color-info);"></i> <strong>Pregunta:</strong> Usa este tipo para hacer consultas sobre productos, servicios, eventos o tiendas.',
+                'QUEJA': '<i class="bi bi-exclamation-triangle" style="color: var(--color-danger);"></i> <strong>Queja:</strong> Si tuviste una mala experiencia con una tienda o evento, compártela aquí. Será atendida con prioridad.',
+                'SUGERENCIA': '<i class="bi bi-lightbulb" style="color: var(--color-warning);"></i> <strong>Sugerencia:</strong> Comparte tus ideas para mejorar Campo Libre, las tiendas o los eventos.'
+            };
+
+            tipoInfoText.innerHTML = infoTexts[selectedValue];
+        }
+
+        // Validar que solo se seleccione tienda O evento, no ambos
+        const tiendaSelect = document.getElementById('idTienda');
+        const eventoSelect = document.getElementById('idEvento');
+
+        if (tiendaSelect && eventoSelect) {
+            tiendaSelect.addEventListener('change', function() {
+                if (this.value !== '') {
+                    eventoSelect.value = '';
+                    eventoSelect.disabled = true;
+                    eventoSelect.style.opacity = '0.6';
+                } else {
+                    eventoSelect.disabled = false;
+                    eventoSelect.style.opacity = '1';
+                }
+            });
+
+            eventoSelect.addEventListener('change', function() {
+                if (this.value !== '') {
+                    tiendaSelect.value = '';
+                    tiendaSelect.disabled = true;
+                    tiendaSelect.style.opacity = '0.6';
+                } else {
+                    tiendaSelect.disabled = false;
+                    tiendaSelect.style.opacity = '1';
+                }
+            });
+        }
+
+        // Validación del formulario antes de enviar
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const descripcion = descripcionTextarea.value.trim();
+
+            if (descripcion.length < 10) {
+                e.preventDefault();
+                alert('La descripción debe tener al menos 10 caracteres.');
+                descripcionTextarea.focus();
+                return false;
+            }
+
+            return true;
+        });
+    </script>
+</main>
+
+</body>
+</html>

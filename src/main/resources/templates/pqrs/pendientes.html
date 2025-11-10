@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>PQRS Pendientes - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-clock-history"></i>
+                PQRS Pendientes de Respuesta
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/pqrs}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Ver Todas
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">PQRS respondida exitosamente</span>
+        </div>
+
+        <!-- Alerta de pendientes -->
+        <div th:if="${!pqrsList.isEmpty()}" class="dashboard-alert warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div>
+                <strong>Atención:</strong>
+                Hay <span th:text="${pqrsList.size()}">0</span> PQRS pendiente(s) de respuesta.
+                Por favor, revísalas y responde lo antes posible.
+            </div>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por descripción..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterTipo">Filtrar por Tipo</label>
+                <select id="filterTipo" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="PREGUNTA">Preguntas</option>
+                    <option value="QUEJA">Quejas</option>
+                    <option value="SUGERENCIA">Sugerencias</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-exclamation-circle"></i>
+            <strong th:text="${pqrsList.size()}">0</strong> PQRS pendiente(s) de respuesta
+        </div>
+
+        <!-- Tabla de PQRS Pendientes -->
+        <div class="table-responsive">
+            <table class="data-table" id="pqrsTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Emisor</th>
+                    <th>Fecha Envío</th>
+                    <th>Tiempo Transcurrido</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="pqrs : ${pqrsList}">
+                    <td th:text="${pqrs.id_pqrs}" data-label="ID">1</td>
+
+                    <td data-label="Tipo">
+                            <span class="status-badge"
+                                  th:classappend="${pqrs.tipo.name() == 'PREGUNTA'} ? 'info' : (${pqrs.tipo.name() == 'QUEJA'} ? 'danger' : 'warning')">
+                                <i class="bi"
+                                   th:classappend="${pqrs.tipo.name() == 'PREGUNTA'} ? 'bi-question-circle' : (${pqrs.tipo.name() == 'QUEJA'} ? 'bi-exclamation-triangle' : 'bi-lightbulb')"></i>
+                                <span th:text="${pqrs.tipo}">PREGUNTA</span>
+                            </span>
+                    </td>
+
+                    <td data-label="Descripción">
+                            <span th:text="${#strings.abbreviate(pqrs.descripcion, 100)}">
+                                Descripción de la PQRS...
+                            </span>
+                    </td>
+
+                    <td data-label="Emisor">
+                            <span style="font-weight: 600;">
+                                ID: <span th:text="${pqrs.id_emisor}">1</span>
+                            </span>
+                    </td>
+
+                    <td th:text="${#temporals.format(pqrs.fecha_envio, 'dd/MM/yyyy HH:mm')}"
+                        data-label="Fecha Envío">01/01/2024 10:00</td>
+
+                    <td data-label="Tiempo Transcurrido">
+                            <span style="color: var(--color-warning); font-weight: 600;">
+                                <i class="bi bi-clock"></i>
+                                <!-- Aquí podrías calcular días transcurridos con JavaScript o backend -->
+                                Pendiente
+                            </span>
+                    </td>
+
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver detalle -->
+                            <a th:href="@{/pqrs/ver/{id}(id=${pqrs.id_pqrs})}"
+                               class="btn-action btn-view"
+                               title="Ver detalle completo">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Responder -->
+                            <a th:href="@{/pqrs/responder/{id}(id=${pqrs.id_pqrs})}"
+                               class="btn-action btn-edit"
+                               title="Responder ahora"
+                               style="background-color: var(--color-success);">
+                                <i class="bi bi-chat-left-text"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${pqrsList.isEmpty()}" class="empty-list">
+            <i class="bi bi-check-circle" style="color: var(--color-success);"></i>
+            <h3>¡Excelente!</h3>
+            <p>No hay PQRS pendientes de respuesta. Todas han sido atendidas.</p>
+            <a th:href="@{/pqrs}" class="btn btn-primary">
+                <i class="bi bi-list"></i> Ver Todas las PQRS
+            </a>
+        </div>
+
+        <!-- Información adicional -->
+        <div th:if="${!pqrsList.isEmpty()}" style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-info);">
+            <h4 style="color: var(--color-info); margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-info-circle"></i> Recordatorio
+            </h4>
+            <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
+                Es importante responder las PQRS lo antes posible para mantener una buena
+                experiencia de usuario. Las quejas deben tener prioridad sobre las preguntas y sugerencias.
+            </p>
+        </div>
+    </div>
+
+    <!-- Script para filtrado -->
+    <script>
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterTipo = document.getElementById('filterTipo').value;
+            const table = document.getElementById('pqrsTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const descripcion = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                const tipoBadge = rows[i].getElementsByTagName('td')[1].textContent;
+
+                const matchSearch = descripcion.includes(searchInput);
+                const matchTipo = filterTipo === '' || tipoBadge.includes(filterTipo);
+
+                if (matchSearch && matchTipo) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+    </script>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Eventos - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-calendar-event"></i>
+                Eventos Agrícolas
+            </h2>
+            <div class="list-header-actions">
+                <!-- Crear Evento (solo PROVEEDOR) -->
+                <a th:href="@{/eventos/crear}"
+                   class="btn btn-primary"
+                   sec:authorize="hasAuthority('PROVEEDOR')">
+                    <i class="bi bi-calendar-plus"></i> Crear Evento
+                </a>
+
+                <!-- Mis Eventos (solo PROVEEDOR) -->
+                <a th:href="@{/eventos/mis-eventos}"
+                   class="btn btn-success"
+                   sec:authorize="hasAuthority('PROVEEDOR')">
+                    <i class="bi bi-calendar-check"></i> Mis Eventos
+                </a>
+
+                <!-- Eventos Pendientes (solo ADMIN) -->
+                <a th:href="@{/eventos/pendientes}"
+                   class="btn btn-warning"
+                   sec:authorize="hasAuthority('ADMINISTRADOR')">
+                    <i class="bi bi-clock-history"></i> Pendientes
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por nombre, ubicación o descripción..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterTipo">Tipo de Evento</label>
+                <select id="filterTipo" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="FERIA">Feria</option>
+                    <option value="TALLER">Taller</option>
+                    <option value="ACTIVIDAD">Actividad</option>
+                    <option value="OTRO">Otro</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterFecha">Filtrar por Fecha</label>
+                <select id="filterFecha" class="form-select" onchange="filterTable()">
+                    <option value="">Todas las fechas</option>
+                    <option value="proximos">Próximos 7 días</option>
+                    <option value="mes">Este mes</option>
+                    <option value="pasados">Eventos pasados</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Mostrando <strong th:text="${eventos.size()}">0</strong> evento(s) aprobado(s)
+        </div>
+
+        <!-- Tabla de eventos -->
+        <div class="table-responsive">
+            <table class="data-table" id="eventosTable">
+                <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th class="sortable-header" onclick="sortTable(1)">Nombre</th>
+                    <th>Tipo</th>
+                    <th>Fecha y Hora</th>
+                    <th>Ubicación</th>
+                    <th sec:authorize="hasAuthority('ADMINISTRADOR')">Creado Por</th>
+                    <th>Estado</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Si hay eventos -->
+                <tr th:each="evento : ${eventos}">
+                    <!-- Imagen -->
+                    <td data-label="Imagen">
+                        <div style="position: relative; width: 80px; height: 60px;">
+                            <!-- Imagen si existe -->
+                            <img th:if="${evento.imagen_evento != null}"
+                                 th:src="@{${evento.imagen_evento}}"
+                                 alt="Imagen evento"
+                                 style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color); display: block;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                            <!-- Fallback cuando falla la imagen -->
+                            <div th:if="${evento.imagen_evento != null}"
+                                 style="display: none; width: 80px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                <i class="bi bi-calendar-event" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                            </div>
+
+                            <!-- Ícono cuando no hay imagen -->
+                            <div th:if="${evento.imagen_evento == null}"
+                                 style="width: 80px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                <i class="bi bi-calendar-event" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Nombre -->
+                    <td data-label="Nombre">
+                        <strong th:text="${evento.nombre}">Feria Agrícola</strong>
+                        <br>
+                        <small style="color: var(--color-text-light);"
+                               th:text="${#strings.abbreviate(evento.descripcion, 50)}">
+                            Descripción...
+                        </small>
+                    </td>
+
+                    <!-- Tipo -->
+                    <td data-label="Tipo">
+                        <span class="badge"
+                              th:classappend="${evento.tipo_evento.name() == 'FERIA' ? 'badge-success' :
+                                               (evento.tipo_evento.name() == 'TALLER' ? 'badge-info' :
+                                               (evento.tipo_evento.name() == 'ACTIVIDAD' ? 'badge-warning' : 'badge-primary'))}"
+                              th:text="${evento.tipo_evento.name()}">
+                            FERIA
+                        </span>
+                    </td>
+
+                    <!-- Fecha y Hora -->
+                    <td data-label="Fecha y Hora">
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <span>
+                                <i class="bi bi-calendar-date" style="color: var(--color-primary);"></i>
+                                <span th:text="${#temporals.format(evento.fecha_evento, 'dd/MM/yyyy')}">01/01/2024</span>
+                            </span>
+                            <span>
+                                <i class="bi bi-clock" style="color: var(--color-primary);"></i>
+                                <span th:text="${#temporals.format(evento.hora_evento, 'HH:mm')}">10:00</span>
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Ubicación -->
+                    <td data-label="Ubicación">
+                        <i class="bi bi-geo-alt" style="color: var(--color-danger);"></i>
+                        <span th:text="${evento.ubicacion}">Bogotá, Colombia</span>
+                    </td>
+
+                    <!-- Creado Por (solo ADMIN) -->
+                    <td data-label="Creado Por" sec:authorize="hasAuthority('ADMINISTRADOR')">
+                        <span th:text="'ID: ' + ${evento.creado_por}">ID: 1</span>
+                    </td>
+
+                    <!-- Estado -->
+                    <td data-label="Estado">
+                        <span class="status-badge approved">
+                            <i class="bi bi-check-circle"></i> Aprobado
+                        </span>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver Detalle (todos) -->
+                            <a th:href="@{/eventos/ver/{id}(id=${evento.id_evento})}"
+                               class="btn-action btn-view"
+                               title="Ver evento">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Confirmar Asistencia via AJAX (fetch) -->
+                            <form th:action="@{/mis-eventos/confirmar/{id}(id=${evento.id_evento})}"
+                                  method="post"
+                                  class="d-inline"
+                                  sec:authorize="isAuthenticated()">
+                                <button type="submit"
+                                        class="btn btn-success btn-sm"
+                                        title="Confirmar asistencia">
+                                    <i class="bi bi-bookmark-plus"></i>
+                                </button>
+                            </form>
+
+                            <!-- Editar (solo creador o ADMIN) -->
+                            <a th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
+                               class="btn-action btn-edit"
+                               title="Editar evento"
+                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${eventos.isEmpty()}" class="empty-list">
+            <i class="bi bi-calendar-x"></i>
+            <h3>No hay eventos disponibles</h3>
+            <p>Los eventos aprobados aparecerán aquí</p>
+            <a th:href="@{/eventos/crear}"
+               class="btn btn-primary"
+               sec:authorize="hasAuthority('PROVEEDOR')">
+                <i class="bi bi-calendar-plus"></i> Crear Primer Evento
+            </a>
+        </div>
+
+        <!-- Paginación -->
+        <div th:if="${!eventos.isEmpty()}" class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <strong th:text="${eventos.size()}">10</strong> de
+                <strong th:text="${eventos.size()}">10</strong> eventos
+            </div>
+            <ul class="pagination">
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link active">1</a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para búsqueda y filtrado -->
+    <script>
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterTipo = document.getElementById('filterTipo').value;
+            const filterFecha = document.getElementById('filterFecha').value;
+            const table = document.getElementById('eventosTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            const today = new Date();
+            const next7Days = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            for (let i = 0; i < rows.length; i++) {
+                const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const tipo = rows[i].getElementsByTagName('td')[2].textContent;
+                const fechaTexto = rows[i].getElementsByTagName('td')[3].textContent;
+                const ubicacion = rows[i].getElementsByTagName('td')[4].textContent.toLowerCase();
+
+                // Extraer fecha del texto (formato dd/MM/yyyy)
+                const fechaParts = fechaTexto.match(/\d{2}\/\d{2}\/\d{4}/);
+                let fechaEvento = null;
+                if (fechaParts) {
+                    const [dia, mes, anio] = fechaParts[0].split('/');
+                    fechaEvento = new Date(anio, mes - 1, dia);
+                }
+
+                const matchSearch = nombre.includes(searchInput) || ubicacion.includes(searchInput);
+                const matchTipo = filterTipo === '' || tipo.includes(filterTipo);
+
+                let matchFecha = true;
+                if (filterFecha && fechaEvento) {
+                    if (filterFecha === 'proximos') {
+                        matchFecha = fechaEvento >= today && fechaEvento <= next7Days;
+                    } else if (filterFecha === 'mes') {
+                        matchFecha = fechaEvento >= today && fechaEvento <= endOfMonth;
+                    } else if (filterFecha === 'pasados') {
+                        matchFecha = fechaEvento < today;
+                    }
+                }
+
+                if (matchSearch && matchTipo && matchFecha) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('eventosTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+            rows.sort((a, b) => {
+                const aValue = a.getElementsByTagName('td')[columnIndex].textContent;
+                const bValue = b.getElementsByTagName('td')[columnIndex].textContent;
+                return aValue.localeCompare(bValue);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</main>
+
+</body>
+</html>

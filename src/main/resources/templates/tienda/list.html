@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestión de Tiendas - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-shop"></i>
+                <span th:if="${tipoLista == 'todas'}">Todas las Tiendas</span>
+                <span th:if="${tipoLista == 'mis_tiendas'}">Mis Tiendas</span>
+                <span th:if="${tipoLista == 'activas'}">Tiendas Activas</span>
+            </h2>
+            <div class="list-header-actions">
+                <!-- Solo PROVEEDOR puede crear tiendas -->
+                <a th:href="@{/tiendas/nueva}"
+                   class="btn btn-primary"
+                   sec:authorize="hasAuthority('PROVEEDOR')">
+                    <i class="bi bi-plus-circle"></i> Nueva Tienda
+                </a>
+
+                <!-- Toggle de vistas para PROVEEDOR -->
+                <div class="view-toggle" sec:authorize="hasAuthority('PROVEEDOR')">
+                    <button class="view-toggle-btn"
+                            th:classappend="${tipoLista == 'todas' ? 'active' : ''}"
+                            th:onclick="'window.location.href=\'/tiendas\''">
+                        <i class="bi bi-list"></i> Todas
+                    </button>
+                    <button class="view-toggle-btn"
+                            th:classappend="${tipoLista == 'mis_tiendas' ? 'active' : ''}"
+                            th:onclick="'window.location.href=\'/tiendas/mis-tiendas\''">
+                        <i class="bi bi-shop"></i> Mis Tiendas
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes de éxito/error -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="list-filters">
+            <div class="search-box">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por nombre, ubicación o correo..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterEstado">Estado</label>
+                <select id="filterEstado" class="form-select" onchange="filterTable()">
+                    <option value="">Todos</option>
+                    <option value="ACTIVA" selected>Activas</option>
+                    <option value="INACTIVA">Inactivas</option>
+                    <option value="ELIMINADA">Eliminadas</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Mostrando <strong th:text="${tiendas.size()}">0</strong> tienda(s)
+        </div>
+
+        <!-- Tabla de tiendas -->
+        <div class="table-responsive">
+            <table class="data-table" id="tiendasTable">
+                <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th class="sortable-header" onclick="sortTable(1)">Nombre</th>
+                    <th>Ubicación</th>
+                    <th>Contacto</th>
+                    <th sec:authorize="hasAuthority('ADMINISTRADOR')">Proveedor</th>
+                    <th>Fecha Creación</th>
+                    <th>Estado</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Si hay tiendas -->
+                <tr th:each="tienda : ${tiendas}">
+                    <!-- Imagen -->
+                    <td data-label="Imagen">
+                        <img th:if="${tienda.imagen_tienda != null}"
+                             th:src="@{${tienda.imagen_tienda}}"
+                             alt="Logo tienda"
+                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);"
+                             onerror="this.src='/images/placeholder-shop.jpg'">
+                        <div th:if="${tienda.imagen_tienda == null}"
+                             style="width: 60px; height: 60px; background-color: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                            <i class="bi bi-shop" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        </div>
+                    </td>
+
+                    <!-- Nombre -->
+                    <td data-label="Nombre">
+                        <strong th:text="${tienda.nombre}">Tienda del Valle</strong>
+                        <br>
+                        <small style="color: var(--color-text-light);"
+                               th:text="${#strings.abbreviate(tienda.descripcion, 50)}">
+                            Productos frescos...
+                        </small>
+                    </td>
+
+                    <!-- Ubicación -->
+                    <td data-label="Ubicación">
+                        <i class="bi bi-geo-alt" style="color: var(--color-danger);"></i>
+                        <span th:text="${tienda.ubicacion}">Bogotá, Colombia</span>
+                    </td>
+
+                    <!-- Contacto -->
+                    <td data-label="Contacto">
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                <span th:if="${tienda.correo_tienda != null}">
+                                    <i class="bi bi-envelope"></i>
+                                    <span th:text="${tienda.correo_tienda}">correo@tienda.com</span>
+                                </span>
+                            <span th:if="${tienda.telefono_tienda != null}">
+                                    <i class="bi bi-telephone"></i>
+                                    <span th:text="${tienda.telefono_tienda}">3001234567</span>
+                                </span>
+                        </div>
+                    </td>
+
+                    <!-- Proveedor (solo ADMIN) -->
+                    <td data-label="Proveedor" sec:authorize="hasAuthority('ADMINISTRADOR')">
+                        <span th:text="'ID: ' + ${tienda.id_usuario}">ID: 1</span>
+                    </td>
+
+                    <!-- Fecha Creación -->
+                    <td data-label="Fecha" th:text="${#temporals.format(tienda.fecha_creacion, 'dd/MM/yyyy')}">
+                        01/01/2024
+                    </td>
+
+                    <!-- Estado -->
+                    <td data-label="Estado">
+                            <span class="status-badge active" th:if="${tienda.estado.name() == 'ACTIVA'}">
+                                <i class="bi bi-check-circle"></i> Activa
+                            </span>
+                        <span class="status-badge pending" th:if="${tienda.estado.name() == 'INACTIVA'}">
+                                <i class="bi bi-pause-circle"></i> Inactiva
+                            </span>
+                        <span class="status-badge inactive" th:if="${tienda.estado.name() == 'ELIMINADA'}">
+                                <i class="bi bi-x-circle"></i> Eliminada
+                            </span>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td data-label="Acciones">
+                        <div class="table-actions">
+                            <!-- Ver (todos) -->
+                            <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}"
+                               class="btn-action btn-view"
+                               title="Ver tienda">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Editar (solo dueño o ADMIN) -->
+                            <a th:href="@{/tiendas/editar/{id}(id=${tienda.id_tienda})}"
+                               class="btn-action btn-edit"
+                               title="Editar tienda"
+                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <!-- Ver Productos de tienda (todos) -->
+                            <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
+                               class="btn btn-success btn-sm"
+                               title="Ver productos"
+                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <i class="bi bi-box-seam"></i>
+                            </a>
+
+                            <!-- Cambiar Estado (solo dueño o ADMIN) -->
+                            <div class="btn-group" sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <button type="button"
+                                        class="btn-action btn-warning dropdown-toggle"
+                                        data-bs-toggle="dropdown"
+                                        title="Cambiar estado">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li th:if="${tienda.estado.name() != 'ACTIVA'}">
+                                        <a class="dropdown-item"
+                                           th:href="@{/tiendas/cambiar-estado/{id}(id=${tienda.id_tienda}, nuevoEstado='ACTIVA')}">
+                                            <i class="bi bi-check-circle"></i> Activar
+                                        </a>
+                                    </li>
+                                    <li th:if="${tienda.estado.name() != 'INACTIVA'}">
+                                        <a class="dropdown-item"
+                                           th:href="@{/tiendas/cambiar-estado/{id}(id=${tienda.id_tienda}, nuevoEstado='INACTIVA')}">
+                                            <i class="bi bi-pause-circle"></i> Desactivar
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Eliminar (solo dueño o ADMIN) -->
+                            <a th:if="${tienda.estado.name() != 'ELIMINADA'}"
+                               th:href="@{/tiendas/eliminar/{id}(id=${tienda.id_tienda})}"
+                               class="btn-action btn-delete"
+                               title="Eliminar tienda"
+                               onclick="return confirm('¿Estás seguro de eliminar esta tienda?')"
+                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${tiendas.isEmpty()}" class="empty-list">
+            <i class="bi bi-shop"></i>
+            <h3>No hay tiendas registradas</h3>
+            <p th:if="${tipoLista == 'mis_tiendas'}">
+                Crea tu primera tienda y empieza a vender tus productos
+            </p>
+            <p th:if="${tipoLista != 'mis_tiendas'}">
+                Las tiendas registradas aparecerán aquí
+            </p>
+            <a th:href="@{/tiendas/nueva}"
+               class="btn btn-primary"
+               sec:authorize="hasAuthority('PROVEEDOR')">
+                <i class="bi bi-plus-circle"></i> Crear Mi Primera Tienda
+            </a>
+        </div>
+
+        <!-- Paginación (placeholder) -->
+        <div th:if="${!tiendas.isEmpty()}" class="pagination-container">
+            <div class="pagination-info">
+                Mostrando <strong th:text="${tiendas.size()}">10</strong> de
+                <strong th:text="${tiendas.size()}">10</strong> tiendas
+            </div>
+            <ul class="pagination">
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link active">1</a>
+                </li>
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link disabled">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script para búsqueda y filtrado -->
+    <script>
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterEstado = document.getElementById('filterEstado').value;
+            const table = document.getElementById('tiendasTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+                const ubicacion = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
+                const contacto = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
+                const estadoBadge = rows[i].getElementsByTagName('td')[rows[i].getElementsByTagName('td').length - 2].textContent;
+
+                const matchSearch = nombre.includes(searchInput) ||
+                                   ubicacion.includes(searchInput) ||
+                                   contacto.includes(searchInput);
+                const matchEstado = filterEstado === '' || estadoBadge.includes(filterEstado);
+
+                if (matchSearch && matchEstado) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('tiendasTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+
+            rows.sort((a, b) => {
+                const aValue = a.getElementsByTagName('td')[columnIndex].textContent;
+                const bValue = b.getElementsByTagName('td')[columnIndex].textContent;
+                return aValue.localeCompare(bValue);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</main>
+
+</body>
+</html>

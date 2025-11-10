@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Dashboard Consumidor - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content" class="dashboard-container">
+
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+        <div class="dashboard-welcome">
+            <div class="user-greeting">
+                <h1>
+                    <i class="bi bi-person-circle"></i>
+                    ¡Hola, <span th:text="${usuario.nombre}">Usuario</span>!
+                </h1>
+                <p>Descubre productos frescos del campo y participa en eventos agrícolas</p>
+            </div>
+            <div class="quick-actions">
+                <a th:href="@{/tiendas}" class="btn">
+                    <i class="bi bi-shop"></i> Explorar Tiendas
+                </a>
+                <a th:href="@{/productos}" class="btn">
+                    <i class="bi bi-basket"></i> Ver Productos
+                </a>
+                <a th:href="@{/eventos}" class="btn">
+                    <i class="bi bi-calendar-event"></i> Eventos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner informativo -->
+    <div class="dashboard-alert info">
+        <i class="bi bi-info-circle"></i>
+        <div>
+            <strong>¡Bienvenido a Campo Libre!</strong>
+            Explora productos frescos directamente de productores del campo.
+            Encuentra eventos y ferias agrícolas cerca de ti.
+        </div>
+    </div>
+
+    <!-- Grid de Estadísticas -->
+    <div class="stats-grid">
+        <!-- Tiendas Disponibles -->
+        <div class="stat-card" onclick="window.location.href='/tiendas'">
+            <div class="stat-card-header">
+                <h3>Tiendas Disponibles</h3>
+                <div class="stat-card-icon primary">
+                    <i class="bi bi-shop"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${tiendasDisponibles}">0</div>
+                <div class="stat-label">Tiendas activas</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/tiendas}">
+                    <i class="bi bi-arrow-right"></i> Explorar tiendas
+                </a>
+            </div>
+        </div>
+
+        <!-- Productos Disponibles -->
+        <div class="stat-card" onclick="window.location.href='/productos'">
+            <div class="stat-card-header">
+                <h3>Productos</h3>
+                <div class="stat-card-icon success">
+                    <i class="bi bi-basket"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${productosDisponibles}">0</div>
+                <div class="stat-label">Productos frescos</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/productos}">
+                    <i class="bi bi-arrow-right"></i> Ver productos
+                </a>
+            </div>
+        </div>
+
+        <!-- Eventos Disponibles -->
+        <div class="stat-card" onclick="window.location.href='/eventos'">
+            <div class="stat-card-header">
+                <h3>Eventos</h3>
+                <div class="stat-card-icon info">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${eventosDisponibles}">0</div>
+                <div class="stat-label">Eventos próximos</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/eventos}">
+                    <i class="bi bi-arrow-right"></i> Ver eventos
+                </a>
+            </div>
+        </div>
+
+        <!-- Mis PQRS -->
+        <div class="stat-card" onclick="window.location.href='/pqrs'">
+            <div class="stat-card-header">
+                <h3>Mis PQRS</h3>
+                <div class="stat-card-icon warning">
+                    <i class="bi bi-chat-square-dots"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" th:text="${misPqrs}">0</div>
+                <div class="stat-label">Opiniones enviadas</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/pqrs}">
+                    <i class="bi bi-arrow-right"></i> Ver mis PQRS
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secciones del Dashboard -->
+    <div class="row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+
+        <!-- Descubre Campo Libre -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-compass"></i>
+                    Descubre Campo Libre
+                </h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Card Tiendas -->
+                <div style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%); padding: 2rem; border-radius: 8px; color: white; text-align: center;">
+                    <i class="bi bi-shop" style="font-size: 3rem;"></i>
+                    <h3 style="color: white; margin: 1rem 0;">Explora Tiendas</h3>
+                    <p style="margin-bottom: 1.5rem; opacity: 0.95;">
+                        Conoce a los productores del campo y sus tiendas
+                    </p>
+                    <a th:href="@{/tiendas}" class="btn btn-light" style="width: 100%;">
+                        Ver Tiendas
+                    </a>
+                </div>
+
+                <!-- Card Productos -->
+                <div style="background: linear-gradient(135deg, var(--color-success) 0%, #66bb6a 100%); padding: 2rem; border-radius: 8px; color: white; text-align: center;">
+                    <i class="bi bi-basket" style="font-size: 3rem;"></i>
+                    <h3 style="color: white; margin: 1rem 0;">Productos Frescos</h3>
+                    <p style="margin-bottom: 1.5rem; opacity: 0.95;">
+                        Encuentra frutas, verduras y más productos del campo
+                    </p>
+                    <a th:href="@{/productos}" class="btn btn-light" style="width: 100%;">
+                        Ver Productos
+                    </a>
+                </div>
+
+                <!-- Card Eventos -->
+                <div style="background: linear-gradient(135deg, var(--color-info) 0%, #42a5f5 100%); padding: 2rem; border-radius: 8px; color: white; text-align: center;">
+                    <i class="bi bi-calendar-event" style="font-size: 3rem;"></i>
+                    <h3 style="color: white; margin: 1rem 0;">Eventos Agrícolas</h3>
+                    <p style="margin-bottom: 1.5rem; opacity: 0.95;">
+                        Participa en ferias, talleres y actividades del campo
+                    </p>
+                    <a th:href="@{/eventos}" class="btn btn-light" style="width: 100%;">
+                        Ver Eventos
+                    </a>
+                </div>
+
+                <!-- Card PQRS -->
+                <div style="background: linear-gradient(135deg, var(--color-warning) 0%, #ffa726 100%); padding: 2rem; border-radius: 8px; color: white; text-align: center;">
+                    <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+                    <h3 style="color: white; margin: 1rem 0;">Tu Opinión</h3>
+                    <p style="margin-bottom: 1.5rem; opacity: 0.95;">
+                        Comparte tu experiencia con tiendas y eventos
+                    </p>
+                    <a th:href="@{/pqrs/crear}" class="btn btn-light" style="width: 100%;">
+                        Enviar Opinión
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-lightning"></i>
+                    Acceso Rápido
+                </h2>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <a th:href="@{/tiendas}" class="btn btn-primary" style="width: 100%; justify-content: flex-start;">
+                    <i class="bi bi-shop"></i> Explorar Tiendas
+                </a>
+                <a th:href="@{/productos}" class="btn btn-success" style="width: 100%; justify-content: flex-start;">
+                    <i class="bi bi-basket"></i> Ver Productos
+                </a>
+                <a th:href="@{/eventos}" class="btn btn-info" style="width: 100%; justify-content: flex-start;">
+                    <i class="bi bi-calendar-event"></i> Eventos Próximos
+                </a>
+                <a th:href="@{/mis-eventos}" class="btn btn-warning" style="width: 100%; justify-content: flex-start;">
+                    <i class="bi bi-bookmark-check"></i> Mis Eventos
+                </a>
+                <a th:href="@{/pqrs/crear}" class="btn btn-secondary" style="width: 100%; justify-content: flex-start;">
+                    <i class="bi bi-chat-dots"></i> Enviar Opinión
+                </a>
+                <a th:href="@{/usuarios/perfil}" class="btn btn-secondary" style="width: 100%; justify-content: flex-start;">
+                    <i class="bi bi-person-circle"></i> Mi Perfil
+                </a>
+            </div>
+
+            <!-- Información útil -->
+            <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+                <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                    <i class="bi bi-lightbulb"></i> ¿Sabías que?
+                </h4>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
+                    Puedes confirmar tu asistencia a eventos agrícolas y recibir recordatorios.
+                    ¡Participa en la comunidad de Campo Libre!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categorías de productos -->
+    <div class="dashboard-section" style="margin-top: 2rem;">
+        <div class="dashboard-section-header">
+            <h2>
+                <i class="bi bi-grid"></i>
+                Explora por Categorías
+            </h2>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+            <a th:href="@{/productos(categoria='FRUTAS')}"
+               style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent;"
+               onmouseover="this.style.borderColor='var(--color-primary)'; this.style.transform='translateY(-5px)';"
+               onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
+                <i class="bi bi-apple" style="font-size: 2.5rem; color: var(--color-danger);"></i>
+                <p style="margin-top: 0.75rem; font-weight: 600; color: var(--color-text-dark);">Frutas</p>
+            </a>
+
+            <a th:href="@{/productos(categoria='VERDURAS')}"
+               style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent;"
+               onmouseover="this.style.borderColor='var(--color-primary)'; this.style.transform='translateY(-5px)';"
+               onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
+                <i class="bi bi-basket" style="font-size: 2.5rem; color: var(--color-success);"></i>
+                <p style="margin-top: 0.75rem; font-weight: 600; color: var(--color-text-dark);">Verduras</p>
+            </a>
+
+            <a th:href="@{/productos(categoria='LACTEOS')}"
+               style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent;"
+               onmouseover="this.style.borderColor='var(--color-primary)'; this.style.transform='translateY(-5px)';"
+               onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
+                <i class="bi bi-egg" style="font-size: 2.5rem; color: var(--color-info);"></i>
+                <p style="margin-top: 0.75rem; font-weight: 600; color: var(--color-text-dark);">Lácteos</p>
+            </a>
+
+            <a th:href="@{/productos(categoria='CARNES')}"
+               style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent;"
+               onmouseover="this.style.borderColor='var(--color-primary)'; this.style.transform='translateY(-5px)';"
+               onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
+                <i class="bi bi-basket2" style="font-size: 2.5rem; color: var(--color-danger);"></i>
+                <p style="margin-top: 0.75rem; font-weight: 600; color: var(--color-text-dark);">Carnes</p>
+            </a>
+
+            <a th:href="@{/productos(categoria='HERRAMIENTAS')}"
+               style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent;"
+               onmouseover="this.style.borderColor='var(--color-primary)'; this.style.transform='translateY(-5px)';"
+               onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
+                <i class="bi bi-tools" style="font-size: 2.5rem; color: var(--color-warning);"></i>
+                <p style="margin-top: 0.75rem; font-weight: 600; color: var(--color-text-dark);">Herramientas</p>
+            </a>
+
+            <a th:href="@{/productos(categoria='MAQUINARIA')}"
+               style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-decoration: none; transition: all 0.3s ease; border: 2px solid transparent;"
+               onmouseover="this.style.borderColor='var(--color-primary)'; this.style.transform='translateY(-5px)';"
+               onmouseout="this.style.borderColor='transparent'; this.style.transform='translateY(0)';">
+                <i class="bi bi-gear" style="font-size: 2.5rem; color: var(--color-primary);"></i>
+                <p style="margin-top: 0.75rem; font-weight: 600; color: var(--color-text-dark);">Maquinaria</p>
+            </a>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Reporte PQRS - Campo Libre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        h2 {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .fecha-generacion {
+            text-align: center;
+            font-size: 9px;
+            color: #95a5a6;
+            margin-bottom: 20px;
+        }
+        .estadisticas {
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .estadisticas h3 {
+            margin-top: 0;
+            font-size: 12px;
+            color: #34495e;
+        }
+        .estadisticas table {
+            width: 100%;
+            font-size: 9px;
+        }
+        .estadisticas td {
+            padding: 3px;
+        }
+        .estadisticas td:first-child {
+            font-weight: bold;
+            width: 60%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-size: 9px;
+        }
+        td {
+            border: 1px solid #bdc3c7;
+            padding: 6px;
+            font-size: 8px;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .estado-pendiente {
+            color: #e67e22;
+            font-weight: bold;
+        }
+        .estado-respondida {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .tipo-pregunta {
+            color: #3498db;
+        }
+        .tipo-queja {
+            color: #e74c3c;
+        }
+        .tipo-sugerencia {
+            color: #f39c12;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 8px;
+            color: #95a5a6;
+            border-top: 1px solid #bdc3c7;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>REPORTE DE PQRS</h1>
+<h2>Campo Libre - Sistema de Gestión</h2>
+<p class="fecha-generacion">Generado el: <span th:text="${fechaGeneracion}">01/01/2024 10:00</span></p>
+
+<!-- Estadísticas -->
+<div class="estadisticas">
+    <h3>Resumen Estadístico</h3>
+    <table>
+        <tr>
+            <td>Total de PQRS:</td>
+            <td th:text="${totalRegistros}">0</td>
+        </tr>
+        <tr>
+            <td>Pendientes:</td>
+            <td th:text="${estadisticas.pendientes}">0</td>
+        </tr>
+        <tr>
+            <td>Respondidas:</td>
+            <td th:text="${estadisticas.respondidas}">0</td>
+        </tr>
+        <tr>
+            <td>Preguntas:</td>
+            <td th:text="${estadisticas.preguntas}">0</td>
+        </tr>
+        <tr>
+            <td>Quejas:</td>
+            <td th:text="${estadisticas.quejas}">0</td>
+        </tr>
+        <tr>
+            <td>Sugerencias:</td>
+            <td th:text="${estadisticas.sugerencias}">0</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Tabla de PQRS -->
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Descripción</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+        <th>Asociado a</th>
+        <th>Respuesta</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="pqrs : ${pqrsList}">
+        <td th:text="${pqrs.id_pqrs}">1</td>
+        <td>
+                    <span th:text="${pqrs.tipo}"
+                          th:class="${pqrs.tipo.name() == 'PREGUNTA'} ? 'tipo-pregunta' : (${pqrs.tipo.name() == 'QUEJA'} ? 'tipo-queja' : 'tipo-sugerencia')">
+                        PREGUNTA
+                    </span>
+        </td>
+        <td th:text="${#strings.abbreviate(pqrs.descripcion, 60)}">Descripción...</td>
+        <td th:text="${#temporals.format(pqrs.fecha_envio, 'dd/MM/yyyy HH:mm')}">01/01/2024</td>
+        <td>
+                    <span th:text="${pqrs.estado}"
+                          th:class="${pqrs.estado.name() == 'PENDIENTE'} ? 'estado-pendiente' : 'estado-respondida'">
+                        PENDIENTE
+                    </span>
+        </td>
+        <td th:text="${pqrs.asociacion}">Administración General</td>
+        <td th:text="${pqrs.respuesta != null ? #strings.abbreviate(pqrs.respuesta, 50) : 'Sin respuesta'}">
+            Sin respuesta
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="footer">
+    <p>Este reporte fue generado automáticamente por el Sistema Campo Libre</p>
+    <p>Campo Libre © 2025 - Todos los derechos reservados</p>
+</div>
+</body>
+</html>

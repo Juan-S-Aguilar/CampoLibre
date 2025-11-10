@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Resumen del Pedido - CampoLibre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container my-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2><i class="fas fa-shopping-cart"></i> Resumen del Pedido</h2>
+                <p class="text-muted">Revisa los productos en tu carrito y completa los datos de entrega.</p>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger"> <span th:text="${error}"></span> </div>
+
+        <form th:action="@{/pedidos/confirmar}" method="post" th:object="${datosEntrega}">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-box"></i> Productos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Precio</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-center">Subtotal</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="item : ${items}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img th:if="${item.imagen_producto != null}"
+                                                     th:src="@{${item.imagen_producto}}"
+                                                     alt="Producto"
+                                                     class="me-3"
+                                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                                <div>
+                                                    <strong th:text="${item.nombre_producto}">Producto</strong>
+                                                    <br>
+                                                    <small class="text-muted"><i class="fas fa-store"></i>
+                                                        <span th:text="${item.nombre_tienda}">Tienda</span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center align-middle">
+                                            <span th:text="'$' + ${#numbers.formatDecimal(item.precio_unitario, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                                        </td>
+                                        <td class="text-center align-middle"><span th:text="${item.cantidad}">1</span></td>
+                                        <td class="text-center align-middle"><strong class="text-success" th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">$0</strong></td>
+                                    </tr>
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                        <td class="text-center">
+                                            <h5 class="text-success mb-0" th:text="'$' + ${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}">$0</h5>
+                                        </td>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos de entrega -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-truck"></i> Datos de Entrega</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nombre de Contacto *</label>
+                                    <input type="text" class="form-control" th:field="*{nombre_contacto}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Teléfono de Contacto *</label>
+                                    <input type="tel" class="form-control" th:field="*{telefono_contacto}" required>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Dirección de Entrega *</label>
+                                    <textarea class="form-control" th:field="*{direccion_entrega}" rows="2" placeholder="Calle 123 #45-67" required></textarea>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Ciudad</label>
+                                    <input type="text" class="form-control" th:field="*{ciudad}">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Notas Adicionales (Opcional)</label>
+                                    <textarea class="form-control" th:field="*{notas_adicionales}" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Resumen lateral -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm sticky-top" style="top:120px;">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-receipt"></i> Resumen</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Items:</span>
+                                <strong th:text="${items.size()}">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total:</span>
+                                <strong class="text-success" th:text="'$' + ${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')}">$0</strong>
+                            </div>
+                            <hr>
+                            <button type="submit" class="btn btn-success btn-lg w-100 mb-2"><i class="fas fa-lock"></i> Confirmar y Pagar</button>
+                            <a th:href="@{/carrito}" class="btn btn-outline-secondary w-100"> <i class="fas fa-arrow-left"></i> Volver al Carrito</a>
+                            <div class="alert alert-info mt-3 mb-0"><small><i class="fas fa-info-circle"></i> El pago será simulado.</small></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

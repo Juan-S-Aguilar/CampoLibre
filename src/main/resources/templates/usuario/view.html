@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Detalle Usuario - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-person-badge"></i>
+                Información del Usuario
+            </h2>
+            <p>Detalles completos del usuario en el sistema</p>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <!-- Información Personal -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-person"></i>
+                    Información Personal
+                </h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <a th:href="@{/usuarios/editar/{id}(id=${usuario.id_usuario})}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a th:href="@{/usuarios}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <!-- ID Usuario -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-hash"></i> ID Usuario
+                    </label>
+                    <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--color-primary);"
+                       th:text="${usuario.id_usuario}">1</p>
+                </div>
+
+                <!-- Nombre -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-person"></i> Nombre Completo
+                    </label>
+                    <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--color-text-dark);"
+                       th:text="${usuario.nombre}">Juan Pérez</p>
+                </div>
+
+                <!-- Email -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-envelope"></i> Correo Electrónico
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${usuario.email}">juan@ejemplo.com</p>
+                </div>
+
+                <!-- Teléfono -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-telephone"></i> Teléfono
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${usuario.telefono ?: 'No registrado'}">3001234567</p>
+                </div>
+
+                <!-- Tipo Documento -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-card-list"></i> Tipo de Documento
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${usuario.tipo_documento}">CC</p>
+                </div>
+
+                <!-- Número Documento -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-card-heading"></i> Número de Documento
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${usuario.documento}">1234567890</p>
+                </div>
+
+                <!-- Fecha Registro -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-calendar"></i> Fecha de Registro
+                    </label>
+                    <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
+                       th:text="${#temporals.format(usuario.fecha_registro, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</p>
+                </div>
+
+                <!-- Estado -->
+                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
+                        <i class="bi bi-toggle-on"></i> Estado
+                    </label>
+                    <span class="status-badge active" th:if="${usuario.estado == 'ACTIVO'}">
+                        <i class="bi bi-check-circle"></i> Activo
+                    </span>
+                    <span class="status-badge inactive" th:if="${usuario.estado == 'ELIMINADO'}">
+                        <i class="bi bi-x-circle"></i> Eliminado
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles Asignados -->
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-shield-lock"></i>
+                    Roles Asignados
+                </h2>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div th:each="rol : ${roles}"
+                     style="padding: 1rem 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+                    <i class="bi bi-shield-check" style="color: var(--color-primary); font-size: 1.5rem;"></i>
+                    <span style="margin-left: 0.5rem; font-weight: 600; color: var(--color-text-dark);">
+                        [[${rol.id_rol == 1 ? 'ADMINISTRADOR' : (rol.id_rol == 2 ? 'PROVEEDOR' : 'CONSUMIDOR')}]]
+                    </span>
+                </div>
+            </div>
+
+            <div th:if="${roles.isEmpty()}" class="empty-state" style="padding: 2rem;">
+                <i class="bi bi-shield-x"></i>
+                <h3>Sin roles asignados</h3>
+                <p>Este usuario no tiene ningún rol asignado</p>
+            </div>
+        </div>
+
+        <!-- Acciones de Administración -->
+        <div class="dashboard-section" th:if="${usuario.estado == 'ACTIVO'}">
+            <div class="dashboard-section-header">
+                <h2>
+                    <i class="bi bi-gear"></i>
+                    Acciones de Administración
+                </h2>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <a th:href="@{/usuarios/editar/{id}(id=${usuario.id_usuario})}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Editar Usuario
+                </a>
+                <a th:href="@{/usuarios/eliminar/{id}(id=${usuario.id_usuario})}"
+                   class="btn btn-danger"
+                   onclick="return confirm('¿Está seguro de eliminar este usuario?')">
+                    <i class="bi bi-trash"></i> Eliminar Usuario
+                </a>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>

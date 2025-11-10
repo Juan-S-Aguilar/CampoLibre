@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Iniciar Sesión - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="login-container">
+        <!-- Sección de bienvenida -->
+        <div class="welcome-section">
+            <span class="material-symbols-outlined" style="font-size: 4rem; margin-bottom: 1rem;">eco</span>
+            <h3>Bienvenido a Campo Libre</h3>
+            <p>
+                Conectarás con vendedores del campo, encontrarás cientos de productos frescos
+                e incluso podrás emprender tu propia tienda virtual.
+            </p>
+        </div>
+
+        <!-- Formulario de login -->
+        <div class="login-form-section">
+            <h3>Iniciar Sesión</h3>
+
+            <!-- Mensaje de error -->
+            <div th:if="${param.error}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Error:</strong> Usuario o contraseña inválidos.
+            </div>
+
+            <!-- Mensaje de logout -->
+            <div th:if="${param.logout}" class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle"></i>
+                Has cerrado sesión correctamente.
+            </div>
+
+            <!-- Mensaje de éxito en registro -->
+            <div th:if="${param.success}" class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle"></i>
+                ¡Registro exitoso! Ahora puedes iniciar sesión.
+            </div>
+
+            <form method="post" th:action="@{/login}">
+                <!-- Email -->
+                <div class="mb-3">
+                    <label for="username" class="form-label">
+                        <i class="bi bi-envelope"></i> Correo electrónico
+                    </label>
+                    <input type="email"
+                           class="form-control"
+                           id="username"
+                           name="username"
+                           placeholder="correo@ejemplo.com"
+                           required
+                           autofocus>
+                </div>
+
+                <!-- Contraseña -->
+                <div class="mb-4">
+                    <label for="password" class="form-label">
+                        <i class="bi bi-lock"></i> Contraseña
+                    </label>
+                    <input type="password"
+                           class="form-control"
+                           id="password"
+                           name="password"
+                           placeholder="Ingresa tu contraseña"
+                           required>
+                </div>
+
+                <!-- Botón de submit -->
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                    </button>
+                </div>
+            </form>
+
+            <!-- Link a registro -->
+            <div class="text-register">
+                <p>
+                    ¿No tienes una cuenta?
+                    <a th:href="@{/register}">
+                        <i class="bi bi-person-plus"></i> Regístrate aquí
+                    </a>
+                </p>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="text-center mt-4" style="padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                <p class="text-muted" style="font-size: 0.9rem;">
+                    <i class="bi bi-info-circle"></i>
+                    Al iniciar sesión, aceptas nuestros términos y condiciones.
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

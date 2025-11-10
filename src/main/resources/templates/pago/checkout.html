@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout - Pago</title>
+</head>
+<body>
+<h1>Confirmar pago</h1>
+<div>
+    <p>Pedido: <span th:text="${pedido.numero_pedido}"></span></p>
+    <p>Total: $<span th:text="${pedido.total}"></span></p>
+</div>
+<form th:action="@{/pagos/procesar/{id}(id=${pedido.id_pedido})}" method="post">
+    <label for="metodoPago">Selecciona método de pago:</label>
+    <select id="metodoPago" name="metodoPago">
+        <option th:each="m : ${metodos}" th:value="${m}" th:text="${m}"></option>
+    </select>
+    <button type="submit">Pagar</button>
+</form>
+
+<p><a th:href="@{/carrito}">Volver al carrito</a></p>
+</body>
+</html>

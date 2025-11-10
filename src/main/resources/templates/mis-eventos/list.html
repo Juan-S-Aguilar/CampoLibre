@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Mis Eventos - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-calendar-check"></i>
+                Mis Eventos Confirmados
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/eventos}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Eventos
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count">
+            <i class="bi bi-info-circle"></i>
+            Has confirmado <strong th:text="${misEventos.size()}">0</strong> evento(s)
+        </div>
+
+        <!-- Tabla de mis eventos -->
+        <div class="table-responsive" th:if="${!misEventos.isEmpty()}">
+            <table class="data-table" id="misEventosTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Evento</th>
+                    <th>Fecha de Confirmación</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="me : ${misEventos}">
+                    <td data-label="ID">
+                        <span th:text="${me.id_mis_eventos}">1</span>
+                    </td>
+
+                    <td data-label="Evento">
+                        <!-- No se dispone del nombre del evento en el DTO; enlazamos al detalle del evento por id -->
+                        <a th:href="@{/eventos/ver/{id}(id=${me.id_evento})}" class="link-primary">
+                            Evento ID: <strong th:text="${me.id_evento}">1</strong>
+                        </a>
+                        <br>
+                        <small style="color: var(--color-text-light);">Ver información completa del evento</small>
+                    </td>
+
+                    <td data-label="Fecha de Confirmación">
+                        <span th:text="${#temporals.format(me.fecha_guardado, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</span>
+                    </td>
+
+                    <td data-label="Acciones">
+                        <div class="table-actions" style="display:flex; gap:0.5rem; justify-content:center;">
+                            <!-- Ver detalle del evento -->
+                            <a th:href="@{/eventos/ver/{id}(id=${me.id_evento})}"
+                               class="btn-action btn-view"
+                               title="Ver evento">
+                                <i class="bi bi-eye"></i>
+                            </a>
+
+                            <!-- Cancelar asistencia -->
+                            <a th:href="@{/mis-eventos/cancelar/{id}(id=${me.id_mis_eventos})}"
+                               class="btn-action btn-delete"
+                               title="Cancelar asistencia"
+                               onclick="return confirm('¿Deseas cancelar tu asistencia a este evento?')">
+                                <i class="bi bi-x-circle"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${misEventos.isEmpty()}" class="empty-list">
+            <i class="bi bi-calendar-x"></i>
+            <h3>No tienes asistencias confirmadas</h3>
+            <p>Cuando confirmes asistencia a un evento, aparecerá aquí.</p>
+            <a th:href="@{/eventos}" class="btn btn-primary">
+                <i class="bi bi-calendar-event"></i> Ver Eventos
+            </a>
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>
+
