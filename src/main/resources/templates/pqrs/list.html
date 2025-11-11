@@ -98,7 +98,10 @@
                 <select id="filterEstado" class="form-select" onchange="filterTable()">
                     <option value="">Todos</option>
                     <option value="Pendiente">Pendiente</option>
-                    <option value="Respondida">Respondida</option>
+                    <option value="Respondida (Pendiente Consumidor)">Respondida</option>
+                    <option value="En Réplica">En Réplica</option>
+                    <option value="Cerrada Aceptada">Cerrada Aceptada</option>
+                    <option value="Cierre Definitivo">Cierre Definitivo</option>
                 </select>
             </div>
 
@@ -150,12 +153,23 @@
                         data-label="Fecha Envío">01/01/2024 10:00</td>
 
                     <td data-label="Estado">
-                            <span class="status-badge pending" th:if="${pqrs.estado.name() == 'PENDIENTE'}">
-                                <i class="bi bi-clock-history"></i> Pendiente
-                            </span>
+                        <span class="status-badge pending" th:if="${pqrs.estado.name() == 'PENDIENTE'}">
+                            <i class="bi bi-clock-history"></i> Pendiente
+                        </span>
+                        <span class="status-badge alvertencia" th:if="${pqrs.estado.name() == 'EN_REPLICA'}">
+                            <i class="bi bi-arrow-repeat"></i> En Réplica
+                        </span>
                         <span class="status-badge approved" th:if="${pqrs.estado.name() == 'RESPONDIDA'}">
-                                <i class="bi bi-check-circle"></i> Respondida
-                            </span>
+                            <i class="bi bi-patch-question"></i> Respondida (Pendiente Consumidor)
+                        </span>
+
+                        <span class="status-badge success" th:if="${pqrs.estado.name() == 'CERRADA_ACEPTADA'}">
+                            <i class="bi bi-check-all"></i> Cerrada Aceptada
+                        </span>
+
+                        <span class="status-badge danger" th:if="${pqrs.estado.name() == 'CERRADA_DEFINITIVA'}">
+                            <i class="bi bi-lock-fill"></i> Cierre Definitivo
+                        </span>
                     </td>
 
                     <!-- Columna Emisor (solo ADMIN) -->

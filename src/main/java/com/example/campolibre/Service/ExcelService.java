@@ -17,6 +17,11 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+
+import com.example.campolibre.Entity.PqrsRespuesta;
+import com.example.campolibre.Repository.PqrsRespuestaRepository;
 
 @Service
 public class ExcelService {
@@ -26,6 +31,9 @@ public class ExcelService {
 
     @Autowired
     private PqrsEventoRepository pqrsEventoRepository;
+
+    @Autowired
+    private PqrsRespuestaRepository pqrsRespuestaRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -161,15 +169,19 @@ public class ExcelService {
             dto.setDescripcion(pqrs.getDescripcion());
             dto.setFecha_envio(pqrs.getFecha_envio());
             dto.setEstado(pqrs.getEstado());
-            dto.setFecha_respuesta(pqrs.getFecha_respuesta());
-            dto.setRespuesta(pqrs.getRespuesta());
+            // dto.setFecha_respuesta(pqrs.getFecha_respuesta()); // ELIMINAR O IGNORAR
+            // dto.setRespuesta(pqrs.getRespuesta()); // ELIMINAR O IGNORAR
 
             if (pqrs.getEmisor() != null) {
                 dto.setId_emisor(pqrs.getEmisor().getId_usuario());
             }
+            // 💡 AJUSTE: El receptor es el responsable actual, pero podemos usar el emisor de la última respuesta
             if (pqrs.getReceptor() != null) {
                 dto.setId_receptor(pqrs.getReceptor().getId_usuario());
             }
+
+            // 💡 2. OBTENER LA ÚLTIMA INTERACCIÓN (CORRECCIÓN)
+            obtenerUltimaInteraccion(pqrs, dto);
 
             // Determinar asociación
             dto.setAsociacion(determinarAsociacion(pqrs));
@@ -178,6 +190,31 @@ public class ExcelService {
         }
 
         return resultado;
+    }
+
+    // 💡 NUEVO MÉTODO HELPER para obtener la última respuesta del historial
+    private void obtenerUltimaInteraccion(Pqrs pqrs, PqrsReporteItemDTO dto) {
+        // Usa el repositorio para buscar la respuesta más reciente
+        Optional<PqrsRespuesta> ultimaInteraccion = pqrsRespuestaRepository
+                .findFirstByPqrsOrderByFechaEmisionDesc(pqrs);
+
+        if (ultimaInteraccion.isPresent()) {
+            PqrsRespuesta r = ultimaInteraccion.get();
+
+            // Asignar el contenido y la fecha de la última interacción
+            dto.setRespuesta(r.getContenido());
+            dto.setFecha_respuesta(r.getFechaEmision());
+
+            // Opcional: Si quieres el ID de la persona que *envió* la última interacción (proveedor o consumidor)
+            // if (r.getEmisor() != null) {
+            //     dto.setId_receptor(r.getEmisor().getId_usuario());
+            // }
+
+        } else {
+            // Si no hay respuesta en el historial (solo está la PQRS inicial)
+            dto.setRespuesta(null);
+            dto.setFecha_respuesta(null);
+        }
     }
 
     /**

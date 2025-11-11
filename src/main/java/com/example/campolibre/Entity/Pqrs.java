@@ -2,9 +2,12 @@ package com.example.campolibre.Entity;
 
 import com.example.campolibre.Enum.EstadoPqrs;
 import com.example.campolibre.Enum.TipoPqrs;
+import com.example.campolibre.Enum.RolProceso; // Importar el nuevo Enum
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pqrs")
@@ -30,11 +33,16 @@ public class Pqrs {
     @Column(name = "estado", nullable = false)
     private EstadoPqrs estado = EstadoPqrs.PENDIENTE;
 
-    @Column(name = "fecha_respuesta")
-    private LocalDateTime fecha_respuesta;
+    // Nuevo campo: Indica a qué rol le toca la siguiente acción
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pendiente_de", nullable = false)
+    private RolProceso pendienteDe = RolProceso.PROVEEDOR; // Inicialmente, el Proveedor debe responder
 
-    @Column(name = "respuesta", length = 1000)
-    private String respuesta;
+    // ¡CAMPOS ELIMINADOS! Ya no se usan: fecha_respuesta, respuesta
+
+    // AÑADIDO: Relación Uno a Muchos con el Historial de Respuestas/Réplicas
+    @OneToMany(mappedBy = "pqrs", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<PqrsRespuesta> historialRespuestas = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "id_emisor", nullable = false)

@@ -230,6 +230,22 @@ button.btn-action { background:none; border:none; color:inherit; cursor:pointer;
     color: #856404;
     border: 1px solid #ffeaa7;
 }
+.status-badge.success{
+    background-color: #88d4b1ad;
+    color: #2a5142;
+    border: 1px solid #198754;
+}
+.status-badge.alvertencia{
+     background-color: #e3b529;
+     color: #4d4633;
+     border: 1px solid #ffc107;
+}
+
+.status-badge.danger{
+    background-color: #edbabf;
+    color: #432629;
+    border: 1px solid #dc3545;
+}
 
 .status-badge.approved {
     background-color: #d1ecf1;

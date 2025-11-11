@@ -11,8 +11,11 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+
 @Repository
 public interface PqrsRepository extends JpaRepository<Pqrs, Long> {
+
 
     @Query("SELECT p FROM Pqrs p WHERE p.estado = :estado")
     List<Pqrs> findByEstado(@Param("estado") EstadoPqrs estado);
@@ -72,4 +75,6 @@ public interface PqrsRepository extends JpaRepository<Pqrs, Long> {
     List<Pqrs> findByEventoParaReporte(
             @Param("idEvento") Long idEvento
     );
+
+
 }
