@@ -23,10 +23,11 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login", "/", "/register", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
-                        .requestMatchers("usuarios/perfil", "/usuarios/perfil/actualizar").hasAnyAuthority("ADMINISTRADOR", "CONSUMIDOR", "PROVEEDOR")
+                        .requestMatchers("usuarios/perfil", "/usuarios/perfil/actualizar","/carrito/contador").hasAnyAuthority("ADMINISTRADOR", "CONSUMIDOR", "PROVEEDOR")
                         .requestMatchers("/consumidor/**", "/tiendas/**", "/productos/**", "/eventos/**", "/mis-eventos/**").hasAnyAuthority("ADMINISTRADOR", "CONSUMIDOR", "PROVEEDOR")
                         .requestMatchers("/proveedor/**", "/eventos/crear", "/eventos/mis-eventos").hasAnyAuthority("ADMINISTRADOR", "PROVEEDOR")
                         .requestMatchers("/admin/**", "/usuarios/**").hasAuthority("ADMINISTRADOR")
+                        .requestMatchers("/pedidos/**", "/carrito/**", "/pagos/**").hasAnyAuthority("CONSUMIDOR")
                         .requestMatchers("/pqrs/**").authenticated()
                         .anyRequest().authenticated()
                 )
