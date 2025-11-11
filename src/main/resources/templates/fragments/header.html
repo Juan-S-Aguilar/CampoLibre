@@ -178,7 +178,7 @@
                             </li>
 
                             <!-- ✨ CARRITO (solo para usuarios autenticados) -->
-                            <li sec:authorize="isAuthenticated()">
+                            <li sec:authorize="hasAuthority('CONSUMIDOR')">
                                 <a class="dropdown-item position-relative" th:href="@{/carrito}">
                                     <i class="bi bi-cart"></i> Mi Carrito
                                     <span class="badge bg-danger rounded-pill position-absolute"
@@ -195,17 +195,17 @@
                                 </a>
                             </li>
 
-                            <!-- Mis Ventas (solo proveedores) -->
+
+                            <!-- Mis Ventas (solo proveedores)
                             <li sec:authorize="hasAuthority('PROVEEDOR')">
                                 <a class="dropdown-item position-relative" th:href="@{/pedidos/ventas}">
                                     <i class="bi bi-graph-up"></i> Mis Ventas
-                                    <!-- Badge de pedidos pendientes (opcional) -->
                                     <span th:if="${pedidosPendientes != null and pedidosPendientes > 0}"
                                           class="badge bg-warning rounded-pill position-absolute"
                                           style="top: 8px; right: 15px; font-size: 0.7rem;"
                                           th:text="${pedidosPendientes}">0</span>
                                 </a>
-                            </li>
+                            </li> -->
 
                             <li><hr class="dropdown-divider"></li>
 
