@@ -122,6 +122,8 @@ public class EventoController {
 
         try {
             String emailConsumidor = authentication.getName();
+            System.out.println("[EventoController] confirmarAsistencia llamada. idEvento=" + idEvento + ", emailConsumidor=" + emailConsumidor);
+
             UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(emailConsumidor);
             EventoDTO evento = eventoService.obtenerEventoPorId(idEvento);
 
@@ -131,15 +133,25 @@ public class EventoController {
             }
 
             // 2. Lógica principal: Guardar la relación en la base de datos
-            // Llama al método que verifica duplicados y guarda
+            System.out.println("[EventoController] Guardando asistencia para usuarioId=" + usuario.getId_usuario() + " eventoId=" + idEvento);
             misEventosService.guardarAsistencia(usuario.getId_usuario(), idEvento);
+            System.out.println("[EventoController] Asistencia guardada para usuarioId=" + usuario.getId_usuario() + " eventoId=" + idEvento);
 
-            // 3. ENVÍO AUTOMÁTICO DEL CORREO
-            emailService.enviarInvitacion(emailConsumidor, evento.getNombre());
+            // 3. ENVÍO AUTOMÁTICO DEL CORREO: enviar confirmación/invitación al consumidor
+            try {
+                if (emailConsumidor != null && !emailConsumidor.isEmpty()) {
+                    System.out.println("[EventoController] Llamando a EmailService.enviarConfirmacionParticipacion para " + emailConsumidor);
+                    emailService.enviarConfirmacionParticipacion(emailConsumidor, evento.getNombre());
+                    System.out.println("[EventoController] llamada a EmailService finalizada para " + emailConsumidor);
+                }
+            } catch (Exception mailEx) {
+                System.err.println("[EventoController] Error enviando correo tras confirmar asistencia: " + mailEx.getMessage());
+                mailEx.printStackTrace();
+            }
 
             redirectAttributes.addFlashAttribute("mensaje",
                     "¡Has confirmado tu asistencia a " + evento.getNombre() +
-                            "! Se ha enviado la invitación a tu correo electrónico.");
+                            "! Se ha enviado la confirmación a tu correo electrónico.");
 
         } catch (Exception e) {
             System.err.println("❌ Error al confirmar asistencia y enviar correo: " + e.getMessage());
@@ -270,6 +282,26 @@ public class EventoController {
         try {
             eventoService.cambiarEstadoEvento(id, EstadoEvento.APROBADO);
             redirectAttributes.addFlashAttribute("mensaje", "Evento aprobado exitosamente.");
+
+            // Enviar invitación por correo a todos los usuarios activos
+            try {
+                EventoDTO evento = eventoService.obtenerEventoPorId(id);
+                List<com.example.campolibre.DTO.UsuarioDTO> usuarios = usuarioService.obtenerUsuariosActivos();
+                if (usuarios != null) {
+                    for (com.example.campolibre.DTO.UsuarioDTO u : usuarios) {
+                        try {
+                            if (u.getEmail() != null && !u.getEmail().isEmpty()) {
+                                emailService.enviarInvitacion(u.getEmail(), evento.getNombre());
+                            }
+                        } catch (Exception mailEx) {
+                            System.err.println("Advertencia: error al enviar invitación a " + u.getEmail() + ": " + mailEx.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception eSend) {
+                System.err.println("Advertencia: error al enviar invitaciones tras aprobar evento: " + eSend.getMessage());
+            }
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al aprobar evento: " + e.getMessage());
         }

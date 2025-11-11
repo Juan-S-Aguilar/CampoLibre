@@ -195,7 +195,7 @@
                             </a>
 
                             <!-- Confirmar Asistencia via AJAX (fetch) -->
-                            <form th:action="@{/mis-eventos/confirmar/{id}(id=${evento.id_evento})}"
+                            <form th:action="@{/eventos/confirmar/{id}(id=${evento.id_evento})}"
                                   method="post"
                                   class="d-inline"
                                   sec:authorize="isAuthenticated()">

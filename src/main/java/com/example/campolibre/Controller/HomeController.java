@@ -49,6 +49,9 @@ public class HomeController {
     @Autowired
     private PedidoService pedidoService;
 
+    @Autowired
+    private com.example.campolibre.Service.EmailService emailService;
+
 
     // ==================== RUTAS PÚBLICAS ====================
 
@@ -107,6 +110,15 @@ public class HomeController {
                 );
             }
 
+            // 5. Enviar correo de confirmación de cuenta (async dentro del servicio)
+            try {
+                if (nuevoUsuario.getEmail() != null && !nuevoUsuario.getEmail().isEmpty()) {
+                    emailService.enviarConfirmacionCuenta(nuevoUsuario.getEmail(), nuevoUsuario.getNombre());
+                }
+            } catch (Exception mailEx) {
+                System.err.println("Advertencia: error al enviar correo de confirmación de cuenta: " + mailEx.getMessage());
+            }
+
             redirectAttributes.addFlashAttribute("success", "Usuario registrado exitosamente. Puedes iniciar sesión.");
             return "redirect:/login";
         } catch (Exception e) {
@@ -139,9 +151,6 @@ public class HomeController {
                     .flatMap(p -> p.getItems().stream())
                     .mapToLong(ItemPedidoDTO::getCantidad)
                     .sum();
-
-            model.addAttribute("totalPedidos", totalPedidos);
-            model.addAttribute("totalProductosVendidos", totalProductosVendidos);
 
             model.addAttribute("totalUsuarios", totalUsuarios);
             model.addAttribute("totalTiendas", totalTiendas);
