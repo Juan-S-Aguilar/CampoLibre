@@ -3,6 +3,7 @@ package com.example.campolibre.Controller;
 import com.example.campolibre.DTO.*;
 import com.example.campolibre.Entity.Pqrs;
 import com.example.campolibre.Enum.EstadoPqrs;
+import com.example.campolibre.Enum.RolProceso;
 import com.example.campolibre.Enum.TipoPqrs;
 import com.example.campolibre.Repository.PqrsEventoRepository;
 import com.example.campolibre.Repository.PqrsRepository;
@@ -69,7 +70,6 @@ public class PqrsController {
 
     }
 
-    // Ver PQRS (ADMIN ve todas sin asociación, otros ven las suyas y las de sus tiendas/eventos)
     // Ver PQRS (ADMIN ve solo sin asociación, otros ven las suyas y las de sus tiendas/eventos)
     @GetMapping
     public String listarPqrs(
@@ -115,16 +115,22 @@ public class PqrsController {
             }
 
             pqrsList = pqrsEntities.stream()
-                    .map(this::convertirAPqrsDTO) // Necesitas crear este método helper
+                    .map(pqrs -> pqrsService.obtenerPqrsPorId(pqrs.getId_pqrs()))
                     .collect(Collectors.toList());
         } else {
             // Sin filtros: comportamiento actual
             pqrsList = pqrsService.obtenerPqrsVisibles(idUsuario, esAdmin);
         }
 
-        // Marcar permisos de respuesta
+        // Marcar permisos de respuesta (Lógica Corregida)
         for (PqrsDTO dto : pqrsList) {
-            dto.setPuede_responder(pqrsService.puedeResponder(dto.getId_pqrs(), idUsuario, esAdmin));
+            boolean tienePermisoEstatico = pqrsService.puedeResponder(dto.getId_pqrs(), idUsuario, esAdmin);
+
+            // Solo puede responder si tiene el permiso Y es el turno del proveedor
+            boolean puedeResponderAhora = tienePermisoEstatico &&
+                    dto.getPendienteDe() == RolProceso.PROVEEDOR;
+
+            dto.setPuede_responder(puedeResponderAhora);
         }
 
         model.addAttribute("pqrsList", pqrsList);
@@ -134,7 +140,7 @@ public class PqrsController {
         return "pqrs/list";
     }
 
-    // ✅ Método helper para convertir entidad a DTO
+/*    // ✅ Método helper para convertir entidad a DTO
     private PqrsDTO convertirAPqrsDTO(Pqrs pqrs) {
         PqrsDTO dto = new PqrsDTO();
         dto.setId_pqrs(pqrs.getId_pqrs());
@@ -156,7 +162,7 @@ public class PqrsController {
         // ... (copiar lógica de mapToDto en PqrsImplement)
 
         return dto;
-    }
+    }*/
 
     // Ver PQRS pendientes (ADMIN)
     @GetMapping("/pendientes")
@@ -187,7 +193,6 @@ public class PqrsController {
         return "pqrs/pendientes";
     }
 
-    // Ver detalle de PQRS
     @GetMapping("/ver/{id}")
     public String verPqrs(@PathVariable Long id, Model model, Authentication authentication) {
         PqrsDTO pqrs = pqrsService.obtenerPqrsPorId(id);
@@ -196,7 +201,7 @@ public class PqrsController {
         PqrsTiendaDTO pqrsTienda = pqrsTiendaService.obtenerPorPqrsId(id);
         PqrsEventoDTO pqrsEvento = pqrsEventoService.obtenerPorPqrsId(id);
 
-        // Obtener usuario actual
+        // Obtener usuario actual (idUsuarioActual, esAdmin)
         Long idUsuarioActual = null;
         boolean esAdmin = false;
         if (authentication != null && authentication.isAuthenticated()) {
@@ -206,11 +211,7 @@ public class PqrsController {
             if (usuario != null) idUsuarioActual = usuario.getId_usuario();
         }
 
-        // Regla de acceso:
-        // - Si no está asociada a tienda ni evento => solo ADMIN
-        // - Si está asociada a tienda => la ve el dueño de la tienda o el emisor
-        // - Si está asociada a evento => la ve el creador del evento o el emisor
-        // - El emisor siempre puede ver
+        // Regla de acceso (permitido)
         boolean permitido = false;
         if (pqrs.getId_emisor() != null && idUsuarioActual != null && pqrs.getId_emisor().equals(idUsuarioActual)) {
             permitido = true; // emisor
@@ -245,13 +246,43 @@ public class PqrsController {
             return "redirect:/pqrs"; // denegar acceso
         }
 
-        // indicar si el usuario actual puede responder esta PQRS
-        boolean puedeResponder = pqrsService.puedeResponder(id, idUsuarioActual, esAdmin);
-        pqrs.setPuede_responder(puedeResponder);
+        // ---------------------------------------------------------------------------------
+        // 💡 LÓGICA DE UI PARA TRAZABILIDAD (FINAL Y CORREGIDA)
+        // ---------------------------------------------------------------------------------
 
+        // 1. Lógica del Botón "Contáctenos"
+        boolean mostrarBotonContacto = pqrs.getEstado() == EstadoPqrs.CERRADA_DEFINITIVA;
+
+        // Lógica de Permisos Estáticos (para simplificar las banderas)
+        boolean tienePermisoEstaticoProveedor = pqrsService.puedeResponder(id, idUsuarioActual, esAdmin);
+        boolean esEmisorOriginal = idUsuarioActual != null && idUsuarioActual.equals(pqrs.getId_emisor());
+
+
+        // Bandera para el botón "Responder" (Proveedor/Admin)
+        // Solo si tiene el permiso estático Y le toca al PROVEEDOR.
+        boolean puedeResponderAhora = tienePermisoEstaticoProveedor &&
+                pqrs.getPendienteDe() == RolProceso.PROVEEDOR;
+
+        pqrs.setPuede_responder(puedeResponderAhora);
+
+
+        // Bandera para los botones "Replicar" y "Cerrar por Aceptación" (Consumidor)
+        // Solo si es el Emisor Y le toca al CONSUMIDOR (independiente del estado exacto).
+        boolean puedeConsumidorActuar = esEmisorOriginal &&
+                pqrs.getPendienteDe() == RolProceso.CONSUMIDOR;
+
+        boolean puedeReplicar = puedeConsumidorActuar;
+        boolean puedeCerrar = puedeConsumidorActuar; // Mismo turno
+
+        // Marcar los booleanos para la vista
         model.addAttribute("pqrs", pqrs);
         model.addAttribute("pqrsTienda", pqrsTienda);
         model.addAttribute("pqrsEvento", pqrsEvento);
+
+        model.addAttribute("mostrarBotonContacto", mostrarBotonContacto);
+        model.addAttribute("puedeReplicar", puedeReplicar);
+        model.addAttribute("puedeCerrar", puedeCerrar);
+
         return "pqrs/view";
     }
 
@@ -268,7 +299,6 @@ public class PqrsController {
         model.addAttribute("idEventoSeleccionado", idEvento);
         return "pqrs/form";
     }
-
     @PostMapping("/crear")
     public String crearPqrs(@ModelAttribute PqrsDTO pqrsDTO,
                             @RequestParam(required = false) Long idTienda,
@@ -278,25 +308,31 @@ public class PqrsController {
         try {
             String email = authentication.getName();
             UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+
+            // 1. Asignar el ID del emisor.
             pqrsDTO.setId_emisor(usuario.getId_usuario());
 
-            PqrsDTO nuevaPqrs = pqrsService.crearPqrs(pqrsDTO);
-
-            // Asociar con tienda si se proporcionó
+            // 💡 CORRECCIÓN CRÍTICA: Asignar los IDs de asociación al DTO
+            // Esto permite que PqrsImplement determine el receptor (Proveedor/Admin)
+            // y cree la asociación (PqrsTienda/PqrsEvento).
             if (idTienda != null) {
-                PqrsTiendaDTO pqrsTiendaDTO = new PqrsTiendaDTO();
-                pqrsTiendaDTO.setId_pqrs(nuevaPqrs.getId_pqrs());
-                pqrsTiendaDTO.setId_tienda(idTienda);
-                pqrsTiendaService.crearPqrsTienda(pqrsTiendaDTO);
+                pqrsDTO.setId_tienda(idTienda);
+                // Asegurarse de que idEvento sea null si se selecciona Tienda, para evitar ambigüedad.
+                pqrsDTO.setId_evento(null);
+            } else if (idEvento != null) {
+                pqrsDTO.setId_evento(idEvento);
+                // Asegurarse de que idTienda sea null si se selecciona Evento.
+                pqrsDTO.setId_tienda(null);
+            } else {
+                // Si ambos son null, la PQRS va al Admin (que ya es el valor por defecto en el DTO).
+                pqrsDTO.setId_tienda(null);
+                pqrsDTO.setId_evento(null);
             }
 
-            // Asociar con evento si se proporcionó
-            if (idEvento != null) {
-                PqrsEventoDTO pqrsEventoDTO = new PqrsEventoDTO();
-                pqrsEventoDTO.setId_pqrs(nuevaPqrs.getId_pqrs());
-                pqrsEventoDTO.setId_evento(idEvento);
-                pqrsEventoService.crearPqrsEvento(pqrsEventoDTO);
-            }
+
+            // 2. Llamar al servicio.
+            // El servicio centraliza la lógica de: Receptor, pendienteDe, Pqrs.save(), y PqrsTienda/Evento.save().
+            PqrsDTO nuevaPqrs = pqrsService.crearPqrs(pqrsDTO);
 
             redirectAttributes.addFlashAttribute("mensaje", "PQRS creada exitosamente.");
         } catch (Exception e) {
@@ -304,6 +340,7 @@ public class PqrsController {
         }
         return "redirect:/pqrs";
     }
+
 
     // Responder PQRS (ADMIN o propietario/creador asociado)
     @GetMapping("/responder/{id}")
@@ -329,7 +366,7 @@ public class PqrsController {
         return "pqrs/responder";
     }
 
-    @PostMapping("/responder/{id}")
+   /* @PostMapping("/responder/{id}")
     public String responderPqrs(@PathVariable Long id,
                                 @RequestParam String respuesta,
                                 Authentication authentication,
@@ -356,7 +393,7 @@ public class PqrsController {
             redirectAttributes.addFlashAttribute("error", "Error al responder PQRS: " + e.getMessage());
         }
         return "redirect:/pqrs/pendientes";
-    }
+    }*/
 
     /**
      * Genera reporte de PQRS en formato Excel
@@ -490,6 +527,96 @@ public class PqrsController {
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(new InputStreamResource(bais));
+    }
+
+    //___________________________________________________________________________________________________________________________
+
+
+
+    @PostMapping("/registrar-respuesta/{id}")
+    public String registrarRespuesta(@PathVariable Long id,
+                                     @RequestParam String contenido,
+                                     Authentication authentication,
+                                     RedirectAttributes redirectAttributes) {
+        boolean esAdmin = false;
+        Long idUsuario = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            esAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"));
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+            if (usuario != null) idUsuario = usuario.getId_usuario();
+        }
+
+        // permiso para responder (La lógica se mantiene igual)
+        if (!pqrsService.puedeResponder(id, idUsuario, esAdmin)) {
+            redirectAttributes.addFlashAttribute("error", "No autorizado para registrar respuesta en esta PQRS.");
+            return "redirect:/pqrs";
+        }
+
+        try {
+            pqrsService.registrarRespuesta(id, contenido, idUsuario);
+            redirectAttributes.addFlashAttribute("mensaje", "Respuesta registrada exitosamente. El consumidor ha sido notificado.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al registrar respuesta: " + e.getMessage());
+        }
+
+        // 💡 AJUSTE DE REDIRECCIÓN: Redirigir según el rol
+        if (esAdmin) {
+            // El Administrador debe volver a su lista de pendientes para continuar el trabajo
+            return "redirect:/pqrs/pendientes";
+        } else {
+            // Los dueños de tienda/evento vuelven al detalle para ver la trazabilidad
+            return "redirect:/pqrs/ver/" + id;
+        }
+    }
+
+    // --- ✅ NUEVO Endpoint POST /registrar-replica/{id} (Réplica del Consumidor) ---
+    @PostMapping("/registrar-replica/{id}")
+    public String registrarReplica(@PathVariable Long id,
+                                   @RequestParam String contenido,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttributes) {
+
+        Long idUsuario = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+            if (usuario != null) idUsuario = usuario.getId_usuario();
+        }
+
+        try {
+            // El servicio valida si es el emisor y si el estado es RESPONDIDA
+            pqrsService.registrarReplica(id, contenido, idUsuario);
+            redirectAttributes.addFlashAttribute("mensaje", "Su réplica ha sido enviada. El proveedor debe responder.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al enviar la réplica: " + e.getMessage());
+        }
+
+        return "redirect:/pqrs/ver/" + id;
+    }
+
+    // --- ✅ NUEVO Endpoint POST /cerrar-pqrs/{id} (Aceptación del Consumidor) ---
+    @PostMapping("/cerrar-pqrs/{id}")
+    public String cerrarPqrsPorConsumidor(@PathVariable Long id,
+                                          Authentication authentication,
+                                          RedirectAttributes redirectAttributes) {
+
+        Long idUsuario = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+            if (usuario != null) idUsuario = usuario.getId_usuario();
+        }
+
+        try {
+            // El servicio valida si es el emisor y si el estado es RESPONDIDA
+            pqrsService.cerrarPqrsPorConsumidor(id, idUsuario);
+            redirectAttributes.addFlashAttribute("mensaje", "PQRS cerrada exitosamente por aceptación.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cerrar la PQRS: " + e.getMessage());
+        }
+
+        return "redirect:/pqrs/ver/" + id;
     }
 
 }

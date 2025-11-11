@@ -23,6 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.campolibre.Entity.PqrsRespuesta;
+import com.example.campolibre.Repository.PqrsRespuestaRepository;
+import java.util.Optional;
+
 @Service
 public class PdfService {
 
@@ -34,6 +38,9 @@ public class PdfService {
 
     @Autowired
     private PqrsEventoRepository pqrsEventoRepository;
+
+    @Autowired
+    private PqrsRespuestaRepository pqrsRespuestaRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -81,8 +88,8 @@ public class PdfService {
             dto.setDescripcion(pqrs.getDescripcion());
             dto.setFecha_envio(pqrs.getFecha_envio());
             dto.setEstado(pqrs.getEstado());
-            dto.setFecha_respuesta(pqrs.getFecha_respuesta());
-            dto.setRespuesta(pqrs.getRespuesta());
+            // dto.setFecha_respuesta(pqrs.getFecha_respuesta()); // Ya no se usan los campos directos de PQRS
+            // dto.setRespuesta(pqrs.getRespuesta());
 
             if (pqrs.getEmisor() != null) {
                 dto.setId_emisor(pqrs.getEmisor().getId_usuario());
@@ -91,6 +98,9 @@ public class PdfService {
                 dto.setId_receptor(pqrs.getReceptor().getId_usuario());
             }
 
+            // 💡 2. OBTENER LA ÚLTIMA INTERACCIÓN (NUEVA LÓGICA)
+            obtenerUltimaInteraccion(pqrs, dto);
+
             // Determinar asociación
             dto.setAsociacion(determinarAsociacion(pqrs));
 
@@ -98,6 +108,25 @@ public class PdfService {
         }
 
         return resultado;
+    }
+
+    /**
+     * Helper para obtener la última respuesta del historial de trazabilidad.
+     */
+    private void obtenerUltimaInteraccion(Pqrs pqrs, PqrsReporteItemDTO dto) {
+        // Usa el repositorio para buscar la respuesta/réplica más reciente
+        Optional<PqrsRespuesta> ultimaInteraccion = pqrsRespuestaRepository
+                .findFirstByPqrsOrderByFechaEmisionDesc(pqrs);
+
+        if (ultimaInteraccion.isPresent()) {
+            PqrsRespuesta r = ultimaInteraccion.get();
+            // Asignar el contenido y la fecha de la última interacción del historial
+            dto.setRespuesta(r.getContenido());
+            dto.setFecha_respuesta(r.getFechaEmision());
+        } else {
+            dto.setRespuesta(null);
+            dto.setFecha_respuesta(null);
+        }
     }
 
     /**

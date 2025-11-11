@@ -10,7 +10,6 @@
 <main th:fragment="content">
     <div class="form-container">
 
-        <!-- Header -->
         <div class="form-header">
             <h2>
                 <i class="bi bi-chat-square-dots"></i>
@@ -19,13 +18,15 @@
             <p>Información completa de la PQRS</p>
         </div>
 
-        <!-- Mensajes -->
         <div th:if="${mensaje}" class="alert alert-success" role="alert">
             <i class="bi bi-check-circle"></i>
             <span th:text="${mensaje}">Operación exitosa</span>
         </div>
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-x-circle"></i>
+            <span th:text="${error}">Ocurrió un error</span>
+        </div>
 
-        <!-- Sección: Información de la PQRS -->
         <div class="dashboard-section">
             <div class="dashboard-section-header">
                 <h2>
@@ -33,12 +34,20 @@
                     Información General
                 </h2>
                 <div style="display: flex; gap: 0.5rem;">
-                    <!-- Botón de responder: visible si el servicio marcó que el usuario puede responder y está pendiente -->
-                    <a th:if="${pqrs.puede_responder} and ${pqrs.estado.name()} == 'PENDIENTE'"
+
+                    <a th:if="${pqrs.puede_responder} and (${pqrs.estado.name()} == 'PENDIENTE' or ${pqrs.estado.name()} == 'EN_REPLICA')"
                        th:href="@{/pqrs/responder/{id}(id=${pqrs.id_pqrs})}"
                        class="btn btn-success">
-                        <i class="bi bi-chat-left-text"></i> Responder
+                        <i class="bi bi-chat-left-text"></i>
+                        <span th:text="${pqrs.estado.name() == 'EN_REPLICA'} ? 'Responder Réplica' : 'Responder'">Responder</span>
                     </a>
+
+                    <a th:if="${mostrarBotonContacto}"
+                       href="mailto:contactenos@campolibre.com"
+                       class="btn btn-danger">
+                        <i class="bi bi-person-rolodex"></i> Contáctenos
+                    </a>
+
                     <a th:href="@{/pqrs}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Volver
                     </a>
@@ -46,7 +55,6 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
-                <!-- ID PQRS -->
                 <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
                         <i class="bi bi-hash"></i> ID PQRS
@@ -55,7 +63,6 @@
                        th:text="${pqrs.id_pqrs}">1</p>
                 </div>
 
-                <!-- Tipo -->
                 <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
                         <i class="bi bi-tag"></i> Tipo
@@ -68,7 +75,6 @@
                     </span>
                 </div>
 
-                <!-- Fecha de envío -->
                 <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
                         <i class="bi bi-calendar"></i> Fecha de Envío
@@ -77,7 +83,6 @@
                        th:text="${#temporals.format(pqrs.fecha_envio, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</p>
                 </div>
 
-                <!-- Estado -->
                 <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
                         <i class="bi bi-toggle-on"></i> Estado
@@ -86,11 +91,20 @@
                         <i class="bi bi-clock-history"></i> Pendiente
                     </span>
                     <span class="status-badge approved" th:if="${pqrs.estado.name() == 'RESPONDIDA'}">
-                        <i class="bi bi-check-circle"></i> Respondida
+                        <i class="bi bi-patch-question"></i> Respondida (Pendiente Consumidor)
+                    </span>
+                    <span class="status-badge warning" th:if="${pqrs.estado.name() == 'EN_REPLICA'}">
+                        <i class="bi bi-arrow-repeat"></i> En Réplica
+                    </span>
+                    <span class="status-badge success" th:if="${pqrs.estado.name() == 'CERRADA_ACEPTADA'}">
+                        <i class="bi bi-check-all"></i> Cerrada Aceptada
+                    </span>
+
+                    <span class="status-badge danger" th:if="${pqrs.estado.name() == 'CERRADA_DEFINITIVA'}">
+                        <i class="bi bi-lock-fill"></i> Cierre Definitivo
                     </span>
                 </div>
 
-                <!-- Emisor (solo visible para ADMIN) -->
                 <div sec:authorize="hasAuthority('ADMINISTRADOR')"
                      style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
@@ -100,21 +114,19 @@
                        th:text="${pqrs.id_emisor}">1</p>
                 </div>
 
-                <!-- Receptor (si está respondida) -->
-                <div th:if="${pqrs.estado.name() == 'RESPONDIDA' and pqrs.id_receptor != null}"
+                <div th:if="${pqrs.id_receptor != null}"
                      style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
-                        <i class="bi bi-person-badge"></i> Respondida por (ID Admin)
+                        <i class="bi bi-person-badge"></i> Última Interacción por (ID Usuario)
                     </label>
                     <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
                        th:text="${pqrs.id_receptor}">2</p>
                 </div>
 
-                <!-- Fecha de respuesta (si está respondida) -->
-                <div th:if="${pqrs.estado.name() == 'RESPONDIDA' and pqrs.fecha_respuesta != null}"
+                <div th:if="${pqrs.fecha_respuesta != null}"
                      style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
                     <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
-                        <i class="bi bi-calendar-check"></i> Fecha de Respuesta
+                        <i class="bi bi-calendar-check"></i> Fecha Última Interacción
                     </label>
                     <p style="margin: 0; font-size: 1.1rem; color: var(--color-text-dark);"
                        th:text="${#temporals.format(pqrs.fecha_respuesta, 'dd/MM/yyyy HH:mm')}">02/01/2024 15:30</p>
@@ -122,12 +134,11 @@
             </div>
         </div>
 
-        <!-- Sección: Descripción -->
         <div class="dashboard-section">
             <div class="dashboard-section-header">
                 <h2>
                     <i class="bi bi-chat-left-text"></i>
-                    Descripción
+                    Descripción (PQRS Inicial)
                 </h2>
             </div>
             <div style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
@@ -138,79 +149,101 @@
             </div>
         </div>
 
-        <!-- Sección: Asociaciones (si existe) -->
-        <div class="dashboard-section" th:if="${pqrsTienda != null or pqrsEvento != null}">
+        <div class="dashboard-section">
             <div class="dashboard-section-header">
                 <h2>
-                    <i class="bi bi-link-45deg"></i>
-                    Asociada con
+                    <i class="bi bi-journals"></i>
+                    Historial de Interacciones
                 </h2>
             </div>
 
-            <!-- Si está asociada con una tienda -->
-            <div th:if="${pqrsTienda != null}"
+            <div th:if="${pqrs.respuesta != null}"
                  style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success);">
                 <h4 style="color: var(--color-success); margin-bottom: 0.5rem;">
-                    <i class="bi bi-shop"></i> Tienda
+                    <i class="bi bi-chat-right-text"></i> Última Interacción
                 </h4>
-                <p style="margin: 0; color: var(--color-text-dark);">
-                    ID de Tienda: <strong th:text="${pqrsTienda.id_tienda}">1</strong>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-light);">
+                    Tipo: <strong th:text="${pqrs.estado.name() == 'EN_REPLICA'} ? 'Réplica del Consumidor' : 'Respuesta del Proveedor'">Respuesta</strong>
+                    | Emisor: <strong th:text="${pqrs.id_receptor}">ID</strong>
+                    | Fecha: <strong th:text="${#temporals.format(pqrs.fecha_respuesta, 'dd/MM/yyyy HH:mm')}">Fecha</strong>
                 </p>
-                <a th:href="@{/tiendas/ver/{id}(id=${pqrsTienda.id_tienda})}"
-                   class="btn btn-sm btn-success"
-                   style="margin-top: 1rem;">
-                    <i class="bi bi-eye"></i> Ver Tienda
-                </a>
+                <div style="margin-top: 1rem; padding: 1rem; background-color: white; border-radius: 4px; border: 1px solid var(--color-border);">
+                    <p style="margin: 0; font-size: 1rem; line-height: 1.8; color: var(--color-text-dark); white-space: pre-wrap;"
+                       th:text="${pqrs.respuesta}">Contenido de la última interacción...</p>
+                </div>
             </div>
 
-            <!-- Si está asociada con un evento -->
-            <div th:if="${pqrsEvento != null}"
-                 style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-info);">
-                <h4 style="color: var(--color-info); margin-bottom: 0.5rem;">
-                    <i class="bi bi-calendar-event"></i> Evento
-                </h4>
-                <p style="margin: 0; color: var(--color-text-dark);">
-                    ID de Evento: <strong th:text="${pqrsEvento.id_evento}">1</strong>
-                </p>
-                <a th:href="@{/eventos/ver/{id}(id=${pqrsEvento.id_evento})}"
-                   class="btn btn-sm btn-info"
-                   style="margin-top: 1rem;">
-                    <i class="bi bi-eye"></i> Ver Evento
-                </a>
+            <div th:if="${pqrs.respuesta == null}"
+                 style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-warning);">
+                <p style="margin: 0;">Aún no hay interacciones registradas aparte de la PQRS inicial.</p>
             </div>
         </div>
 
-        <!-- Sección: Respuesta (si está respondida) -->
-        <div class="dashboard-section" th:if="${pqrs.estado.name() == 'RESPONDIDA' and pqrs.respuesta != null}">
+        <div class="dashboard-section"
+             th:if="${puedeReplicar} and (${pqrs.estado.name()} == 'RESPONDIDA')">
             <div class="dashboard-section-header">
                 <h2>
-                    <i class="bi bi-chat-right-text"></i>
-                    Respuesta del Administrador
+                    <i class="bi bi-decision"></i>
+                    Acción del Consumidor
                 </h2>
-            </div>
-            <div style="padding: 1.5rem; background: linear-gradient(135deg, var(--color-success) 0%, #66bb6a 100%); border-radius: 8px; color: white;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                    <i class="bi bi-person-badge" style="font-size: 2rem;"></i>
-                    <div>
-                        <strong style="display: block; font-size: 1.1rem;">Respuesta Oficial</strong>
-                        <small style="opacity: 0.9;">
-                            Respondida el <span th:text="${#temporals.format(pqrs.fecha_respuesta, 'dd/MM/yyyy HH:mm')}">02/01/2024 15:30</span>
-                        </small>
-                    </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <form th:action="@{/pqrs/cerrar-pqrs/{id}(id=${pqrs.id_pqrs})}" method="post">
+                        <button type="submit" class="btn btn-success"
+                                onclick="return confirm('¿Está seguro de que acepta la respuesta y desea cerrar la PQRS? Esta acción es definitiva.');">
+                            <i class="bi bi-check2-circle"></i> Aceptar y Cerrar
+                        </button>
+                    </form>
                 </div>
-                <p style="margin: 0; font-size: 1rem; line-height: 1.8; white-space: pre-wrap; background-color: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;"
-                   th:text="${pqrs.respuesta}">
-                    Respuesta del administrador...
-                </p>
+            </div>
+
+            <div style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-warning);">
+                <h4 style="color: var(--color-warning); margin-bottom: 1rem;">
+                    <i class="bi bi-arrow-repeat"></i> ¿Necesitas replicar?
+                </h4>
+                <form th:action="@{/pqrs/registrar-replica/{id}(id=${pqrs.id_pqrs})}" method="post">
+                    <div class="form-group">
+                        <label for="contenidoReplica">Contenido de la Réplica (Máx. 1000 caracteres)</label>
+                        <textarea id="contenidoReplica" name="contenido" class="form-control" rows="4" maxlength="1000" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning" style="margin-top: 1rem;">
+                        <i class="bi bi-send"></i> Enviar Réplica
+                    </button>
+                </form>
             </div>
         </div>
+        <div class="dashboard-section" th:if="${pqrsTienda != null or pqrsEvento != null}">
 
-        <!-- Alerta si está pendiente -->
+        </div>
+
         <div class="dashboard-alert warning" th:if="${pqrs.estado.name() == 'PENDIENTE'}">
             <i class="bi bi-clock-history"></i>
             <div>
-                <strong>Estado: Pendiente</strong><br>
-                Tu PQRS está siendo revisada. Recibirás una respuesta pronto.
+                <strong>Estado: Pendiente de Respuesta</strong><br>
+                Tu PQRS está siendo revisada por un proveedor/administrador. Recibirás una respuesta pronto.
+            </div>
+        </div>
+
+        <div class="dashboard-alert info" th:if="${pqrs.estado.name() == 'EN_REPLICA'}">
+            <i class="bi bi-repeat"></i>
+            <div>
+                <strong>Estado: En Réplica</strong><br>
+                El proveedor está preparando una segunda y última respuesta a tu apelación.
+            </div>
+        </div>
+
+        <div class="dashboard-alert success" th:if="${pqrs.estado.name() == 'CERRADA_ACEPTACION'}">
+            <i class="bi bi-check-all"></i>
+            <div>
+                <strong>Estado: Cerrada por Aceptación</strong><br>
+                Has aceptado la respuesta del proveedor y la PQRS ha sido cerrada.
+            </div>
+        </div>
+
+        <div class="dashboard-alert danger" th:if="${pqrs.estado.name() == 'CERRADA_DEFINITIVA'}">
+            <i class="bi bi-lock-fill"></i>
+            <div>
+                <strong>Estado: Cierre Definitivo</strong><br>
+                La PQRS ha completado su ciclo de respuesta (Respuesta 2) y ha sido cerrada de forma definitiva.
             </div>
         </div>
 

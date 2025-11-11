@@ -41,6 +41,9 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired
     private PqrsEventoRepository pqrsEventoRepository;
 
+    @Autowired
+    private PqrsRespuestaRepository pqrsRespuestaRepository;
+
     @Override
     public void run(String... args) throws Exception {
         // Solo crear datos si no existen
@@ -303,20 +306,21 @@ public class DataSeeder implements CommandLineRunner {
         Tienda tienda1 = tiendaRepository.findById(1L).orElse(null);
         Evento evento1 = eventoRepository.findById(1L).orElse(null);
 
-        if (consumidor == null || tienda1 == null || evento1 == null) {
+        if (consumidor == null || tienda1 == null || evento1 == null || admin == null) {
             System.out.println("⚠️ No se encontraron datos para crear PQRS");
             return;
         }
 
-        // PQRS 1 - PENDIENTE (sobre una tienda)
+        // --- PQRS 1 - PENDIENTE (sobre una tienda) ---
         Pqrs pqrs1 = new Pqrs();
         pqrs1.setTipo(TipoPqrs.PREGUNTA);
         pqrs1.setDescripcion("¿Hacen envíos a domicilio? Me interesa comprar varios productos de su tienda pero vivo lejos.");
         pqrs1.setEstado(EstadoPqrs.PENDIENTE);
         pqrs1.setEmisor(consumidor);
-        pqrs1.setReceptor(null);
-        pqrs1.setRespuesta(null);
-        pqrs1.setFecha_respuesta(null);
+        pqrs1.setReceptor(admin); // Asignar al receptor inicial para que aparezca en su bandeja
+        // pqrs1.setRespuesta(null); // ❌ ELIMINADO
+        // pqrs1.setFecha_respuesta(null); // ❌ ELIMINADO
+        pqrs1.setPendienteDe(RolProceso.PROVEEDOR); // 💡 Indicamos que el PROVEEDOR tiene el turno
         pqrsRepository.save(pqrs1);
 
         // Asociar con tienda
@@ -326,16 +330,26 @@ public class DataSeeder implements CommandLineRunner {
         pqrsTiendaRepository.save(pt1);
         System.out.println("✓ PQRS creada: Pregunta sobre tienda (PENDIENTE)");
 
-        // PQRS 2 - RESPONDIDA (sobre un evento)
+        // --- PQRS 2 - RESPONDIDA (sobre un evento) ---
         Pqrs pqrs2 = new Pqrs();
         pqrs2.setTipo(TipoPqrs.PREGUNTA);
         pqrs2.setDescripcion("¿La entrada al evento es gratuita o tiene algún costo?");
         pqrs2.setEstado(EstadoPqrs.RESPONDIDA);
         pqrs2.setEmisor(consumidor);
-        pqrs2.setReceptor(admin);
-        pqrs2.setRespuesta("¡Hola! La entrada es completamente gratuita para todos los asistentes. Te esperamos.");
-        pqrs2.setFecha_respuesta(LocalDateTime.now().minusDays(1));
+        pqrs2.setReceptor(consumidor); // El último receptor es el Consumidor, quien debe replicar
+        // pqrs2.setRespuesta("..."); // ❌ ELIMINADO
+        // pqrs2.setFecha_respuesta(...) // ❌ ELIMINADO
+        pqrs2.setPendienteDe(RolProceso.CONSUMIDOR); // 💡 Indicamos que el CONSUMIDOR tiene el turno
         pqrsRepository.save(pqrs2);
+
+        // 💡 CREAR EL REGISTRO DE RESPUESTA
+        PqrsRespuesta resp2 = new PqrsRespuesta();
+        resp2.setPqrs(pqrs2);
+        resp2.setContenido("¡Hola! La entrada es completamente gratuita para todos los asistentes. Te esperamos.");
+        resp2.setEmisor(admin);
+        resp2.setEmitidoPor(RolProceso.PROVEEDOR);
+        resp2.setFechaEmision(LocalDateTime.now().minusDays(1));
+        pqrsRespuestaRepository.save(resp2);
 
         // Asociar con evento
         PqrsEvento pe1 = new PqrsEvento();
@@ -344,16 +358,27 @@ public class DataSeeder implements CommandLineRunner {
         pqrsEventoRepository.save(pe1);
         System.out.println("✓ PQRS creada: Pregunta sobre evento (RESPONDIDA)");
 
-        // PQRS 3 - RESPONDIDA (sugerencia general)
+        // --- PQRS 3 - RESPONDIDA (sugerencia general) ---
         Pqrs pqrs3 = new Pqrs();
         pqrs3.setTipo(TipoPqrs.SUGERENCIA);
         pqrs3.setDescripcion("Sería excelente si pudieran agregar filtros por precio en la búsqueda de productos. Facilitaría mucho encontrar lo que busco.");
         pqrs3.setEstado(EstadoPqrs.RESPONDIDA);
         pqrs3.setEmisor(proveedor);
-        pqrs3.setReceptor(admin);
-        pqrs3.setRespuesta("¡Gracias por tu sugerencia! La tomaremos en cuenta para futuras actualizaciones de la plataforma.");
-        pqrs3.setFecha_respuesta(LocalDateTime.now().minusDays(2));
+        pqrs3.setReceptor(proveedor); // El último receptor es el Emisor/Proveedor (quien debe cerrar o replicar)
+        // pqrs3.setRespuesta("..."); // ❌ ELIMINADO
+        // pqrs3.setFecha_respuesta(...) // ❌ ELIMINADO
+        pqrs3.setPendienteDe(RolProceso.CONSUMIDOR); // 💡 Indicamos que el CONSUMIDOR tiene el turno
         pqrsRepository.save(pqrs3);
+
+        // 💡 CREAR EL REGISTRO DE RESPUESTA
+        PqrsRespuesta resp3 = new PqrsRespuesta();
+        resp3.setPqrs(pqrs3);
+        resp3.setContenido("¡Gracias por tu sugerencia! La tomaremos en cuenta para futuras actualizaciones de la plataforma.");
+        resp3.setEmisor(admin);
+        resp3.setEmitidoPor(RolProceso.PROVEEDOR);
+        resp3.setFechaEmision(LocalDateTime.now().minusDays(2));
+        pqrsRespuestaRepository.save(resp3);
+
         System.out.println("✓ PQRS creada: Sugerencia general (RESPONDIDA)");
     }
 }
