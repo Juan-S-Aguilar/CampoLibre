@@ -294,7 +294,7 @@ public class PqrsController {
         model.addAttribute("pqrs", new PqrsDTO());
         model.addAttribute("tiposPqrs", TipoPqrs.values());
         model.addAttribute("tiendas", tiendaService.obtenerTiendasActivas());
-        model.addAttribute("eventos", eventoService.obtenerEventosAprobados());
+        model.addAttribute("eventos", eventoService.obtenerEventosPublicados());
         model.addAttribute("idTiendaSeleccionada", idTienda);
         model.addAttribute("idEventoSeleccionado", idEvento);
         return "pqrs/form";

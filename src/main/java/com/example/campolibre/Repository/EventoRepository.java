@@ -22,12 +22,18 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     @Query("SELECT e FROM Evento e WHERE e.creado_por.id_usuario = :idUsuario AND e.estado = :estado")
     List<Evento> findByCreadorIdAndEstado(@Param("idUsuario") Long idUsuario, @Param("estado") EstadoEvento estado);
 
-    @Query("SELECT e FROM Evento e WHERE e.tipo_evento = :tipoEvento AND e.estado = 'APROBADO'")
-    List<Evento> findByTipoEventoAndAprobado(@Param("tipoEvento") TipoEvento tipoEvento);
+    // Reemplazar los queries que usan String 'APROBADO' por un parámetro de Enum para mayor seguridad
+    @Query("SELECT e FROM Evento e WHERE e.tipo_evento = :tipoEvento AND e.estado = :estado")
+    List<Evento> findByTipoEventoAndEstado(@Param("tipoEvento") TipoEvento tipoEvento, @Param("estado") EstadoEvento estado);
 
-    @Query("SELECT e FROM Evento e WHERE e.fecha_evento >= :fecha AND e.estado = 'APROBADO'")
-    List<Evento> findEventosProximos(@Param("fecha") LocalDate fecha);
+    @Query("SELECT e FROM Evento e WHERE e.fecha_evento >= :fecha AND e.estado = :estado")
+    List<Evento> findEventosProximosAndEstado(@Param("fecha") LocalDate fecha, @Param("estado") EstadoEvento estado);
 
-    @Query("SELECT e FROM Evento e WHERE e.estado = 'APROBADO'")
-    List<Evento> findAllApproved();
+
+    // Nuevo método para encontrar eventos por patrocinador
+    @Query("SELECT e FROM Evento e WHERE e.patrocinador.id_patrocinador = :idPatrocinador")
+    List<Evento> findByPatrocinadorId(@Param("idPatrocinador") Long idPatrocinador);
+
+
+
 }

@@ -3,6 +3,9 @@ package com.example.campolibre.Enum;
 public enum TipoEvento {
     FERIA,
     TALLER,
-    ACTIVIDAD,
+    FESTIVAL,        // Festival agrícola
+    CAPACITACION,    // Capacitación/formación
+    EXPOSICION,      // Exposición de productos
+    MERCADO,         // Mercado campesino
     OTRO
 }

@@ -5,15 +5,34 @@ import java.util.List;
 
 public interface MisEventosService {
 
-    // Método original
-    MisEventosDTO confirmarAsistencia(MisEventosDTO misEventosDTO);
+    /**
+     * Guarda la intención de asistencia de un Consumidor.
+     * Esto dispara el correo de confirmación de detalles del evento.
+     * @param idUsuario ID del Consumidor.
+     * @param idEvento ID del Evento.
+     * @return MisEventosDTO con los datos de la relación guardada.
+     */
+    MisEventosDTO guardarIntencionAsistencia(Long idUsuario, Long idEvento);
 
-    // ✨ Nuevo método más simple para el Controller (Guarda la relación)
-    // Usamos el nombre 'guardarAsistencia' para alinearnos con el Controller
-    void guardarAsistencia(Long idUsuario, Long idEvento);
+    /**
+     * Elimina el evento de la lista "Mis Eventos" del Consumidor.
+     * @param idUsuario ID del Consumidor.
+     * @param idEvento ID del Evento.
+     */
+    void removerIntencionAsistencia(Long idUsuario, Long idEvento);
 
-    List<MisEventosDTO> obtenerEventosDeUsuario(Long idUsuario);
-    List<MisEventosDTO> obtenerAsistentesPorEvento(Long idEvento);
-    void cancelarAsistencia(Long id);
-    boolean usuarioConfirmoAsistencia(Long idUsuario, Long idEvento);
+    /**
+     * Obtiene la lista de Eventos guardados por un Consumidor.
+     * @param idUsuario ID del Consumidor.
+     * @return Lista de MisEventosDTO.
+     */
+    List<MisEventosDTO> obtenerEventosGuardadosDeUsuario(Long idUsuario);
+
+    /**
+     * Verifica si un Consumidor ya tiene un Evento guardado en su lista.
+     * @param idUsuario ID del Consumidor.
+     * @param idEvento ID del Evento.
+     * @return true si ya está guardado.
+     */
+    boolean usuarioTieneEventoGuardado(Long idUsuario, Long idEvento);
 }

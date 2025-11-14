@@ -1,34 +1,36 @@
 package com.example.campolibre.DTO;
 
-import com.example.campolibre.Enum.EstadoEvento;
 import com.example.campolibre.Enum.TipoEvento;
 import lombok.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class EventoDTO {
-    private Long id_evento;
+public class EventoCreacionDTO {
+
+    // Datos básicos del evento
     private String nombre;
     private String descripcion;
     private String ubicacion;
     private LocalDate fecha_evento;
     private LocalTime hora_evento;
     private TipoEvento tipo_evento;
-    private EstadoEvento estado;
-    private Long creado_por;
-    private String imagen_evento;
-    private LocalDateTime fecha_creacion;
 
-    // --- CAMPOS FALTANTES (críticos) ---
-    private Long id_patrocinador;
-    private String nombrePatrocinador; // Para mostrar en el frontend
+    // --- Nuevos campos de control (gestionados por el Administrador) ---
+
+    // Relación con Patrocinador
+    private Long id_patrocinador; // FK al Patrocinador
+
+    // Control de Cupos
     private Integer cuposMaximosProveedor;
-    private Integer cuposDisponibles; // Calculado: cuposMaximos - cuposOcupados
     private Double costoEspacio;
+
+    // Términos y Condiciones
     private String terminosCondiciones;
+
+    // ID del Administrador que lo crea (para trazabilidad en el Service)
+    private Long id_admin_creador;
 }

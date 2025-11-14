@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+>
+<head>
+    <title>Gestión de Patrocinadores | Campo Libre</title>
+</head>
+<body>
+
+<section class="container my-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm border-start border-success border-5">
+        <h1 class="h3 mb-0 text-success">
+            <i class="bi bi-handshake-fill me-2"></i> Gestión de Patrocinadores
+        </h1>
+        <a th:href="@{/admin/patrocinadores/crear}" class="btn btn-success btn-lg shadow-sm">
+            <i class="bi bi-plus-circle"></i> Nuevo Patrocinador
+        </a>
+    </div>
+
+    <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-white">
+            <h5 class="mb-0 text-dark">Listado de Patrocinadores (<span th:text="${patrocinadores.size()}">0</span>)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div th:if="${patrocinadores.isEmpty()}" class="p-4 text-center text-muted">
+                <p class="mb-0">No hay patrocinadores registrados en la plataforma.</p>
+            </div>
+
+            <table th:unless="${patrocinadores.isEmpty()}" class="table table-striped table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Contacto</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${patrocinadores}">
+                    <td th:text="${p.id_patrocinador}">1</td>
+                    <td th:text="${p.nombre}">Patrocinador Ejemplo</td>
+                    <td th:text="${p.personaContacto}">Contacto Demo</td>
+                    <td th:text="${p.telefono}">1234567890</td>
+                    <td th:text="${p.email}">demo@patrocinador.com</td>
+                    <td>
+                        <a th:href="@{/admin/patrocinadores/editar/{id}(id=${p.id_patrocinador})}"
+                           class="btn btn-warning btn-sm" title="Editar Patrocinador">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        <a th:href="@{/admin/patrocinadores/eliminar/{id}(id=${p.id_patrocinador})}"
+                           onclick="return confirm('ATENCIÓN: ¿Está seguro de que desea eliminar este patrocinador? Si el patrocinador tiene eventos asociados, su estado será CANCELADO.');"
+                           class="btn btn-danger btn-sm ms-2" title="Eliminar Patrocinador">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

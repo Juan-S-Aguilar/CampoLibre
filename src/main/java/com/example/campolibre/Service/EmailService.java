@@ -40,40 +40,6 @@ public class EmailService {
         enviarCorreo(emailUsuario, asunto, cuerpo);
     }
 
-    // ✅ 2) Enviar correo cuando confirma asistencia a un evento
-    @Async
-    public void enviarConfirmacionParticipacion(String emailConsumidor, String nombreEvento) {
-        String asunto = "✅ Confirmación de asistencia: " + nombreEvento;
-        String cuerpo = String.format(
-                "Hola,\n\n" +
-                        "Tu asistencia al evento '%s' ha sido confirmada. ¡Te esperamos!\n\n" +
-                        "Si necesitas cancelar, puedes hacerlo desde tu perfil.\n\n" +
-                        "Saludos,\n" +
-                        "El equipo de Campolibre",
-                nombreEvento
-        );
-
-        enviarCorreo(emailConsumidor, asunto, cuerpo);
-    }
-
-    // ✅ 3) Enviar invitación al evento (cuando confirma asistencia)
-    @Async
-    public void enviarInvitacion(String emailConsumidor, String nombreEvento) {
-        String asunto = "🎉 Invitación confirmada: " + nombreEvento;
-        String cuerpo = String.format(
-                "Hola,\n\n" +
-                        "Gracias por confirmar tu asistencia al evento '%s'.\n\n" +
-                        "Aquí tienes tu invitación oficial al evento.\n" +
-                        "Guarda este correo y preséntalo el día del evento si es necesario.\n\n" +
-                        "¡Nos vemos pronto!\n\n" +
-                        "Saludos,\n" +
-                        "El equipo de Campolibre",
-                nombreEvento
-        );
-
-        enviarCorreo(emailConsumidor, asunto, cuerpo);
-    }
-
     // 🔧 Método genérico reutilizable (centraliza el envío de correos)
     private void enviarCorreo(String destinatario, String asunto, String cuerpo) {
         try {
@@ -95,5 +61,61 @@ public class EmailService {
             System.err.println("[EmailService] Error al enviar correo a " + destinatario + ": " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    // Modificación sugerida para enviar un solo correo informativo
+
+    // ✅ 2) Enviar correo cuando el consumidor GUARDA un evento (Intención de Asistencia)
+    @Async
+    public void enviarConfirmacionGuardadoEvento(String emailConsumidor, String nombreConsumidor,
+                                                 String nombreEvento, String ubicacion, String fecha, String hora,
+                                                 String patrocinador) {
+        String asunto = "🎉 Evento Guardado: Confirmación y detalles de " + nombreEvento;
+
+        // Crear un cuerpo de correo más detallado que sirva como "pase"
+        String cuerpo = String.format(
+                "Hola %s,\n\n" +
+                        "¡Tu registro de interés para el evento **'%s'** ha sido confirmado!\n\n" +
+                        "**Guarda este correo, ya que servirá como tu pase para registrar la asistencia** el día del evento.\n\n" +
+                        "--- DETALLES DEL EVENTO ---\n" +
+                        "**Evento:** %s\n" +
+                        "**Patrocinador:** %s\n" +
+                        "**Ubicación:** %s\n" +
+                        "**Fecha:** %s a las %s\n" +
+                        "--------------------------\n\n" +
+                        "¡Esperamos verte allí!\n\n" +
+                        "Saludos,\n" +
+                        "El equipo de Campolibre",
+                nombreConsumidor, nombreEvento, nombreEvento, patrocinador, ubicacion, fecha, hora
+        );
+
+        enviarCorreo(emailConsumidor, asunto, cuerpo);
+    }
+    @Async
+    public void enviarNotificacionEventoPublicado(String emailProveedor, String nombreProveedor,
+                                                  String nombreEvento, String ubicacion,
+                                                  String fecha, String hora,
+                                                  Integer cuposDisponibles, Double costoEspacio) {
+        String asunto = "🎉 Nuevo Evento Disponible: " + nombreEvento;
+
+        String cuerpo = String.format(
+                "Hola %s,\n\n" +
+                        "¡Tenemos un nuevo evento disponible para proveedores!\n\n" +
+                        "--- DETALLES DEL EVENTO ---\n" +
+                        "**Evento:** %s\n" +
+                        "**Ubicación:** %s\n" +
+                        "**Fecha:** %s a las %s\n" +
+                        "**Cupos Disponibles:** %d\n" +
+                        "**Costo por Espacio:** $%.2f\n" +
+                        "--------------------------\n\n" +
+                        "Para inscribirte, ingresa a la plataforma y solicita tu cupo.\n\n" +
+                        "¡No pierdas esta oportunidad!\n\n" +
+                        "Saludos,\n" +
+                        "El equipo de Campolibre",
+                nombreProveedor, nombreEvento, ubicacion, fecha, hora,
+                cuposDisponibles, costoEspacio
+        );
+
+        enviarCorreo(emailProveedor, asunto, cuerpo);
     }
 }

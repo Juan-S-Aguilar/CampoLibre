@@ -140,8 +140,8 @@ public class HomeController {
             Long totalUsuarios = (long) usuarioService.obtenerUsuariosActivos().size();
             Long totalTiendas = (long) tiendaService.obtenerTiendasActivas().size();
             Long totalProductos = (long) productoService.obtenerProductosActivos().size();
-            Long eventosAprobados = (long) eventoService.obtenerEventosAprobados().size();
-            Long eventosPendientes = (long) eventoService.obtenerEventosPendientes().size();
+            Long eventosAprobados = (long) eventoService.obtenerEventosPublicados().size();
+            Long eventosPendientes = (long) eventoService.obtenerEventosBorrador().size();
             Long pqrsPendientes = (long) pqrsService.obtenerPqrsPendientes().size();
             // ✅ NUEVAS ESTADÍSTICAS DE VENTAS
             Long totalPedidos = (long) pedidoService.obtenerPedidosPorEstado(EstadoPedido.PAGADO).size();
@@ -233,7 +233,7 @@ public class HomeController {
             // Estadísticas para el dashboard de CONSUMIDOR
             Long tiendasDisponibles = (long) tiendaService.obtenerTiendasActivas().size();
             Long productosDisponibles = (long) productoService.obtenerProductosActivos().size();
-            Long eventosDisponibles = (long) eventoService.obtenerEventosAprobados().size();
+            Long eventosDisponibles = (long) eventoService.obtenerEventosPublicados().size();
             Long misPqrs = (long) pqrsService.obtenerPqrsPorEmisor(usuario.getId_usuario()).size();
 
             model.addAttribute("usuario", usuario);

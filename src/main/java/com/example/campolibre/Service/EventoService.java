@@ -7,16 +7,21 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.example.campolibre.DTO.EventoCreacionDTO;
+
 public interface EventoService {
-    EventoDTO crearEvento(EventoDTO eventoDTO, MultipartFile imagen);
-    EventoDTO obtenerEventoPorId(Long id);
+
     List<EventoDTO> obtenerTodosLosEventos();
-    List<EventoDTO> obtenerEventosAprobados();
-    List<EventoDTO> obtenerEventosPendientes();
+    List<EventoDTO> obtenerEventosPublicados();
+    List<EventoDTO> obtenerEventosBorrador();
     List<EventoDTO> obtenerEventosPorCreador(Long idCreador);
     List<EventoDTO> obtenerEventosPorTipo(TipoEvento tipoEvento);
     List<EventoDTO> obtenerEventosProximos(LocalDate fecha);
-    EventoDTO actualizarEvento(Long id, EventoDTO eventoDTO, MultipartFile imagen);
+
     void cambiarEstadoEvento(Long id, EstadoEvento estado);
     void eliminarEvento(Long id);
+
+    EventoDTO crearEvento(EventoCreacionDTO eventoCreacionDTO, Long idAdmin, MultipartFile imagen);
+    EventoDTO obtenerEventoPorId(Long id);
+    EventoDTO actualizarEvento(Long id, EventoCreacionDTO eventoCreacionDTO, MultipartFile imagen);
 }

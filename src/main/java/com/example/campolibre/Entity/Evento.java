@@ -39,7 +39,7 @@ public class Evento {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
-    private EstadoEvento estado = EstadoEvento.PENDIENTE;
+    private EstadoEvento estado = EstadoEvento.BORRADOR;
 
     @ManyToOne
     @JoinColumn(name = "creado_por", nullable = false)
@@ -55,4 +55,23 @@ public class Evento {
     protected void onCreate() {
         fecha_creacion = LocalDateTime.now();
     }
+   //_______________________________________________________________________________________
+    // --- NUEVOS CAMPOS PARA EL CONTROL DEL EVENTO ---
+
+    // Relación con el Patrocinador
+    @ManyToOne
+    @JoinColumn(name = "id_patrocinador", nullable = false)
+    private Patrocinador patrocinador; // FK a la nueva entidad Patrocinador
+
+    // Control de cupos para Proveedores
+    @Column(name = "cupos_proveedor_max", nullable = false)
+    private Integer cuposMaximosProveedor; // Por ejemplo, 50
+
+    // Costo por espacio/cupo para Proveedores
+    @Column(name = "costo_espacio", nullable = false)
+    private Double costoEspacio;
+
+    // Apartado para los Términos y Condiciones
+    @Column(name = "terminos_condiciones", length = 2000)
+    private String terminosCondiciones; // Texto sobre la responsabilidad de Campo Libre
 }

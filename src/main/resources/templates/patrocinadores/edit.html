@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+>
+<head>
+    <title th:text="'Editar Patrocinador: ' + ${patrocinador.nombre}">Editar Patrocinador</title>
+</head>
+<body>
+
+<section class="container my-5">
+
+    <th:block th:insert="~{patrocinadores/fragments :: form_content(${patrocinador})}"></th:block>
+
+</section>
+
+</body>
+</html>

@@ -11,6 +11,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.util.List;
 
 @Controller
@@ -23,49 +25,47 @@ public class MisEventosController {
     @Autowired
     private UsuarioService usuarioService;
 
-    // Ver mis eventos confirmados
     @GetMapping
-    public String listarMisEventos(Model model, Authentication authentication) {
+    public String listarMisEventos(Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
+        // Asegurar que solo los consumidores usen este endpoint
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("CONSUMIDOR"))) {
+            redirectAttributes.addFlashAttribute("error", "Funcionalidad solo para Consumidores.");
+            return "redirect:/eventos";
+        }
+
         String email = authentication.getName();
         UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-        List<MisEventosDTO> misEventos = misEventosService.obtenerEventosDeUsuario(usuario.getId_usuario());
+        // ⚠️ CAMBIO CLAVE: Usar el método correcto para obtener la lista de guardados
+        List<MisEventosDTO> misEventos = misEventosService.obtenerEventosGuardadosDeUsuario(usuario.getId_usuario());
 
         model.addAttribute("misEventos", misEventos);
         return "mis-eventos/list";
     }
 
-    // Confirmar asistencia a un evento
-    @PostMapping("/confirmar/{idEvento}")
-    public String confirmarAsistencia(@PathVariable Long idEvento,
-                                      Authentication authentication,
-                                      RedirectAttributes redirectAttributes) {
+    /**
+     * Permite al Consumidor remover un evento de su lista de guardados.
+     */
+    @PostMapping("/remover/{idEvento}")
+    public String removerIntencionAsistencia(@PathVariable Long idEvento,
+                                             Authentication authentication,
+                                             RedirectAttributes redirectAttributes) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("CONSUMIDOR"))) {
+            return "redirect:/eventos";
+        }
+
         try {
             String email = authentication.getName();
             UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-            MisEventosDTO misEventosDTO = new MisEventosDTO();
-            misEventosDTO.setId_usuario(usuario.getId_usuario());
-            misEventosDTO.setId_evento(idEvento);
-
-            misEventosService.confirmarAsistencia(misEventosDTO);
-            redirectAttributes.addFlashAttribute("mensaje", "Asistencia confirmada exitosamente.");
+            // ⚠️ CAMBIO CLAVE: Usar el método de remover
+            misEventosService.removerIntencionAsistencia(usuario.getId_usuario(), idEvento);
+            redirectAttributes.addFlashAttribute("mensaje", "Evento removido de tu lista.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/eventos/ver/" + idEvento;
-    }
-
-    // Cancelar asistencia
-    @GetMapping("/cancelar/{id}")
-    public String cancelarAsistencia(@PathVariable Long id,
-                                     RedirectAttributes redirectAttributes) {
-        try {
-            misEventosService.cancelarAsistencia(id);
-            redirectAttributes.addFlashAttribute("mensaje", "Asistencia cancelada exitosamente.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al cancelar asistencia: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al remover evento: " + e.getMessage());
         }
         return "redirect:/mis-eventos";
     }
+
+
 }
