@@ -24,6 +24,49 @@
             <span th:text="${error}">Error en el formulario</span>
         </div>
 
+        <!-- ⭐ NUEVO: Advertencia sobre nombres prohibidos -->
+        <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #fff3cd 0%, #fffaeb 100%); border-left: 5px solid #ffc107; border-radius: 8px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);">
+            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                <i class="bi bi-info-circle" style="font-size: 2rem; color: #856404; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h4 style="color: #856404; margin: 0 0 0.75rem 0; font-size: 1.1rem;">
+                        <strong>⚠️ Importante: Nombres de Tienda Permitidos</strong>
+                    </h4>
+                    <p style="margin: 0 0 1rem 0; color: #856404; line-height: 1.6;">
+                        Campo Libre es un marketplace exclusivo para <strong>productos agrícolas alimenticios</strong>.
+                        Por favor, asegúrate de que el nombre de tu tienda NO contenga referencias a:
+                    </p>
+
+                    <!-- Lista de NO permitidos -->
+                    <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(220, 53, 69, 0.08); border-radius: 6px; border: 1px solid rgba(220, 53, 69, 0.2);">
+                        <h5 style="color: #721c24; margin: 0 0 0.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-x-circle-fill"></i>
+                            <strong>NO PERMITIDOS:</strong>
+                        </h5>
+                        <ul style="margin: 0; padding-left: 1.5rem; color: #721c24; font-size: 0.9rem; line-height: 1.8;">
+                            <li><strong>Carnes:</strong> carne, chorizo, jamón, embutidos, frigorífico, carnicería</li>
+                            <li><strong>Animales:</strong> ganado, crianza, aves, avícola, pecuario, veterinaria</li>
+                            <li><strong>Maquinaria:</strong> tractor, cosechadora, arado, motor, implementos</li>
+                            <li><strong>Herramientas:</strong> pala, azadón, machete, fumigadora, ferretería</li>
+                        </ul>
+                    </div>
+
+                    <!-- Lista de SÍ permitidos -->
+                    <div style="padding: 1rem; background-color: rgba(40, 167, 69, 0.08); border-radius: 6px; border: 1px solid rgba(40, 167, 69, 0.2);">
+                        <h5 style="color: #155724; margin: 0 0 0.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <strong>SÍ PERMITIDOS (Ejemplos):</strong>
+                        </h5>
+                        <ul style="margin: 0; padding-left: 1.5rem; color: #155724; font-size: 0.9rem; line-height: 1.8;">
+                            <li>Frutas del Valle, Lácteos La Campiña, Verduras Frescas</li>
+                            <li>Granos y Cereales Don Juan, Mermeladas Artesanales</li>
+                            <li>Mieles del Bosque, Productos Orgánicos del Campo</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Formulario -->
         <form th:action="@{/tiendas/crear}" th:object="${tienda}" method="post" enctype="multipart/form-data">
 
@@ -45,12 +88,12 @@
                            th:field="*{nombre}"
                            class="form-control"
                            id="nombre"
-                           placeholder="Ej: Productos del Valle"
+                           placeholder="Ej: Lácteos del Valle, Frutas Frescas"
                            maxlength="100"
                            required>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        El nombre de tu tienda debe ser único y descriptivo
+                        El nombre debe reflejar productos agrícolas alimenticios. Evita palabras relacionadas con carnes, animales, maquinaria o herramientas.
                     </small>
                 </div>
 
@@ -70,32 +113,38 @@
                               required></textarea>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Máximo 500 caracteres. <span id="charCount">0</span>/500
+                        Máximo 500 caracteres. Quedan <strong><span id="charCount">0</span></strong> caracteres.
                     </small>
                 </div>
+            </div>
 
-                <!-- Imagen de la Tienda -->
+            <!-- Sección: Imagen -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-image"></i>
+                    Imagen de la Tienda
+                </h3>
+
+                <!-- Imagen -->
                 <div class="form-group">
                     <label>
-                        <i class="bi bi-image"></i>
-                        Logo o Imagen de la Tienda
-                        <span class="required">*</span>
+                        <i class="bi bi-camera"></i>
+                        Foto de Portada
                     </label>
                     <div class="file-input-wrapper">
                         <input type="file"
                                name="imagen"
                                id="imagen"
                                accept="image/*"
-                               onchange="previewImage(event)"
-                               required>
+                               onchange="previewImage(event)">
                         <label for="imagen" class="file-input-label">
                             <i class="bi bi-cloud-upload"></i>
-                            <span>Haz clic para seleccionar una imagen</span>
+                            <span>Seleccionar imagen</span>
                         </label>
                     </div>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Formatos: JPG, PNG, GIF. Tamaño máximo: 10MB. Recomendado: 800x600px
+                        Opcional. Tamaño máximo: 10MB. Usa una foto representativa de tu tienda o productos.
                     </small>
                     <div id="imagePreview" class="file-preview" style="display: none;">
                         <img id="preview" src="" alt="Vista previa">
@@ -122,12 +171,12 @@
                            th:field="*{ubicacion}"
                            class="form-control"
                            id="ubicacion"
-                           placeholder="Ej: Vereda El Rosal, Bogotá, Cundinamarca"
+                           placeholder="Ej: Vereda El Paraíso, Zipaquirá, Cundinamarca"
                            maxlength="200"
                            required>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Indica tu ubicación para que los clientes puedan encontrarte
+                        Indica dónde se encuentra tu producción o punto de venta
                     </small>
                 </div>
             </div>
@@ -145,16 +194,18 @@
                         <label for="correo_tienda">
                             <i class="bi bi-envelope"></i>
                             Correo Electrónico
+                            <span class="required">*</span>
                         </label>
                         <input type="email"
                                th:field="*{correo_tienda}"
                                class="form-control"
                                id="correo_tienda"
                                placeholder="contacto@mitienda.com"
-                               maxlength="100">
+                               maxlength="100"
+                               required>
                         <small class="form-text">
                             <i class="bi bi-info-circle"></i>
-                            Correo donde recibirás consultas de clientes
+                            Los clientes podrán contactarte a este correo
                         </small>
                     </div>
 
@@ -162,43 +213,33 @@
                     <div class="form-group">
                         <label for="telefono_tienda">
                             <i class="bi bi-phone"></i>
-                            Teléfono de Contacto
+                            Teléfono
+                            <span class="required">*</span>
                         </label>
                         <input type="tel"
                                th:field="*{telefono_tienda}"
                                class="form-control"
                                id="telefono_tienda"
                                placeholder="3001234567"
-                               pattern="[0-9]{10}"
-                               maxlength="20">
+                               maxlength="20"
+                               required>
                         <small class="form-text">
                             <i class="bi bi-info-circle"></i>
-                            10 dígitos sin espacios
+                            Número de contacto para consultas
                         </small>
                     </div>
                 </div>
             </div>
 
-            <!-- Información adicional -->
-            <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary); margin-bottom: 2rem;">
-                <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
-                    <i class="bi bi-lightbulb"></i> Consejos para tu tienda
-                </h4>
-                <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
-                    <li>Usa una imagen de buena calidad para tu logo o foto de portada</li>
-                    <li>Describe claramente qué productos ofreces</li>
-                    <li>Proporciona información de contacto actualizada</li>
-                    <li>Una vez creada, podrás agregar productos a tu tienda</li>
-                </ul>
-            </div>
-
-            <!-- Botones de acción -->
+            <!-- Botones de Acción -->
             <div class="form-actions">
-                <a th:href="@{/tiendas/mis-tiendas}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Cancelar
+                <a th:href="@{/tiendas}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i>
+                    Cancelar
                 </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle"></i> Crear Tienda
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i>
+                    Crear Tienda
                 </button>
             </div>
         </form>
@@ -206,12 +247,15 @@
 
     <!-- Scripts -->
     <script>
-        // Contador de caracteres para descripción
-        const descripcion = document.getElementById('descripcion');
-        const charCount = document.getElementById('charCount');
+        // Inicializar contador de caracteres
+        window.addEventListener('DOMContentLoaded', function() {
+            const descripcion = document.getElementById('descripcion');
+            const charCount = document.getElementById('charCount');
+            charCount.textContent = descripcion.value.length;
 
-        descripcion.addEventListener('input', function() {
-            charCount.textContent = this.value.length;
+            descripcion.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
         });
 
         // Preview de imagen

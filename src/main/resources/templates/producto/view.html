@@ -16,101 +16,63 @@
                 <i class="bi bi-basket-fill"></i>
                 Información del Producto
             </h2>
-            <p>Detalles completos del producto y su tienda</p>
+            <p>Detalles completos del producto en Campo Libre</p>
         </div>
 
-        <!-- Mensajes -->
-        <div th:if="${mensaje}" class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle"></i>
-            <span th:text="${mensaje}">Operación exitosa</span>
+        <!-- Alerta si producto está eliminado -->
+        <div th:if="${producto.estado == 'ELIMINADO'}" class="alert alert-danger" role="alert">
+            <i class="bi bi-trash"></i>
+            <strong>Producto Eliminado:</strong> Este producto no está visible para los consumidores.
         </div>
 
-        <!-- Grid Principal: Imagen + Info -->
-        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Grid: Imagen + Información -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
 
             <!-- Imagen del Producto -->
-            <div style="position: relative;">
-                <div style="background-color: var(--color-bg-light); border-radius: 12px; padding: 1rem; border: 2px solid var(--border-color); position: relative;">
-                    <img th:if="${producto.imagen_producto != null}"
-                         th:src="@{${producto.imagen_producto}}"
+            <div>
+                <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-md); border: 3px solid var(--border-color);">
+                    <img th:src="@{'/uploads/' + ${producto.imagen_producto}}"
                          alt="Imagen del producto"
-                         style="width: 100%; border-radius: 8px; object-fit: cover;"
-                         onerror="this.src='/images/placeholder-product.jpg'">
-                    <div th:if="${producto.imagen_producto == null}"
-                         style="width: 100%; height: 400px; background-color: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; border: 2px dashed var(--border-color);">
-                        <i class="bi bi-basket" style="font-size: 5rem; color: var(--color-primary); opacity: 0.5;"></i>
-                        <p style="margin-top: 1rem; color: var(--color-text-light);">Sin imagen</p>
-                    </div>
+                         style="width: 100%; height: auto; display: block;"
+                         onerror="this.src='/images/placeholder.jpg'">
 
-                    <!-- Badge de categoría -->
-                    <div style="position: absolute; top: 1.5rem; right: 1.5rem;">
-                        <span class="badge"
-                              style="font-size: 1rem; padding: 0.5rem 1rem;"
-                              th:classappend="${producto.categoria.name() == 'FRUTAS' ? 'badge-danger' :
-                                               (producto.categoria.name() == 'VERDURAS' ? 'badge-success' :
-                                               (producto.categoria.name() == 'LACTEOS' ? 'badge-info' :
-                                               (producto.categoria.name() == 'CARNES' ? 'badge-danger' : 'badge-primary')))}"
-                              th:text="${producto.categoria.name()}">
-                            CATEGORIA
+                    <!-- Badge de Estado -->
+                    <div style="position: absolute; top: 1rem; right: 1rem;">
+                        <span class="badge badge-success" th:if="${producto.estado == 'ACTIVO'}">
+                            <i class="bi bi-check-circle"></i> ACTIVO
+                        </span>
+                        <span class="badge badge-danger" th:if="${producto.estado == 'ELIMINADO'}">
+                            <i class="bi bi-x-circle"></i> ELIMINADO
                         </span>
                     </div>
-                </div>
 
-                <!-- Información de Stock -->
-                <div style="margin-top: 1rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; text-align: center; border: 2px solid var(--border-color);">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <i class="bi bi-box-seam" style="font-size: 1.5rem; color: var(--color-primary);"></i>
-                        <span style="font-weight: 600; color: var(--color-text-dark);">Stock Disponible</span>
+                    <!-- Badge de Stock -->
+                    <div th:if="${producto.stock == 0}"
+                         style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(220, 53, 69, 0.95); padding: 0.75rem; text-align: center;">
+                        <i class="bi bi-x-circle" style="font-size: 2rem; color: white;"></i>
+                        <p style="margin: 0.5rem 0 0 0; color: white; font-weight: 600;">
+                            Producto agotado
+                        </p>
                     </div>
-                    <p style="font-size: 2rem; font-weight: 700; margin: 0; color: var(--color-primary);" th:text="${producto.stock}">100</p>
-
-                    <span class="badge badge-success" th:if="${producto.stock >= 10}" style="margin-top: 0.5rem;">
-                        <i class="bi bi-check-circle"></i> Disponible
-                    </span>
-                    <span class="badge badge-warning" th:if="${producto.stock > 0 and producto.stock < 10}" style="margin-top: 0.5rem;">
-                        <i class="bi bi-exclamation-triangle"></i> Stock Bajo
-                    </span>
-                    <span class="badge badge-danger" th:if="${producto.stock == 0}" style="margin-top: 0.5rem;">
-                        <i class="bi bi-x-circle"></i> Agotado
-                    </span>
                 </div>
 
-                <!-- ✨ FORMULARIO DE AGREGAR AL CARRITO (destacado) -->
-                <div th:if="${producto.estado == 'ACTIVO' and producto.stock > 0}"
-                     sec:authorize="isAuthenticated()"
-                     style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, var(--color-success) 0%, #66bb6a 100%); border-radius: 12px; box-shadow: var(--shadow-lg);">
-                    <form th:action="@{/carrito/agregar}" method="post">
-                        <input type="hidden" name="idProducto" th:value="${producto.id_producto}" />
-
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; color: white; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem;">
-                                <i class="bi bi-plus-circle"></i> Cantidad:
-                            </label>
-                            <input type="number"
-                                   name="cantidad"
-                                   value="1"
-                                   min="1"
-                                   th:max="${producto.stock}"
-                                   class="form-control"
-                                   style="text-align: center; font-size: 1.2rem; font-weight: 700;">
-                        </div>
-
-                        <button type="submit"
-                                class="btn btn-light"
-                                style="width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                            <i class="bi bi-cart-plus" style="font-size: 1.3rem;"></i>
-                            Agregar al Carrito
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Mensaje si no hay stock -->
-                <div th:if="${producto.stock == 0}"
-                     style="margin-top: 1.5rem; padding: 1.5rem; background-color: #f8d7da; border-radius: 8px; border-left: 4px solid var(--color-danger); text-align: center;">
-                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: var(--color-danger);"></i>
-                    <p style="margin: 0.5rem 0 0 0; color: #721c24; font-weight: 600;">
-                        Producto agotado
-                    </p>
+                <!-- ⭐ NUEVO: Badge de Categoría y Subcategoría -->
+                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span class="badge"
+                          style="font-size: 0.9rem; padding: 0.5rem 1rem;"
+                          th:classappend="${producto.categoria.name() == 'LACTEOS' ? 'badge-info' :
+                                         (producto.categoria.name() == 'FRUTAS' ? 'badge-warning' :
+                                         (producto.categoria.name() == 'VERDURAS' ? 'badge-success' :
+                                         (producto.categoria.name() == 'GRANOS' ? 'badge-secondary' :
+                                         (producto.categoria.name() == 'CEREALES' ? 'badge-primary' : 'badge-dark'))))}"
+                          th:text="${producto.categoria.nombre}">
+                        CATEGORIA
+                    </span>
+                    <span class="badge badge-light"
+                          style="font-size: 0.85rem; padding: 0.4rem 0.8rem; color: var(--color-text-dark); border: 2px solid var(--border-color);"
+                          th:text="${producto.subcategoria.nombre}">
+                        SUBCATEGORIA
+                    </span>
                 </div>
             </div>
 
@@ -123,9 +85,18 @@
                     </h1>
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                         <p style="font-size: 2.5rem; font-weight: 700; color: var(--color-success); margin: 0;">
-                            $<span th:text="${#numbers.formatDecimal(producto.precio, 0, 'COMMA', 2, 'POINT')}">0.00</span>
+                            $<span th:text="${#numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}">0</span>
                         </p>
                         <span style="color: var(--color-text-light); font-size: 0.9rem;">COP</span>
+                    </div>
+
+                    <!-- ⭐ NUEVO: Presentación del Producto -->
+                    <div style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 8px; border: 2px solid #2196f3;">
+                        <p style="margin: 0; font-size: 0.9rem; color: #0d47a1;">
+                            <i class="bi bi-box-seam" style="font-size: 1.2rem;"></i>
+                            <strong>Presentación:</strong>
+                            <span style="font-weight: 700; font-size: 1.1rem;" th:text="${producto.cantidadFormateada}">1 kg</span>
+                        </p>
                     </div>
                 </div>
 
@@ -150,66 +121,139 @@
                             Tienda
                         </h3>
                     </div>
-                    <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
-                        <h4 style="color: var(--color-primary); margin: 0 0 0.5rem 0;" th:text="${tienda.nombre}">Nombre de la Tienda</h4>
-                        <p style="margin: 0 0 0.5rem 0; color: var(--color-text-dark);">
-                            <i class="bi bi-geo-alt"></i>
-                            <span th:text="${tienda.ubicacion}">Ubicación</span>
+                    <a th:href="@{/tiendas/ver/{id}(id=${producto.id_tienda})}"
+                       style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; border-radius: 8px; text-decoration: none; transition: transform 0.2s;">
+                        <i class="bi bi-shop-window" style="font-size: 2rem;"></i>
+                        <div>
+                            <h4 style="color: white; margin: 0; font-size: 1.2rem;" th:text="${tienda.nombre}">Nombre Tienda</h4>
+                            <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">Ver todos los productos de esta tienda</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- ⭐ NUEVO: Información de Stock -->
+                <div style="margin-top: 1rem; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; text-align: center; border: 2px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="bi bi-box-seam" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                        <span style="font-weight: 600; color: var(--color-text-dark);">Stock Disponible</span>
+                    </div>
+                    <p style="font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0;"
+                       th:style="${producto.stock < 10 ? 'color: var(--color-warning);' : 'color: var(--color-primary);'}"
+                       th:text="${producto.stock}">100</p>
+
+                    <span class="badge badge-success" th:if="${producto.stock >= 10}" style="font-size: 0.9rem;">
+                        <i class="bi bi-check-circle"></i> Disponible
+                    </span>
+                    <span class="badge badge-warning" th:if="${producto.stock > 0 and producto.stock < 10}" style="font-size: 0.9rem;">
+                        <i class="bi bi-exclamation-triangle"></i> Stock Bajo
+                    </span>
+                    <span class="badge badge-danger" th:if="${producto.stock == 0}" style="font-size: 0.9rem;">
+                        <i class="bi bi-x-circle"></i> Agotado
+                    </span>
+                </div>
+
+                <!-- ⭐ NUEVO: Gestión de Stock (Solo PROVEEDOR/ADMIN) -->
+                <div th:if="${producto.estado == 'ACTIVO'}"
+                     sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')"
+                     style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 12px; border: 2px solid #ff9800; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);">
+
+                    <h4 style="color: #e65100; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="bi bi-gear-fill"></i>
+                        <strong>Gestionar Stock</strong>
+                    </h4>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <!-- Formulario: Aumentar Stock -->
+                        <form th:action="@{/productos/aumentar-stock/{id}(id=${producto.id_producto})}"
+                              method="post"
+                              style="padding: 1rem; background-color: rgba(76, 175, 80, 0.1); border-radius: 8px; border: 2px solid #4caf50;">
+                            <label style="display: block; font-weight: 600; color: #2e7d32; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                                <i class="bi bi-plus-circle"></i> Aumentar Stock
+                            </label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="number"
+                                       name="cantidad"
+                                       class="form-control"
+                                       min="1"
+                                       value="10"
+                                       placeholder="Cantidad"
+                                       required
+                                       style="flex: 1;">
+                                <button type="submit" class="btn btn-success" style="min-width: 100px;">
+                                    <i class="bi bi-plus-lg"></i> Agregar
+                                </button>
+                            </div>
+                            <small style="display: block; margin-top: 0.5rem; color: #2e7d32; font-size: 0.85rem;">
+                                <i class="bi bi-info-circle"></i> Aumenta el inventario disponible
+                            </small>
+                        </form>
+
+                        <!-- Formulario: Disminuir Stock -->
+                        <form th:action="@{/productos/disminuir-stock/{id}(id=${producto.id_producto})}"
+                              method="post"
+                              onsubmit="return confirm('¿Estás seguro de disminuir el stock?');"
+                              style="padding: 1rem; background-color: rgba(255, 152, 0, 0.1); border-radius: 8px; border: 2px solid #ff9800;">
+                            <label style="display: block; font-weight: 600; color: #e65100; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                                <i class="bi bi-dash-circle"></i> Disminuir Stock
+                            </label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="number"
+                                       name="cantidad"
+                                       class="form-control"
+                                       min="1"
+                                       th:max="${producto.stock}"
+                                       value="1"
+                                       placeholder="Cantidad"
+                                       required
+                                       style="flex: 1;">
+                                <button type="submit" class="btn btn-warning" style="min-width: 100px;">
+                                    <i class="bi bi-dash-lg"></i> Reducir
+                                </button>
+                            </div>
+                            <small style="display: block; margin-top: 0.5rem; color: #e65100; font-size: 0.85rem;">
+                                <i class="bi bi-exclamation-triangle"></i> Reduce por pérdidas o ajustes
+                            </small>
+                        </form>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div style="margin-top: 1rem; padding: 0.75rem; background-color: rgba(255, 255, 255, 0.8); border-radius: 6px; border-left: 4px solid #ff9800;">
+                        <p style="margin: 0; font-size: 0.85rem; color: #e65100;">
+                            <i class="bi bi-lightbulb"></i>
+                            <strong>Nota:</strong> Los cambios se aplicarán inmediatamente y se reflejarán en el inventario disponible para los clientes.
                         </p>
-                        <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-primary" style="margin-top: 0.5rem;">
-                            <i class="bi bi-arrow-right"></i> Ver Tienda Completa
-                        </a>
                     </div>
                 </div>
 
-                <!-- Detalles Adicionales -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                    <!-- ID Producto -->
-                    <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
-                        <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
-                            <i class="bi bi-hash"></i> ID Producto
-                        </label>
-                        <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--color-primary);"
-                           th:text="${producto.id_producto}">1</p>
-                    </div>
+                <!-- Agregar al Carrito (destacado para CONSUMIDORES) -->
+                <div th:if="${producto.estado == 'ACTIVO' and producto.stock > 0}"
+                     sec:authorize="isAuthenticated()"
+                     style="margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); border-radius: 12px; box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);">
+                    <form th:action="@{/carrito/agregar}" method="post" style="display: flex; align-items: center; gap: 1rem;">
+                        <input type="hidden" name="idProducto" th:value="${producto.id_producto}" />
 
-                    <!-- Fecha de Creación -->
-                    <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
-                        <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
-                            <i class="bi bi-calendar"></i> Fecha de Publicación
-                        </label>
-                        <p style="margin: 0; font-size: 1rem; color: var(--color-text-dark);"
-                           th:text="${#temporals.format(producto.fecha_creacion, 'dd/MM/yyyy')}">01/01/2024</p>
-                    </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; color: white; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                                <i class="bi bi-basket"></i> Cantidad a agregar
+                            </label>
+                            <input type="number"
+                                   name="cantidad"
+                                   class="form-control"
+                                   min="1"
+                                   th:max="${producto.stock}"
+                                   value="1"
+                                   required
+                                   style="font-size: 1.1rem; padding: 0.75rem;">
+                        </div>
 
-                    <!-- Estado -->
-                    <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
-                        <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
-                            <i class="bi bi-toggle-on"></i> Estado
-                        </label>
-                        <span class="status-badge active" th:if="${producto.estado == 'ACTIVO'}">
-                            <i class="bi bi-check-circle"></i> Activo
-                        </span>
-                        <span class="status-badge inactive" th:if="${producto.estado == 'ELIMINADO'}">
-                            <i class="bi bi-x-circle"></i> Eliminado
-                        </span>
-                    </div>
-
-                    <!-- Categoría -->
-                    <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px;">
-                        <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem;">
-                            <i class="bi bi-grid"></i> Categoría
-                        </label>
-                        <span class="badge"
-                              style="font-size: 0.95rem;"
-                              th:classappend="${producto.categoria.name() == 'FRUTAS' ? 'badge-danger' :
-                                               (producto.categoria.name() == 'VERDURAS' ? 'badge-success' :
-                                               (producto.categoria.name() == 'LACTEOS' ? 'badge-info' :
-                                               (producto.categoria.name() == 'CARNES' ? 'badge-danger' : 'badge-primary')))}"
-                              th:text="${producto.categoria.name()}">
-                            CATEGORIA
-                        </span>
-                    </div>
+                        <button type="submit"
+                                style="min-width: 180px; height: 60px; background-color: white; color: #2e7d32; border: none; border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                            <i class="bi bi-cart-plus" style="font-size: 1.3rem;"></i> Agregar al Carrito
+                        </button>
+                    </form>
+                    <small style="display: block; margin-top: 0.75rem; color: white; text-align: center; font-size: 0.9rem;">
+                        <i class="bi bi-truck"></i> Stock disponible: <strong th:text="${producto.stock}">0</strong> unidades
+                    </small>
                 </div>
             </div>
         </div>
@@ -232,111 +276,32 @@
                    sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                     <i class="bi bi-pencil"></i> Editar Producto
                 </a>
-            </div>
-        </div>
-
-        <!-- Información de Contacto -->
-        <div class="dashboard-section" style="margin-bottom: 2rem;">
-            <div class="dashboard-section-header">
-                <h2>
-                    <i class="bi bi-telephone"></i>
-                    Información de Contacto
-                </h2>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
-                <!-- Ubicación de la Tienda -->
-                <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-danger);">
-                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem; font-weight: 600;">
-                        <i class="bi bi-geo-alt"></i> UBICACIÓN
-                    </label>
-                    <p style="margin: 0; color: var(--color-text-dark);" th:text="${tienda.ubicacion}">
-                        Ubicación de la tienda
-                    </p>
-                </div>
-
-                <!-- Email de la Tienda -->
-                <div th:if="${tienda.correo_tienda != null}"
-                     style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-info);">
-                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem; font-weight: 600;">
-                        <i class="bi bi-envelope"></i> EMAIL
-                    </label>
-                    <a th:href="'mailto:' + ${tienda.correo_tienda}"
-                       style="color: var(--color-primary); text-decoration: none; font-weight: 500;"
-                       th:text="${tienda.correo_tienda}">
-                        correo@tienda.com
-                    </a>
-                </div>
-
-                <!-- Teléfono de la Tienda -->
-                <div th:if="${tienda.telefono_tienda != null}"
-                     style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success);">
-                    <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem; font-weight: 600;">
-                        <i class="bi bi-phone"></i> TELÉFONO
-                    </label>
-                    <a th:href="'tel:' + ${tienda.telefono_tienda}"
-                       style="color: var(--color-primary); text-decoration: none; font-weight: 500;"
-                       th:text="${tienda.telefono_tienda}">
-                        3001234567
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Acciones de Administración (solo dueño o ADMIN) -->
-        <div class="dashboard-section"
-             th:if="${producto.estado == 'ACTIVO'}"
-             sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
-            <div class="dashboard-section-header">
-                <h2>
-                    <i class="bi bi-gear"></i>
-                    Acciones de Administración
-                </h2>
-            </div>
-
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <!-- Editar -->
-                <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
-                   class="btn btn-warning">
-                    <i class="bi bi-pencil"></i> Editar Producto
-                </a>
 
                 <!-- Eliminar -->
-                <a th:href="@{/productos/eliminar/{id}(id=${producto.id_producto})}"
+                <a th:if="${producto.estado == 'ACTIVO'}"
+                   th:href="@{/productos/eliminar/{id}(id=${producto.id_producto})}"
                    class="btn btn-danger"
-                   onclick="return confirm('¿Está seguro de eliminar este producto? Esta acción no se puede deshacer.')">
+                   onclick="return confirm('¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.');"
+                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                     <i class="bi bi-trash"></i> Eliminar Producto
                 </a>
-
-                <!-- Ver más productos de esta tienda -->
-                <a th:href="@{/productos/tienda/{id}(id=${producto.id_tienda})}"
-                   class="btn btn-info">
-                    <i class="bi bi-basket"></i> Otros Productos de esta Tienda
-                </a>
             </div>
         </div>
 
-        <!-- Productos Relacionados (misma categoría) -->
-        <div class="dashboard-section">
-            <div class="dashboard-section-header">
-                <h2>
-                    <i class="bi bi-grid"></i>
-                    Productos Relacionados
-                </h2>
-            </div>
-
-            <!-- Aquí irían productos de la misma categoría -->
-            <div class="empty-state">
-                <i class="bi bi-basket"></i>
-                <h3>Productos de la categoría <span th:text="${producto.categoria.name()}">CATEGORIA</span></h3>
-                <p>Explora más productos de esta categoría</p>
-                <a th:href="@{/productos(categoria=${producto.categoria.name()})}"
-                   class="btn btn-primary">
-                    <i class="bi bi-search"></i> Ver Productos de <span th:text="${producto.categoria.name()}">CATEGORIA</span>
-                </a>
-            </div>
+        <!-- Información Adicional -->
+        <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+            <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-info-circle"></i> Información del Producto
+            </h4>
+            <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
+                <li>ID del Producto: <strong th:text="${producto.id_producto}">1</strong></li>
+                <li>Categoría: <strong th:text="${producto.categoria.nombre}">-</strong></li>
+                <li>Subcategoría: <strong th:text="${producto.subcategoria.nombre}">-</strong></li>
+                <li>Presentación: <strong th:text="${producto.cantidadFormateada}">-</strong></li>
+                <li>Fecha de registro: <strong th:text="${#temporals.format(producto.fecha_creacion, 'dd/MM/yyyy HH:mm')}">01/01/2024</strong></li>
+                <li>Estado: <strong th:text="${producto.estado}">ACTIVO</strong></li>
+            </ul>
         </div>
-
     </div>
 </main>
 

@@ -31,7 +31,7 @@
                 <i class="bi bi-shop" style="font-size: 2rem;"></i>
                 <div>
                     <h4 style="color: white; margin: 0;">Tienda: <span th:text="${tienda.nombre}">Mi Tienda</span></h4>
-                    <p style="margin: 0; opacity: 0.9;">Este producto se agregará a esta tienda</p>
+                    <p style="margin: 0; opacity: 0.9;">Este producto pertenece a esta tienda</p>
                 </div>
             </div>
         </div>
@@ -39,10 +39,9 @@
         <!-- Formulario -->
         <form th:action="@{/productos/actualizar}" th:object="${producto}" method="post" enctype="multipart/form-data">
 
-            <!-- ID Tienda oculto -->
-            <input type="hidden" th:field="*{id_tienda}">
-            <!-- ID Producto oculto para edición -->
+            <!-- IDs ocultos -->
             <input type="hidden" th:field="*{id_producto}">
+            <input type="hidden" th:field="*{id_tienda}">
 
             <!-- Sección: Información Básica -->
             <div class="form-section">
@@ -63,7 +62,7 @@
                            class="form-control"
                            id="nombre"
                            placeholder="Ej: Tomate Chonto Orgánico"
-                           maxlength="100"
+                           maxlength="200"
                            required>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
@@ -83,67 +82,176 @@
                               id="descripcion"
                               rows="4"
                               placeholder="Describe las características, origen, beneficios..."
-                              maxlength="500"
+                              maxlength="1000"
                               required></textarea>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Máximo 500 caracteres. <span id="charCount">0</span>/500
+                        Máximo 1000 caracteres. Quedan <strong><span id="charCount">0</span></strong> caracteres.
                     </small>
+                </div>
+            </div>
+
+            <!-- ⭐ SECCIÓN: Clasificación del Producto -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                    Clasificación del Producto
+                </h3>
+
+                <div class="form-row form-row-2">
+                    <!-- Categoría Principal -->
+                    <div class="form-group">
+                        <label for="categoria">
+                            <i class="bi bi-folder"></i>
+                            Categoría Principal
+                            <span class="required">*</span>
+                        </label>
+                        <select th:field="*{categoria}"
+                                class="form-select"
+                                id="categoria"
+                                onchange="cargarSubcategorias()"
+                                required>
+                            <option value="">-- Selecciona una categoría --</option>
+                            <option th:each="cat : ${categorias}"
+                                    th:value="${cat}"
+                                    th:text="${cat.nombre}"
+                                    th:selected="${cat == producto.categoria}">
+                                Categoría
+                            </option>
+                        </select>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Categoría actual: <strong th:text="${producto.categoria?.nombre}">-</strong>
+                        </small>
+                    </div>
+
+                    <!-- Subcategoría (se carga dinámicamente) -->
+                    <div class="form-group">
+                        <label for="subcategoria">
+                            <i class="bi bi-tags"></i>
+                            Subcategoría
+                            <span class="required">*</span>
+                        </label>
+                        <select th:field="*{subcategoria}"
+                                class="form-select"
+                                id="subcategoria"
+                                required>
+                            <option value="">-- Selecciona una subcategoría --</option>
+                            <!-- Las opciones se cargarán dinámicamente o vía Thymeleaf -->
+                            <option th:each="sub : ${subcategorias}"
+                                    th:value="${sub}"
+                                    th:text="${sub.nombre}"
+                                    th:selected="${sub == producto.subcategoria}">
+                                Subcategoría
+                            </option>
+                        </select>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Subcategoría actual: <strong th:text="${producto.subcategoria?.nombre}">-</strong>
+                        </small>
+                    </div>
                 </div>
 
-                <!-- Categoría -->
-                <div class="form-group">
-                    <label for="categoria">
-                        <i class="bi bi-grid"></i>
-                        Categoría
-                        <span class="required">*</span>
-                    </label>
-                    <select th:field="*{categoria}"
-                            class="form-select"
-                            id="categoria"
-                            required>
-                        <option value="">Seleccione una categoría...</option>
-                        <option value="FRUTAS">🍎 Frutas</option>
-                        <option value="VERDURAS">🥬 Verduras</option>
-                        <option value="LACTEOS">🥛 Lácteos</option>
-                        <option value="CARNES">🥩 Carnes</option>
-                        <option value="HERRAMIENTAS">🔧 Herramientas</option>
-                        <option value="MAQUINARIA">⚙️ Maquinaria</option>
-                        <option value="OTRO">📦 Otro</option>
-                    </select>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Selecciona la categoría que mejor describe tu producto
-                    </small>
+                <!-- Advertencia sobre cambio de categoría -->
+                <div style="margin-top: 1rem; padding: 1rem; background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 6px;">
+                    <p style="margin: 0; font-size: 0.9rem; color: #856404;">
+                        <i class="bi bi-exclamation-triangle" style="color: #ffc107;"></i>
+                        <strong>Importante:</strong> Si cambias la categoría, asegúrate de seleccionar también la subcategoría correcta. La subcategoría debe pertenecer a la categoría seleccionada.
+                    </p>
                 </div>
+            </div>
+
+            <!-- ⭐ SECCIÓN: Presentación del Producto -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-box-seam"></i>
+                    Presentación del Producto
+                </h3>
+
+                <div class="form-row form-row-2">
+                    <!-- Cantidad -->
+                    <div class="form-group">
+                        <label for="cantidad">
+                            <i class="bi bi-123"></i>
+                            Cantidad por Unidad
+                            <span class="required">*</span>
+                        </label>
+                        <input type="number"
+                               th:field="*{cantidad}"
+                               class="form-control"
+                               id="cantidad"
+                               placeholder="Ej: 1, 0.5, 500"
+                               min="0.01"
+                               step="0.01"
+                               required>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Cantidad actual: <strong><span th:text="${producto.cantidadFormateada}">-</span></strong>
+                        </small>
+                    </div>
+
+                    <!-- Unidad de Medida -->
+                    <div class="form-group">
+                        <label for="unidadMedida">
+                            <i class="bi bi-rulers"></i>
+                            Unidad de Medida
+                            <span class="required">*</span>
+                        </label>
+                        <select th:field="*{unidadMedida}"
+                                class="form-select"
+                                id="unidadMedida"
+                                required>
+                            <option value="">-- Selecciona unidad --</option>
+                            <option th:each="unidad : ${unidadesMedida}"
+                                    th:value="${unidad}"
+                                    th:text="${unidad.nombre + ' (' + unidad.abreviatura + ')'}"
+                                    th:selected="${unidad == producto.unidadMedida}">
+                                Unidad
+                            </option>
+                        </select>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Unidad actual: <strong th:text="${producto.unidadMedida?.nombre}">-</strong>
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Vista previa de presentación -->
+                <div id="presentacionPreview" style="display: none; margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-radius: 8px; border: 2px solid #4caf50; text-align: center;">
+                    <p style="margin: 0; font-size: 0.9rem; color: #2e7d32;">
+                        <i class="bi bi-eye" style="font-size: 1.2rem;"></i>
+                        <strong>Nueva presentación:</strong>
+                        <span id="previewText" style="font-weight: 700; color: #1b5e20; font-size: 1.1rem;"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sección: Imagen -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-image"></i>
+                    Imagen del Producto
+                </h3>
 
                 <!-- Imagen Actual -->
                 <div class="form-group" th:if="${producto.imagen_producto != null}">
                     <label>
-                        <i class="bi bi-image"></i>
+                        <i class="bi bi-image-fill"></i>
                         Imagen Actual
                     </label>
-                    <div style="position: relative; max-width: 300px;">
-                        <!-- Imagen -->
-                        <img th:src="@{${producto.imagen_producto}}"
+                    <div style="text-align: center; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border: 2px solid var(--border-color);">
+                        <img th:src="@{'/uploads/' + ${producto.imagen_producto}}"
                              alt="Imagen actual"
-                             style="max-width: 300px; width: 100%; border-radius: 8px; border: 2px solid var(--border-color); display: block;"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-
-                        <!-- Fallback si falla la carga -->
-                        <div style="display: none; width: 300px; height: 200px; background-color: var(--color-bg-light); border-radius: 8px; align-items: center; justify-content: center; border: 2px solid var(--border-color); flex-direction: column; gap: 0.5rem;">
-                            <i class="bi bi-basket" style="font-size: 3rem; color: var(--color-text-light);"></i>
-                            <small style="color: var(--color-text-light);">Imagen no disponible</small>
-                        </div>
+                             style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: var(--shadow-sm);"
+                             onerror="this.src='/images/placeholder.jpg'">
                     </div>
                 </div>
 
-                <!-- Cambiar Imagen -->
+                <!-- Nueva Imagen -->
                 <div class="form-group">
                     <label>
-                        <i class="bi bi-image"></i>
+                        <i class="bi bi-camera"></i>
                         Cambiar Imagen
-                        <small style="font-weight: normal;">(Dejar vacío para mantener la actual)</small>
                     </label>
                     <div class="file-input-wrapper">
                         <input type="file"
@@ -217,94 +325,165 @@
                             <i class="bi bi-exclamation-triangle"></i>
                             Stock bajo. Se mostrará alerta a los usuarios.
                         </small>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Stock actual: <strong th:text="${producto.stock}">0</strong> unidades
+                        </small>
                     </div>
+                </div>
+
+                <!-- Nota sobre gestión de stock -->
+                <div style="margin-top: 1rem; padding: 1rem; background-color: rgba(23, 162, 184, 0.1); border-left: 4px solid #17a2b8; border-radius: 6px;">
+                    <p style="margin: 0; font-size: 0.9rem; color: #0c5460;">
+                        <i class="bi bi-lightbulb" style="color: #17a2b8;"></i>
+                        <strong>Tip:</strong> Para ajustes rápidos de stock, puedes usar los botones de aumentar/disminuir en la vista de detalle del producto.
+                    </p>
                 </div>
             </div>
 
-            <!-- Información adicional -->
-            <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success); margin-bottom: 2rem;">
-                <h4 style="color: var(--color-success); margin-bottom: 0.5rem; font-size: 1rem;">
-                    <i class="bi bi-lightbulb"></i> Consejos para tu producto
-                </h4>
-                <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
-                    <li>Usa fotos reales y de buena calidad del producto</li>
-                    <li>Describe claramente el peso, tamaño o cantidad</li>
-                    <li>Indica si es orgánico, fresco o tiene alguna característica especial</li>
-                    <li>Mantén actualizado el stock para evitar decepciones</li>
-                    <li>Un precio justo atrae más compradores</li>
-                </ul>
-            </div>
-
-            <!-- Botones de acción -->
+            <!-- Botones de Acción -->
             <div class="form-actions">
-                <a th:href="@{/productos/tienda/{id}(id=${producto.id_tienda})}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Cancelar
+                <a th:href="@{/productos/detalle/{id}(id=${producto.id_producto})}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i>
+                    Cancelar
                 </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle"></i> Guardar Cambios
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i>
+                    Guardar Cambios
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Scripts -->
+    <!-- ⭐ SCRIPTS JAVASCRIPT -->
     <script>
-        // Scripts protegidos: se registran solo si los elementos existen
+        // ==================== CARGAR SUBCATEGORÍAS DINÁMICAMENTE ====================
+        async function cargarSubcategorias() {
+            const categoriaSelect = document.getElementById('categoria');
+            const subcategoriaSelect = document.getElementById('subcategoria');
+            const categoriaValue = categoriaSelect.value;
+
+            // Guardar el valor actual de subcategoría
+            const subcategoriaActual = subcategoriaSelect.value;
+
+            if (!categoriaValue) {
+                subcategoriaSelect.innerHTML = '<option value="">-- Primero selecciona una categoría --</option>';
+                subcategoriaSelect.disabled = true;
+                return;
+            }
+
+            try {
+                // Llamar al endpoint del controlador
+                const response = await fetch(`/productos/subcategorias/${categoriaValue}`);
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar subcategorías');
+                }
+
+                const subcategorias = await response.json();
+
+                // Limpiar y repoblar
+                subcategoriaSelect.innerHTML = '<option value="">-- Selecciona una subcategoría --</option>';
+
+                subcategorias.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub.nombre || sub;
+
+                    // Mantener seleccionada la subcategoría actual si pertenece a esta categoría
+                    if (sub === subcategoriaActual) {
+                        option.selected = true;
+                    }
+
+                    subcategoriaSelect.appendChild(option);
+                });
+
+                subcategoriaSelect.disabled = false;
+
+            } catch (error) {
+                console.error('Error:', error);
+                subcategoriaSelect.innerHTML = '<option value="">Error al cargar subcategorías</option>';
+            }
+        }
+
+        // ==================== VISTA PREVIA DE PRESENTACIÓN ====================
+        function actualizarVistaPreviaPresentacion() {
+            const cantidad = document.getElementById('cantidad').value;
+            const unidadMedida = document.getElementById('unidadMedida');
+            const selectedOption = unidadMedida.options[unidadMedida.selectedIndex];
+            const previewDiv = document.getElementById('presentacionPreview');
+            const previewText = document.getElementById('previewText');
+
+            if (cantidad && unidadMedida.value) {
+                const unidadTexto = selectedOption.textContent;
+                const abreviatura = unidadTexto.match(/\(([^)]+)\)/)[1];
+                previewText.textContent = `${cantidad} ${abreviatura}`;
+                previewDiv.style.display = 'block';
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        }
+
+        // ==================== INICIALIZACIÓN ====================
         window.addEventListener('DOMContentLoaded', function() {
-            // Contador de caracteres para descripción
+            // Contador de caracteres
             const descripcion = document.getElementById('descripcion');
             const charCount = document.getElementById('charCount');
-            if (descripcion && charCount) {
-                charCount.textContent = descripcion.value ? descripcion.value.length : 0;
-                descripcion.addEventListener('input', function() {
-                    charCount.textContent = this.value.length;
-                });
-            }
+            charCount.textContent = descripcion.value.length;
+
+            descripcion.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
 
             // Alerta de stock bajo
             const stock = document.getElementById('stock');
             const stockWarning = document.getElementById('stockWarning');
-            if (stock && stockWarning) {
-                stock.addEventListener('input', function() {
-                    const val = parseInt(this.value);
-                    if (!isNaN(val) && val < 10 && val > 0) {
-                        stockWarning.style.display = 'block';
-                    } else {
-                        stockWarning.style.display = 'none';
-                    }
-                });
+
+            // Verificar stock inicial
+            if (parseInt(stock.value) < 10 && parseInt(stock.value) > 0) {
+                stockWarning.style.display = 'block';
             }
 
-            // Preview de imagen: registrar listener en el input file
-            const fileInput = document.getElementById('imagen');
-            if (fileInput) {
-                fileInput.addEventListener('change', function(event) {
-                    const file = event.target.files && event.target.files[0];
-                    const preview = document.getElementById('preview');
-                    const imagePreview = document.getElementById('imagePreview');
-                    const fileName = document.getElementById('fileName');
-                    if (file && preview && imagePreview && fileName) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            preview.src = e.target.result;
-                            imagePreview.style.display = 'block';
-                            fileName.textContent = file.name;
-                        }
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
+            stock.addEventListener('input', function() {
+                if (parseInt(this.value) < 10 && parseInt(this.value) > 0) {
+                    stockWarning.style.display = 'block';
+                } else {
+                    stockWarning.style.display = 'none';
+                }
+            });
+
+            // Vista previa de presentación
+            document.getElementById('cantidad').addEventListener('input', actualizarVistaPreviaPresentacion);
+            document.getElementById('unidadMedida').addEventListener('change', actualizarVistaPreviaPresentacion);
 
             // Formato de precio
             const precio = document.getElementById('precio');
-            if (precio) {
-                precio.addEventListener('blur', function() {
-                    if (this.value) {
-                        this.value = Math.round(this.value / 100) * 100;
-                    }
-                });
-            }
+            precio.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = Math.round(this.value / 100) * 100;
+                }
+            });
         });
+
+        // ==================== PREVIEW DE IMAGEN ====================
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById('preview');
+            const imagePreview = document.getElementById('imagePreview');
+            const fileName = document.getElementById('fileName');
+
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    fileName.textContent = file.name;
+                }
+
+                reader.readAsDataURL(file);
+            }
+        }
     </script>
 </main>
 

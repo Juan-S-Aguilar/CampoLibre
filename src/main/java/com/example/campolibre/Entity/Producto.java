@@ -1,51 +1,104 @@
 package com.example.campolibre.Entity;
 
 import com.example.campolibre.Enum.CategoriaProducto;
+import com.example.campolibre.Enum.SubcategoriaProducto;
+import com.example.campolibre.Enum.UnidadMedida;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "productos")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Producto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_producto", nullable = false, unique = true)
     private Long id_producto;
 
-    @Column(name = "nombre", nullable = false, length = 100)
+    @Column(nullable = false, length = 200)
     private String nombre;
 
-    @Column(name = "descripcion", nullable = false, length = 500)
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
 
-    @Column(name = "precio", nullable = false)
+    @Column(nullable = false)
     private Double precio;
 
-    @Column(name = "stock", nullable = false)
+    @Column(nullable = false)
     private Integer stock;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "categoria", nullable = false)
+    @Column(nullable = false, length = 50)
     private CategoriaProducto categoria;
 
-    @ManyToOne
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 100)
+    private SubcategoriaProducto subcategoria;
+
+    @Column(nullable = false)
+    private Double cantidad; // Ejemplo: 1.5, 5, 10, etc.
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private UnidadMedida unidadMedida;
+
+    @Column(length = 500)
+    private String imagen_producto;
+
+    @Column(nullable = false, length = 20)
+    private String estado = "ACTIVO"; // ACTIVO, INACTIVO, ELIMINADO
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tienda", nullable = false)
     private Tienda tienda;
 
-    @Column(name = "imagen_producto", length = 255)
-    private String imagen_producto;
-
-    @Column(name = "fecha_creacion", nullable = false)
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime fecha_creacion;
 
-    @Column(name = "estado", nullable = false)
-    private String estado = "ACTIVO";
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime fecha_actualizacion;
 
-    @PrePersist
-    protected void onCreate() {
-        fecha_creacion = LocalDateTime.now();
+    // Métodos de utilidad para obtener el id de la tienda
+    @Transient
+    public Long getId_tienda() {
+        return tienda != null ? tienda.getId_tienda() : null;
+    }
+
+    /**
+     * Devuelve la cantidad con su unidad de medida formateada
+     * Ejemplo: "1.5 kg", "10 unidades"
+     */
+    @Transient
+    public String getCantidadFormateada() {
+        if (cantidad == null || unidadMedida == null) {
+            return "N/A";
+        }
+        return unidadMedida.formatearConCantidad(cantidad);
+    }
+
+    /**
+     * Verifica si el producto tiene stock disponible
+     */
+    @Transient
+    public boolean tieneStock() {
+        return stock != null && stock > 0;
+    }
+
+    /**
+     * Verifica si el producto está activo
+     */
+    @Transient
+    public boolean estaActivo() {
+        return "ACTIVO".equals(estado);
     }
 }

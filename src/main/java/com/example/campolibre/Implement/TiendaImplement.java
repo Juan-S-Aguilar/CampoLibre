@@ -1,5 +1,6 @@
 package com.example.campolibre.Implement;
 
+import com.example.campolibre.Config.TiendaValidator; // ⭐ NUEVO - Importar el validador
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.Entity.Tienda;
 import com.example.campolibre.Entity.Usuario;
@@ -23,18 +24,30 @@ public class TiendaImplement implements TiendaService {
     private final UsuarioRepository usuarioRepository;
     private final FileStorageService fileStorageService;
     private final ModelMapper modelMapper;
+    private final TiendaValidator tiendaValidator; // ⭐ NUEVO - Declarar el validador
 
     @Autowired
-    public TiendaImplement(TiendaRepository tiendaRepository, UsuarioRepository usuarioRepository,
-                           FileStorageService fileStorageService, ModelMapper modelMapper) {
+    public TiendaImplement(TiendaRepository tiendaRepository,
+                           UsuarioRepository usuarioRepository,
+                           FileStorageService fileStorageService,
+                           ModelMapper modelMapper,
+                           TiendaValidator tiendaValidator) { // ⭐ NUEVO - Inyectar el validador
         this.tiendaRepository = tiendaRepository;
         this.usuarioRepository = usuarioRepository;
         this.fileStorageService = fileStorageService;
         this.modelMapper = modelMapper;
+        this.tiendaValidator = tiendaValidator; // ⭐ NUEVO - Asignar el validador
     }
 
     @Override
     public TiendaDTO crearTienda(TiendaDTO tiendaDTO, MultipartFile imagen) {
+        // ⭐ NUEVO - VALIDAR NOMBRE DE TIENDA
+        if (!tiendaValidator.esNombreValido(tiendaDTO.getNombre())) {
+            String mensajeError = tiendaValidator.getMensajeError(tiendaDTO.getNombre());
+            throw new CustomException(mensajeError);
+        }
+        // ⭐ FIN VALIDACIÓN
+
         Usuario usuario = usuarioRepository.findById(tiendaDTO.getId_usuario())
                 .orElseThrow(() -> new CustomException("Usuario no encontrado"));
 
@@ -116,6 +129,15 @@ public class TiendaImplement implements TiendaService {
     public TiendaDTO actualizarTienda(Long id, TiendaDTO tiendaDTO, MultipartFile imagen) {
         Tienda tiendaExistente = tiendaRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Tienda no encontrada"));
+
+        // ⭐ NUEVO - VALIDAR NOMBRE SI SE ESTÁ CAMBIANDO
+        if (!tiendaExistente.getNombre().equals(tiendaDTO.getNombre())) {
+            if (!tiendaValidator.esNombreValido(tiendaDTO.getNombre())) {
+                String mensajeError = tiendaValidator.getMensajeError(tiendaDTO.getNombre());
+                throw new CustomException(mensajeError);
+            }
+        }
+        // ⭐ FIN VALIDACIÓN
 
         tiendaExistente.setNombre(tiendaDTO.getNombre());
         tiendaExistente.setDescripcion(tiendaDTO.getDescripcion());

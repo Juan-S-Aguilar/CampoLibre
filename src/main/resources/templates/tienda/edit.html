@@ -24,12 +24,28 @@
             <span th:text="${error}">Error en el formulario</span>
         </div>
 
+        <!-- ⭐ NUEVO: Advertencia sobre cambio de nombre -->
+        <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #d1ecf1 0%, #e7f5f8 100%); border-left: 5px solid #17a2b8; border-radius: 8px; box-shadow: 0 2px 8px rgba(23, 162, 184, 0.15);">
+            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                <i class="bi bi-info-circle" style="font-size: 2rem; color: #0c5460; flex-shrink: 0;"></i>
+                <div style="flex: 1;">
+                    <h4 style="color: #0c5460; margin: 0 0 0.5rem 0; font-size: 1rem;">
+                        <strong>💡 Recordatorio sobre nombres permitidos</strong>
+                    </h4>
+                    <p style="margin: 0; color: #0c5460; line-height: 1.6; font-size: 0.9rem;">
+                        Si vas a cambiar el nombre de tu tienda, recuerda que <strong>NO se permiten</strong> nombres relacionados con:
+                        <strong>carnes, animales vivos, maquinaria o herramientas</strong>.
+                        Solo se aceptan nombres relacionados con productos agrícolas alimenticios.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Formulario -->
         <form th:action="@{/tiendas/actualizar}" th:object="${tienda}" method="post" enctype="multipart/form-data">
 
             <!-- ID oculto -->
             <input type="hidden" th:field="*{id_tienda}">
-            <input type="hidden" th:field="*{id_usuario}">
 
             <!-- Sección: Información Básica -->
             <div class="form-section">
@@ -49,8 +65,13 @@
                            th:field="*{nombre}"
                            class="form-control"
                            id="nombre"
+                           placeholder="Ej: Lácteos del Valle, Frutas Frescas"
                            maxlength="100"
                            required>
+                    <small class="form-text">
+                        <i class="bi bi-lightbulb"></i>
+                        Si cambias el nombre, evita palabras como: carne, tractor, herramienta, ganadería, etc.
+                    </small>
                 </div>
 
                 <!-- Descripción -->
@@ -64,41 +85,42 @@
                               class="form-control"
                               id="descripcion"
                               rows="4"
+                              placeholder="Describe los productos que ofreces, tu historia, qué te hace especial..."
                               maxlength="500"
                               required></textarea>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Máximo 500 caracteres. <span id="charCount">0</span>/500
+                        Máximo 500 caracteres. Quedan <strong><span id="charCount">0</span></strong> caracteres.
                     </small>
                 </div>
+            </div>
+
+            <!-- Sección: Imagen -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-image"></i>
+                    Imagen de la Tienda
+                </h3>
 
                 <!-- Imagen Actual -->
                 <div class="form-group" th:if="${tienda.imagen_tienda != null}">
                     <label>
-                        <i class="bi bi-image"></i>
+                        <i class="bi bi-image-fill"></i>
                         Imagen Actual
                     </label>
-                    <div style="position: relative; max-width: 300px;">
-                        <!-- Imagen -->
-                        <img th:src="@{${tienda.imagen_tienda}}"
+                    <div style="text-align: center; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border: 2px solid var(--border-color);">
+                        <img th:src="@{'/uploads/' + ${tienda.imagen_tienda}}"
                              alt="Imagen actual"
-                             style="max-width: 300px; width: 100%; border-radius: 8px; border: 2px solid var(--border-color); display: block;"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-
-                        <!-- Fallback si falla la carga -->
-                        <div style="display: none; width: 300px; height: 200px; background-color: var(--color-bg-light); border-radius: 8px; align-items: center; justify-content: center; border: 2px solid var(--border-color); flex-direction: column; gap: 0.5rem;">
-                            <i class="bi bi-shop" style="font-size: 3rem; color: var(--color-text-light);"></i>
-                            <small style="color: var(--color-text-light);">Imagen no disponible</small>
-                        </div>
+                             style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: var(--shadow-sm);"
+                             onerror="this.src='/images/placeholder.jpg'">
                     </div>
                 </div>
 
-                <!-- Cambiar Imagen -->
+                <!-- Nueva Imagen -->
                 <div class="form-group">
                     <label>
-                        <i class="bi bi-image"></i>
+                        <i class="bi bi-camera"></i>
                         Cambiar Imagen
-                        <small style="font-weight: normal;">(Dejar vacío para mantener la actual)</small>
                     </label>
                     <div class="file-input-wrapper">
                         <input type="file"
@@ -158,94 +180,55 @@
                         <label for="correo_tienda">
                             <i class="bi bi-envelope"></i>
                             Correo Electrónico
+                            <span class="required">*</span>
                         </label>
                         <input type="email"
                                th:field="*{correo_tienda}"
                                class="form-control"
                                id="correo_tienda"
-                               maxlength="100">
+                               maxlength="100"
+                               required>
                     </div>
 
                     <!-- Teléfono de la Tienda -->
                     <div class="form-group">
                         <label for="telefono_tienda">
                             <i class="bi bi-phone"></i>
-                            Teléfono de Contacto
+                            Teléfono
+                            <span class="required">*</span>
                         </label>
                         <input type="tel"
                                th:field="*{telefono_tienda}"
                                class="form-control"
                                id="telefono_tienda"
-                               pattern="[0-9]{10}"
-                               maxlength="20">
+                               maxlength="20"
+                               required>
                     </div>
                 </div>
             </div>
 
-            <!-- Sección: Información del Sistema -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-info-circle"></i>
-                    Información del Sistema
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Fecha de Creación -->
-                    <div class="form-group">
-                        <label>
-                            <i class="bi bi-calendar"></i>
-                            Fecha de Creación
-                        </label>
-                        <input type="text"
-                               th:value="${#temporals.format(tienda.fecha_creacion, 'dd/MM/yyyy HH:mm')}"
-                               class="form-control" readonly
-                               style="background-color: #f5f5f5;">
-                    </div>
-
-                    <!-- Estado Actual -->
-                    <div class="form-group">
-                        <label>
-                            <i class="bi bi-toggle-on"></i>
-                            Estado Actual
-                        </label>
-                        <div style="padding: 0.75rem; background-color: #f5f5f5; border-radius: 8px;">
-                            <span class="status-badge active" th:if="${tienda.estado.name() == 'ACTIVA'}">
-                                <i class="bi bi-check-circle"></i> Activa
-                            </span>
-                            <span class="status-badge pending" th:if="${tienda.estado.name() == 'INACTIVA'}">
-                                <i class="bi bi-pause-circle"></i> Inactiva
-                            </span>
-                            <span class="status-badge inactive" th:if="${tienda.estado.name() == 'ELIMINADA'}">
-                                <i class="bi bi-x-circle"></i> Eliminada
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de acción -->
+            <!-- Botones de Acción -->
             <div class="form-actions">
-                <a th:href="@{/tiendas/mis-tiendas}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Cancelar
+                <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i>
+                    Cancelar
                 </a>
-                <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-info">
-                    <i class="bi bi-eye"></i> Ver Detalle
-                </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle"></i> Guardar Cambios
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i>
+                    Guardar Cambios
                 </button>
             </div>
         </form>
 
-        <!-- Información adicional -->
-        <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-warning);">
-            <h4 style="color: var(--color-warning); margin-bottom: 0.5rem; font-size: 1rem;">
-                <i class="bi bi-exclamation-triangle"></i> Importante
+        <!-- Nota adicional -->
+        <div style="margin-top: 2rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
+            <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
+                <i class="bi bi-info-circle"></i> Información Importante
             </h4>
             <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
-                <li>La imagen solo se actualizará si seleccionas una nueva</li>
-                <li>Para cambiar el estado de la tienda, usa la vista de detalle</li>
+                <li>Los cambios se aplicarán inmediatamente</li>
                 <li>Los productos asociados a esta tienda no se verán afectados</li>
+                <li>Si el nombre de la tienda contiene palabras prohibidas, el sistema lo rechazará</li>
             </ul>
         </div>
     </div>

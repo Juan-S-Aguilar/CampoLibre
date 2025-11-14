@@ -92,133 +92,302 @@ public class DataSeeder implements CommandLineRunner {
         tiendaRepository.save(tienda2);
         System.out.println("✓ Tienda creada: " + tienda2.getNombre());
 
-        // Tienda 3 - Del admin (para pruebas)
+        // ⭐ Tienda 3 - ACTUALIZADA (ya no vende herramientas)
         Tienda tienda3 = new Tienda();
-        tienda3.setNombre("Herramientas AgroTech");
-        tienda3.setDescripcion("Herramientas y maquinaria agrícola de calidad. Asesoría técnica incluida.");
+        tienda3.setNombre("Granos y Cereales Don Juan");
+        tienda3.setDescripcion("Granos secos, cereales y semillas de la mejor calidad. Productos seleccionados y empacados con higiene.");
         tienda3.setEstado(EstadoTienda.ACTIVA);
-        tienda3.setCorreo_tienda("ventas@agrotech.com");
+        tienda3.setCorreo_tienda("ventas@granosdj.com");
         tienda3.setTelefono_tienda("3157654321");
-        tienda3.setUbicacion("Centro Comercial Agrícola, Bogotá");
+        tienda3.setUbicacion("Centro Agroalimentario, Bogotá");
         tienda3.setUsuario(admin);
         tienda3.setImagen_tienda(null);
         tiendaRepository.save(tienda3);
         System.out.println("✓ Tienda creada: " + tienda3.getNombre());
+
+        // ⭐ Tienda 4 - NUEVA (Verduras)
+        Tienda tienda4 = new Tienda();
+        tienda4.setNombre("Verduras Frescas El Huerto");
+        tienda4.setDescripcion("Verduras y hortalizas recién cosechadas. Cultivo hidropónico y orgánico.");
+        tienda4.setEstado(EstadoTienda.ACTIVA);
+        tienda4.setCorreo_tienda("contacto@elhuerto.com");
+        tienda4.setTelefono_tienda("3118887766");
+        tienda4.setUbicacion("Km 5 Vía Chía, Cundinamarca");
+        tienda4.setUsuario(proveedor);
+        tienda4.setImagen_tienda(null);
+        tiendaRepository.save(tienda4);
+        System.out.println("✓ Tienda creada: " + tienda4.getNombre());
     }
 
     private void cargarProductos() {
         Tienda tienda1 = tiendaRepository.findById(1L).orElse(null);
         Tienda tienda2 = tiendaRepository.findById(2L).orElse(null);
         Tienda tienda3 = tiendaRepository.findById(3L).orElse(null);
+        Tienda tienda4 = tiendaRepository.findById(4L).orElse(null);
 
-        if (tienda1 == null || tienda2 == null || tienda3 == null) {
+        if (tienda1 == null || tienda2 == null || tienda3 == null || tienda4 == null) {
             System.out.println("⚠️ No se encontraron tiendas para agregar productos");
             return;
         }
 
-        // Productos de Tienda 1 (Frutas del Valle)
+        // ==================== PRODUCTOS DE TIENDA 1 (FRUTAS) ====================
+
+        // Producto 1: Aguacate Hass
         Producto p1 = new Producto();
         p1.setNombre("Aguacate Hass");
         p1.setDescripcion("Aguacate de primera calidad, cremoso y nutritivo. Perfecto para ensaladas y preparaciones.");
         p1.setPrecio(2500.0);
         p1.setStock(50);
         p1.setCategoria(CategoriaProducto.FRUTAS);
+        p1.setSubcategoria(SubcategoriaProducto.TROPICALES);
+        p1.setCantidad(1.0);
+        p1.setUnidadMedida(UnidadMedida.KILOGRAMO);
         p1.setTienda(tienda1);
         p1.setImagen_producto(null);
         p1.setEstado("ACTIVO");
         productoRepository.save(p1);
 
+        // Producto 2: Mango Tommy
         Producto p2 = new Producto();
         p2.setNombre("Mango Tommy");
         p2.setDescripcion("Mango dulce y jugoso, ideal para jugos y postres. Cosecha reciente.");
         p2.setPrecio(3000.0);
         p2.setStock(30);
         p2.setCategoria(CategoriaProducto.FRUTAS);
+        p2.setSubcategoria(SubcategoriaProducto.TROPICALES);
+        p2.setCantidad(1.0);
+        p2.setUnidadMedida(UnidadMedida.KILOGRAMO);
         p2.setTienda(tienda1);
         p2.setImagen_producto(null);
         p2.setEstado("ACTIVO");
         productoRepository.save(p2);
 
+        // Producto 3: Papaya Maradol
         Producto p3 = new Producto();
         p3.setNombre("Papaya Maradol");
         p3.setDescripcion("Papaya grande y dulce, rica en vitaminas. Excelente para el desayuno.");
         p3.setPrecio(4500.0);
         p3.setStock(20);
         p3.setCategoria(CategoriaProducto.FRUTAS);
+        p3.setSubcategoria(SubcategoriaProducto.TROPICALES);
+        p3.setCantidad(1.0);
+        p3.setUnidadMedida(UnidadMedida.UNIDAD);
         p3.setTienda(tienda1);
         p3.setImagen_producto(null);
         p3.setEstado("ACTIVO");
         productoRepository.save(p3);
 
-        // Productos de Tienda 2 (Lácteos La Campiña)
+        // Producto 4: Naranja Valencia
         Producto p4 = new Producto();
-        p4.setNombre("Queso Campesino");
-        p4.setDescripcion("Queso fresco artesanal de 500g. Elaborado con leche del día, sin conservantes.");
-        p4.setPrecio(12000.0);
-        p4.setStock(25);
-        p4.setCategoria(CategoriaProducto.LACTEOS);
-        p4.setTienda(tienda2);
+        p4.setNombre("Naranja Valencia");
+        p4.setDescripcion("Naranjas jugosas, ideales para jugo. Alto contenido de vitamina C.");
+        p4.setPrecio(2000.0);
+        p4.setStock(8); // ⚠️ Stock bajo para pruebas
+        p4.setCategoria(CategoriaProducto.FRUTAS);
+        p4.setSubcategoria(SubcategoriaProducto.CITRICOS);
+        p4.setCantidad(1.0);
+        p4.setUnidadMedida(UnidadMedida.KILOGRAMO);
+        p4.setTienda(tienda1);
         p4.setImagen_producto(null);
         p4.setEstado("ACTIVO");
         productoRepository.save(p4);
 
+        System.out.println("✓ 4 productos de FRUTAS creados");
+
+        // ==================== PRODUCTOS DE TIENDA 2 (LÁCTEOS) ====================
+
+        // Producto 5: Queso Campesino
         Producto p5 = new Producto();
-        p5.setNombre("Yogurt Natural");
-        p5.setDescripcion("Yogurt casero de 1 litro, sin azúcar añadida. Probióticos naturales.");
-        p5.setPrecio(8000.0);
-        p5.setStock(40);
+        p5.setNombre("Queso Campesino");
+        p5.setDescripcion("Queso fresco artesanal. Elaborado con leche del día, sin conservantes.");
+        p5.setPrecio(12000.0);
+        p5.setStock(25);
         p5.setCategoria(CategoriaProducto.LACTEOS);
+        p5.setSubcategoria(SubcategoriaProducto.QUESO_FRESCO);
+        p5.setCantidad(0.5);
+        p5.setUnidadMedida(UnidadMedida.KILOGRAMO);
         p5.setTienda(tienda2);
         p5.setImagen_producto(null);
         p5.setEstado("ACTIVO");
         productoRepository.save(p5);
 
+        // Producto 6: Yogurt Natural
         Producto p6 = new Producto();
-        p6.setNombre("Mantequilla Artesanal");
-        p6.setDescripcion("Mantequilla casera de 250g. Sabor único y tradicional.");
-        p6.setPrecio(6500.0);
-        p6.setStock(15);
+        p6.setNombre("Yogurt Natural");
+        p6.setDescripcion("Yogurt casero, sin azúcar añadida. Probióticos naturales.");
+        p6.setPrecio(8000.0);
+        p6.setStock(40);
         p6.setCategoria(CategoriaProducto.LACTEOS);
+        p6.setSubcategoria(SubcategoriaProducto.YOGURT);
+        p6.setCantidad(1.0);
+        p6.setUnidadMedida(UnidadMedida.LITRO);
         p6.setTienda(tienda2);
         p6.setImagen_producto(null);
         p6.setEstado("ACTIVO");
         productoRepository.save(p6);
 
-        // Productos de Tienda 3 (Herramientas AgroTech)
+        // Producto 7: Mantequilla Artesanal
         Producto p7 = new Producto();
-        p7.setNombre("Pala Agrícola Reforzada");
-        p7.setDescripcion("Pala de acero con mango de madera. Resistente y duradera.");
-        p7.setPrecio(45000.0);
-        p7.setStock(12);
-        p7.setCategoria(CategoriaProducto.HERRAMIENTAS);
-        p7.setTienda(tienda3);
+        p7.setNombre("Mantequilla Artesanal");
+        p7.setDescripcion("Mantequilla casera. Sabor único y tradicional.");
+        p7.setPrecio(6500.0);
+        p7.setStock(15);
+        p7.setCategoria(CategoriaProducto.LACTEOS);
+        p7.setSubcategoria(SubcategoriaProducto.MANTEQUILLA);
+        p7.setCantidad(250.0);
+        p7.setUnidadMedida(UnidadMedida.GRAMO);
+        p7.setTienda(tienda2);
         p7.setImagen_producto(null);
         p7.setEstado("ACTIVO");
         productoRepository.save(p7);
 
+        // Producto 8: Leche Entera
         Producto p8 = new Producto();
-        p8.setNombre("Azadón Premium");
-        p8.setDescripcion("Azadón de alta calidad con cabeza forjada. Ideal para labores pesadas.");
-        p8.setPrecio(38000.0);
-        p8.setStock(10);
-        p8.setCategoria(CategoriaProducto.HERRAMIENTAS);
-        p8.setTienda(tienda3);
+        p8.setNombre("Leche Entera Fresca");
+        p8.setDescripcion("Leche fresca de vaca, pasteurizada. Ideal para toda la familia.");
+        p8.setPrecio(3500.0);
+        p8.setStock(4); // ⚠️ Stock crítico para pruebas
+        p8.setCategoria(CategoriaProducto.LACTEOS);
+        p8.setSubcategoria(SubcategoriaProducto.LECHE_ENTERA);
+        p8.setCantidad(1.0);
+        p8.setUnidadMedida(UnidadMedida.LITRO);
+        p8.setTienda(tienda2);
         p8.setImagen_producto(null);
         p8.setEstado("ACTIVO");
         productoRepository.save(p8);
 
+        System.out.println("✓ 4 productos de LÁCTEOS creados");
+
+        // ==================== PRODUCTOS DE TIENDA 3 (GRANOS Y CEREALES) ====================
+
+        // Producto 9: Frijol Cargamanto
         Producto p9 = new Producto();
-        p9.setNombre("Fumigadora Manual 20L");
-        p9.setDescripcion("Fumigadora de espalda con capacidad de 20 litros. Boquilla ajustable.");
-        p9.setPrecio(125000.0);
-        p9.setStock(5);
-        p9.setCategoria(CategoriaProducto.MAQUINARIA);
+        p9.setNombre("Frijol Cargamanto");
+        p9.setDescripcion("Frijol rojo de excelente calidad. Limpio y seleccionado.");
+        p9.setPrecio(7000.0);
+        p9.setStock(100);
+        p9.setCategoria(CategoriaProducto.GRANOS);
+        p9.setSubcategoria(SubcategoriaProducto.FRIJOLES);
+        p9.setCantidad(1.0);
+        p9.setUnidadMedida(UnidadMedida.KILOGRAMO);
         p9.setTienda(tienda3);
         p9.setImagen_producto(null);
         p9.setEstado("ACTIVO");
         productoRepository.save(p9);
 
-        System.out.println("✓ 9 productos creados exitosamente");
+        // Producto 10: Arroz Blanco
+        Producto p10 = new Producto();
+        p10.setNombre("Arroz Blanco Especial");
+        p10.setDescripcion("Arroz de grano largo, excelente para todo tipo de preparaciones.");
+        p10.setPrecio(4500.0);
+        p10.setStock(80);
+        p10.setCategoria(CategoriaProducto.CEREALES);
+        p10.setSubcategoria(SubcategoriaProducto.ARROZ);
+        p10.setCantidad(1.0);
+        p10.setUnidadMedida(UnidadMedida.KILOGRAMO);
+        p10.setTienda(tienda3);
+        p10.setImagen_producto(null);
+        p10.setEstado("ACTIVO");
+        productoRepository.save(p10);
+
+        // Producto 11: Avena en Hojuelas
+        Producto p11 = new Producto();
+        p11.setNombre("Avena en Hojuelas");
+        p11.setDescripcion("Avena 100% natural, perfecta para el desayuno.");
+        p11.setPrecio(5500.0);
+        p11.setStock(60);
+        p11.setCategoria(CategoriaProducto.CEREALES);
+        p11.setSubcategoria(SubcategoriaProducto.AVENA);
+        p11.setCantidad(500.0);
+        p11.setUnidadMedida(UnidadMedida.GRAMO);
+        p11.setTienda(tienda3);
+        p11.setImagen_producto(null);
+        p11.setEstado("ACTIVO");
+        productoRepository.save(p11);
+
+        // Producto 12: Lentejas
+        Producto p12 = new Producto();
+        p12.setNombre("Lentejas Rojas");
+        p12.setDescripcion("Lentejas de cocción rápida, ricas en proteína vegetal.");
+        p12.setPrecio(6000.0);
+        p12.setStock(9); // ⚠️ Stock bajo para pruebas
+        p12.setCategoria(CategoriaProducto.GRANOS);
+        p12.setSubcategoria(SubcategoriaProducto.LENTEJAS);
+        p12.setCantidad(500.0);
+        p12.setUnidadMedida(UnidadMedida.GRAMO);
+        p12.setTienda(tienda3);
+        p12.setImagen_producto(null);
+        p12.setEstado("ACTIVO");
+        productoRepository.save(p12);
+
+        System.out.println("✓ 4 productos de GRANOS Y CEREALES creados");
+
+        // ==================== PRODUCTOS DE TIENDA 4 (VERDURAS) ====================
+
+        // Producto 13: Tomate Chonto
+        Producto p13 = new Producto();
+        p13.setNombre("Tomate Chonto Orgánico");
+        p13.setDescripcion("Tomate fresco y jugoso, cultivado sin pesticidas.");
+        p13.setPrecio(3500.0);
+        p13.setStock(45);
+        p13.setCategoria(CategoriaProducto.VERDURAS);
+        p13.setSubcategoria(SubcategoriaProducto.HORTALIZAS_FRUTO);
+        p13.setCantidad(1.0);
+        p13.setUnidadMedida(UnidadMedida.KILOGRAMO);
+        p13.setTienda(tienda4);
+        p13.setImagen_producto(null);
+        p13.setEstado("ACTIVO");
+        productoRepository.save(p13);
+
+        // Producto 14: Lechuga Crespa
+        Producto p14 = new Producto();
+        p14.setNombre("Lechuga Crespa");
+        p14.setDescripcion("Lechuga fresca y crujiente, ideal para ensaladas.");
+        p14.setPrecio(2500.0);
+        p14.setStock(35);
+        p14.setCategoria(CategoriaProducto.VERDURAS);
+        p14.setSubcategoria(SubcategoriaProducto.HORTALIZAS_HOJA);
+        p14.setCantidad(1.0);
+        p14.setUnidadMedida(UnidadMedida.UNIDAD);
+        p14.setTienda(tienda4);
+        p14.setImagen_producto(null);
+        p14.setEstado("ACTIVO");
+        productoRepository.save(p14);
+
+        // Producto 15: Papa Criolla
+        Producto p15 = new Producto();
+        p15.setNombre("Papa Criolla");
+        p15.setDescripcion("Papa criolla de la mejor calidad, recién cosechada.");
+        p15.setPrecio(4000.0);
+        p15.setStock(3); // ⚠️ Stock crítico para pruebas
+        p15.setCategoria(CategoriaProducto.VERDURAS);
+        p15.setSubcategoria(SubcategoriaProducto.TUBERCULOS);
+        p15.setCantidad(1.0);
+        p15.setUnidadMedida(UnidadMedida.KILOGRAMO);
+        p15.setTienda(tienda4);
+        p15.setImagen_producto(null);
+        p15.setEstado("ACTIVO");
+        productoRepository.save(p15);
+
+        // Producto 16: Zanahoria
+        Producto p16 = new Producto();
+        p16.setNombre("Zanahoria");
+        p16.setDescripcion("Zanahoria fresca, dulce y crujiente. Rica en betacaroteno.");
+        p16.setPrecio(2800.0);
+        p16.setStock(0); // ⚠️ Agotado para pruebas
+        p16.setCategoria(CategoriaProducto.VERDURAS);
+        p16.setSubcategoria(SubcategoriaProducto.RAICES);
+        p16.setCantidad(1.0);
+        p16.setUnidadMedida(UnidadMedida.KILOGRAMO);
+        p16.setTienda(tienda4);
+        p16.setImagen_producto(null);
+        p16.setEstado("ACTIVO");
+        productoRepository.save(p16);
+
+        System.out.println("✓ 4 productos de VERDURAS creados");
+        System.out.println("✅ Total: 16 productos creados exitosamente");
+        System.out.println("   📊 Productos con stock bajo: 4 (para pruebas de alertas)");
+        System.out.println("   📊 Productos agotados: 1 (para pruebas)");
     }
 
     private void cargarEventos() {
@@ -317,10 +486,8 @@ public class DataSeeder implements CommandLineRunner {
         pqrs1.setDescripcion("¿Hacen envíos a domicilio? Me interesa comprar varios productos de su tienda pero vivo lejos.");
         pqrs1.setEstado(EstadoPqrs.PENDIENTE);
         pqrs1.setEmisor(consumidor);
-        pqrs1.setReceptor(admin); // Asignar al receptor inicial para que aparezca en su bandeja
-        // pqrs1.setRespuesta(null); // ❌ ELIMINADO
-        // pqrs1.setFecha_respuesta(null); // ❌ ELIMINADO
-        pqrs1.setPendienteDe(RolProceso.PROVEEDOR); // 💡 Indicamos que el PROVEEDOR tiene el turno
+        pqrs1.setReceptor(admin);
+        pqrs1.setPendienteDe(RolProceso.PROVEEDOR);
         pqrsRepository.save(pqrs1);
 
         // Asociar con tienda
@@ -336,13 +503,11 @@ public class DataSeeder implements CommandLineRunner {
         pqrs2.setDescripcion("¿La entrada al evento es gratuita o tiene algún costo?");
         pqrs2.setEstado(EstadoPqrs.RESPONDIDA);
         pqrs2.setEmisor(consumidor);
-        pqrs2.setReceptor(consumidor); // El último receptor es el Consumidor, quien debe replicar
-        // pqrs2.setRespuesta("..."); // ❌ ELIMINADO
-        // pqrs2.setFecha_respuesta(...) // ❌ ELIMINADO
-        pqrs2.setPendienteDe(RolProceso.CONSUMIDOR); // 💡 Indicamos que el CONSUMIDOR tiene el turno
+        pqrs2.setReceptor(consumidor);
+        pqrs2.setPendienteDe(RolProceso.CONSUMIDOR);
         pqrsRepository.save(pqrs2);
 
-        // 💡 CREAR EL REGISTRO DE RESPUESTA
+        // Crear el registro de respuesta
         PqrsRespuesta resp2 = new PqrsRespuesta();
         resp2.setPqrs(pqrs2);
         resp2.setContenido("¡Hola! La entrada es completamente gratuita para todos los asistentes. Te esperamos.");
@@ -364,13 +529,11 @@ public class DataSeeder implements CommandLineRunner {
         pqrs3.setDescripcion("Sería excelente si pudieran agregar filtros por precio en la búsqueda de productos. Facilitaría mucho encontrar lo que busco.");
         pqrs3.setEstado(EstadoPqrs.RESPONDIDA);
         pqrs3.setEmisor(proveedor);
-        pqrs3.setReceptor(proveedor); // El último receptor es el Emisor/Proveedor (quien debe cerrar o replicar)
-        // pqrs3.setRespuesta("..."); // ❌ ELIMINADO
-        // pqrs3.setFecha_respuesta(...) // ❌ ELIMINADO
-        pqrs3.setPendienteDe(RolProceso.CONSUMIDOR); // 💡 Indicamos que el CONSUMIDOR tiene el turno
+        pqrs3.setReceptor(proveedor);
+        pqrs3.setPendienteDe(RolProceso.CONSUMIDOR);
         pqrsRepository.save(pqrs3);
 
-        // 💡 CREAR EL REGISTRO DE RESPUESTA
+        // Crear el registro de respuesta
         PqrsRespuesta resp3 = new PqrsRespuesta();
         resp3.setPqrs(pqrs3);
         resp3.setContenido("¡Gracias por tu sugerencia! La tomaremos en cuenta para futuras actualizaciones de la plataforma.");
