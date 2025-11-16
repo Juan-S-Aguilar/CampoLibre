@@ -24,4 +24,16 @@ public interface EventoService {
     EventoDTO crearEvento(EventoCreacionDTO eventoCreacionDTO, Long idAdmin, MultipartFile imagen);
     EventoDTO obtenerEventoPorId(Long id);
     EventoDTO actualizarEvento(Long id, EventoCreacionDTO eventoCreacionDTO, MultipartFile imagen);
+
+    // Agregar método para publicar evento (cambiar de BORRADOR a PUBLICADO)
+    void publicarEvento(Long idEvento);
+
+    // Agregar método para obtener eventos con cupos disponibles
+    List<EventoDTO> obtenerEventosConCuposDisponibles();
+
+    // Agregar método para buscar eventos por patrocinador
+    List<EventoDTO> obtenerEventosPorPatrocinador(Long idPatrocinador);
+
+
+
 }

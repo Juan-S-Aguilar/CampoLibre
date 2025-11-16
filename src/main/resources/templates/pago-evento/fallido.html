@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title>Pago Fallido - Campo Libre</title>
+</head>
+
+<body>
+<main th:fragment="content">
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <div class="card shadow-lg border-danger">
+                    <div class="card-header bg-danger text-white text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-x-circle-fill display-1 animate-shake"></i>
+                        </div>
+                        <h1 class="display-5 fw-bold mb-2">Pago No Procesado</h1>
+                        <p class="lead mb-0">Tu pago no pudo ser completado</p>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+
+                        <div class="alert alert-danger text-center mb-4">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                ¿Qué sucedió?
+                            </h5>
+                            <hr>
+                            <p class="mb-0" th:text="${pago.mensajeError != null && !pago.mensajeError.isEmpty()}
+                                    ? ${pago.mensajeError}
+                                    : 'El pago fue rechazado por la pasarela de pagos. Por favor, intenta nuevamente.'">
+                                Motivo del error
+                            </p>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-receipt text-muted fs-1"></i>
+                                        <h6 class="mt-2 text-muted mb-1">Número de Transacción</h6>
+                                        <p class="mb-0 font-monospace small" th:text="${pago.numeroTransaccion}">
+                                            PEVT-202501-XXXX
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-credit-card text-muted fs-1"></i>
+                                        <h6 class="mt-2 text-muted mb-1">Método Utilizado</h6>
+                                        <p class="mb-0" th:text="${pago.metodoPago}">TARJETA_CREDITO</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-calendar-event text-primary"></i>
+                                Evento que Intentaste Adquirir
+                            </h5>
+
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h4 class="card-title text-primary mb-3" th:text="${inscripcion.nombreEvento}">
+                                        Nombre del Evento
+                                    </h4>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2">
+                                            <i class="bi bi-calendar3 text-success"></i>
+                                            <strong>Fecha:</strong>
+                                            <span th:text="${#temporals.format(inscripcion.fechaEvento, 'dd/MM/yyyy')}">
+                                                    15/12/2025
+                                                </span>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <i class="bi bi-geo-alt text-danger"></i>
+                                            <strong>Ubicación:</strong>
+                                            <span th:text="${inscripcion.ubicacionEvento}">
+                                                    Bogotá
+                                                </span>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">Monto a Pagar:</span>
+                                                <h4 class="mb-0 text-success">
+                                                    $<span th:text="${#numbers.formatDecimal(inscripcion.costoPagado, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-question-circle text-warning"></i>
+                                Posibles Causas del Error
+                            </h5>
+
+                            <div class="accordion" id="accordionCausas">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingOne">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                            <i class="bi bi-wallet2 text-danger me-2"></i>
+                                            Fondos Insuficientes
+                                        </button>
+                                    </h2>
+                                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionCausas">
+                                        <div class="accordion-body">
+                                            <strong>Solución:</strong> Verifica que tu tarjeta o cuenta tenga saldo suficiente para cubrir el monto del pago.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingTwo">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                            <i class="bi bi-calendar-x text-danger me-2"></i>
+                                            Tarjeta Vencida o Bloqueada
+                                        </button>
+                                    </h2>
+                                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionCausas">
+                                        <div class="accordion-body">
+                                            <strong>Solución:</strong> Verifica la fecha de vencimiento de tu tarjeta. Si está vencida o bloqueada, contacta a tu banco.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingThree">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                                            <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                                            Datos Incorrectos
+                                        </button>
+                                    </h2>
+                                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionCausas">
+                                        <div class="accordion-body">
+                                            <strong>Solución:</strong> Revisa que el número de tarjeta, fecha de vencimiento y CVV sean correctos.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingFour">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                                            <i class="bi bi-shield-x text-danger me-2"></i>
+                                            Límite de Compras Excedido
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionCausas">
+                                        <div class="accordion-body">
+                                            <strong>Solución:</strong> Algunos bancos tienen límites diarios o mensuales. Contacta a tu banco para aumentar el límite o intenta mañana.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingFive">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive">
+                                            <i class="bi bi-bank text-danger me-2"></i>
+                                            Problemas con el Banco Emisor
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#accordionCausas">
+                                        <div class="accordion-body">
+                                            <strong>Solución:</strong> Contacta directamente con tu banco para verificar si hay algún bloqueo o restricción en tu tarjeta.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/pagos-eventos/checkout/{id}(id=${inscripcion.id_inscripcion})}"
+                               class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-clockwise"></i>
+                                Intentar Nuevamente con Otro Método
+                            </a>
+                            <a th:href="@{/eventos/mis-inscripciones}"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i>
+                                Volver a Mis Inscripciones
+                            </a>
+                            <a th:href="@{/eventos}"
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-grid"></i>
+                                Ver Otros Eventos
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-white text-center py-3">
+                        <h6 class="mb-2">
+                            <i class="bi bi-headset"></i>
+                            ¿Necesitas Ayuda?
+                        </h6>
+                        <p class="small text-muted mb-2">
+                            Si el problema persiste, contáctanos y te ayudaremos
+                        </p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="mailto:soporte@campolibre.com" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-envelope"></i> Email
+                            </a>
+                            <a href="https://wa.me/1234567890" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-whatsapp"></i> WhatsApp
+                            </a>
+                            <a href="tel:+1234567890" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-telephone"></i> Teléfono
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-warning mt-4">
+                    <div class="card-body">
+                        <h6 class="text-warning">
+                            <i class="bi bi-info-circle"></i>
+                            Información Importante
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li class="mb-2">
+                                <strong>Tu cupo aún está reservado:</strong> Tienes tiempo para completar el pago
+                            </li>
+                            <li class="mb-2">
+                                <strong>No se realizó ningún cargo:</strong> Tu tarjeta no fue debitada
+                            </li>
+                            <li class="mb-2">
+                                <strong>Puedes intentar múltiples veces:</strong> Sin costo adicional
+                            </li>
+                            <li class="mb-0">
+                                <strong>Métodos alternativos:</strong> Intenta con PSE, transferencia u otra tarjeta
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Scroll suave al inicio
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Auto-expandir el primer acordeón después de 1 segundo
+        setTimeout(() => {
+            const firstAccordion = document.querySelector('#collapseOne');
+            const bsCollapse = new bootstrap.Collapse(firstAccordion, {
+                toggle: true
+            });
+        }, 1000);
+    </script>
+
+    <style>
+        /* Animación de sacudida para el icono de error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s;
+        }
+
+        /* Efecto hover en acordeón */
+        .accordion-button {
+            transition: background-color 0.3s;
+        }
+
+        .accordion-button:hover {
+            background-color: rgba(255, 193, 7, 0.1); /* Ligero amarillo */
+        }
+
+        /* Pulso suave en el botón de reintentar */
+        .btn-primary {
+            animation: pulse-button 2s infinite;
+        }
+
+        @keyframes pulse-button {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+            }
+        }
+    </style>
+</main>
+</body>
+</html>

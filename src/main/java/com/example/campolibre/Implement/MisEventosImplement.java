@@ -4,6 +4,7 @@ import com.example.campolibre.DTO.MisEventosDTO;
 import com.example.campolibre.Entity.Evento;
 import com.example.campolibre.Entity.MisEventos;
 import com.example.campolibre.Entity.Usuario;
+import com.example.campolibre.Enum.EstadoEvento;
 import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Repository.EventoRepository;
 import com.example.campolibre.Repository.MisEventosRepository;
@@ -13,9 +14,10 @@ import com.example.campolibre.Service.EmailService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.time.format.DateTimeFormatter;
 
 @Service
 public class MisEventosImplement implements MisEventosService {
@@ -41,32 +43,57 @@ public class MisEventosImplement implements MisEventosService {
 
     @Override
     public MisEventosDTO guardarIntencionAsistencia(Long idUsuario, Long idEvento) {
+        // Validar duplicado
         if (usuarioTieneEventoGuardado(idUsuario, idEvento)) {
             throw new CustomException("Este evento ya está en tu lista de 'Mis Eventos'.");
         }
+
+        // Buscar usuario y evento
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new CustomException("Usuario (Consumidor) no encontrado."));
+
         Evento evento = eventoRepository.findById(idEvento)
                 .orElseThrow(() -> new CustomException("Evento no encontrado."));
 
+        // Validar estado del evento
+        if (evento.getEstado() != EstadoEvento.PUBLICADO) {
+            throw new CustomException("Solo puedes guardar eventos publicados.");
+        }
+
+        // Validar que no sea un evento pasado
+        if (evento.getFecha_evento().isBefore(LocalDate.now())) {
+            throw new CustomException("No puedes guardar eventos que ya pasaron.");
+        }
+
+        // Crear relación
         MisEventos misEventos = new MisEventos();
         misEventos.setUsuario(usuario);
         misEventos.setEvento(evento);
+        // Si agregaste el campo 'notificado'
+        // misEventos.setNotificado(true);
+
         MisEventos nuevaRelacion = misEventosRepository.save(misEventos);
 
-        String nombrePatrocinador = evento.getPatrocinador() != null ? evento.getPatrocinador().getNombre() : "Patrocinador Oficial";
+        // Enviar email de confirmación
+        String nombrePatrocinador = evento.getPatrocinador() != null
+                ? evento.getPatrocinador().getNombre()
+                : "Patrocinador Oficial";
 
-        emailService.enviarConfirmacionGuardadoEvento(
-                usuario.getEmail(),
-                usuario.getNombre(),
-                evento.getNombre(),
-                evento.getUbicacion(),
-                evento.getFecha_evento().format(DateTimeFormatter.ISO_LOCAL_DATE),
-                evento.getHora_evento().format(DateTimeFormatter.ISO_LOCAL_TIME),
-                nombrePatrocinador
-        );
+        try {
+            emailService.enviarConfirmacionGuardadoEvento(
+                    usuario.getEmail(),
+                    usuario.getNombre(),
+                    evento.getNombre(),
+                    evento.getUbicacion(),
+                    evento.getFecha_evento().format(DateTimeFormatter.ISO_LOCAL_DATE),
+                    evento.getHora_evento().format(DateTimeFormatter.ISO_LOCAL_TIME),
+                    nombrePatrocinador
+            );
+        } catch (Exception e) {
+            System.err.println("[MisEventosImplement] Error al enviar email: " + e.getMessage());
+        }
 
-        return modelMapper.map(nuevaRelacion, MisEventosDTO.class);
+        return convertirADTO(nuevaRelacion);
     }
 
     @Override
@@ -80,25 +107,37 @@ public class MisEventosImplement implements MisEventosService {
 
     @Override
     public List<MisEventosDTO> obtenerEventosGuardadosDeUsuario(Long idUsuario) {
-        List<MisEventos> eventos = misEventosRepository.findByUsuarioId(idUsuario);
-        return eventos.stream()
-                .map(me -> {
-                    MisEventosDTO dto = modelMapper.map(me, MisEventosDTO.class);
-
-                    // Agregar datos de visualización del evento
-                    dto.setNombreEvento(me.getEvento().getNombre());
-                    dto.setUbicacionEvento(me.getEvento().getUbicacion());
-                    dto.setFechaEvento(me.getEvento().getFecha_evento());
-                    dto.setImagenEvento(me.getEvento().getImagen_evento());
-
-                    return dto;
-                })
+        return misEventosRepository.findByUsuarioId(idUsuario).stream()
+                .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public boolean usuarioTieneEventoGuardado(Long idUsuario, Long idEvento) {
-        MisEventos misEventos = misEventosRepository.findByUsuarioIdAndEventoId(idUsuario, idEvento);
-        return misEventos != null;
+        return misEventosRepository.findByUsuarioIdAndEventoId(idUsuario, idEvento) != null;
+    }
+
+    // Método helper para mapeo
+    private MisEventosDTO convertirADTO(MisEventos misEventos) {
+        MisEventosDTO dto = modelMapper.map(misEventos, MisEventosDTO.class);
+
+        // IDs básicos
+        dto.setId_usuario(misEventos.getUsuario().getId_usuario());
+        dto.setId_evento(misEventos.getEvento().getId_evento());
+
+        // Datos de visualización del evento
+        Evento evento = misEventos.getEvento();
+        dto.setNombreEvento(evento.getNombre());
+        dto.setUbicacionEvento(evento.getUbicacion());
+        dto.setFechaEvento(evento.getFecha_evento());
+        dto.setHoraEvento(evento.getHora_evento());
+        dto.setImagenEvento(evento.getImagen_evento());
+
+        // Nombre del patrocinador
+        if (evento.getPatrocinador() != null) {
+            dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
+        }
+
+        return dto;
     }
 }

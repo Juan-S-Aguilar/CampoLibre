@@ -18,6 +18,12 @@ public class EventoCreacionDTO {
     private LocalDate fecha_evento;
     private LocalTime hora_evento;
     private TipoEvento tipo_evento;
+    private String direccionCompleta;
+
+    // Se necesita para formularios de EDICIÓN
+    private Long id_evento;
+    private String imagen_evento;
+    private Integer cuposOcupados;
 
     // --- Nuevos campos de control (gestionados por el Administrador) ---
 

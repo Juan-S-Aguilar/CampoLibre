@@ -3,19 +3,24 @@ package com.example.campolibre.Implement;
 import com.example.campolibre.DTO.InscripcionProveedorDTO;
 import com.example.campolibre.Entity.Evento;
 import com.example.campolibre.Entity.InscripcionProveedor;
+import com.example.campolibre.Entity.PagoEvento;
 import com.example.campolibre.Entity.Usuario;
 import com.example.campolibre.Enum.EstadoCupo;
 import com.example.campolibre.Enum.EstadoEvento;
+import com.example.campolibre.Enum.EstadoPago;
 import com.example.campolibre.Enum.NombreRol;
 import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Repository.EventoRepository;
 import com.example.campolibre.Repository.InscripcionProveedorRepository;
+import com.example.campolibre.Repository.PagoEventoRepository;
 import com.example.campolibre.Repository.UsuarioRepository;
 import com.example.campolibre.Service.InscripcionProveedorService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,18 +31,22 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
     private final EventoRepository eventoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ModelMapper modelMapper;
+    private  final PagoEventoRepository pagoEventoRepository;
     // Podríamos inyectar EmailService aquí si quisiéramos notificar al proveedor
 
     @Autowired
     public InscripcionProveedorImplement(InscripcionProveedorRepository inscripcionRepository,
                                          EventoRepository eventoRepository,
                                          UsuarioRepository usuarioRepository,
-                                         ModelMapper modelMapper) {
+                                         ModelMapper modelMapper,
+                                         PagoEventoRepository pagoEventoRepository) {
         this.inscripcionRepository = inscripcionRepository;
         this.eventoRepository = eventoRepository;
         this.usuarioRepository = usuarioRepository;
         this.modelMapper = modelMapper;
+        this.pagoEventoRepository = pagoEventoRepository;
     }
+
 
     /**
      * Lógica para que el Proveedor reserve un cupo.
@@ -74,6 +83,11 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
             throw new CustomException("Ya tienes una inscripción (pendiente o confirmada) para este evento.");
         }
 
+        // Validar fecha del evento (no inscribirse a eventos pasados)
+        if (evento.getFecha_evento().isBefore(LocalDate.now())) {
+            throw new CustomException("No puedes inscribirte a un evento que ya pasó.");
+        }
+
         // 4. Crear la inscripción PENDIENTE_PAGO
         InscripcionProveedor inscripcion = new InscripcionProveedor();
         inscripcion.setProveedor(proveedor);
@@ -91,7 +105,7 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
      * Lógica que se llama desde el Webhook o pasarela de pago para confirmar la transacción.
      */
     @Override
-    public InscripcionProveedorDTO confirmarPago(Long idInscripcion, Long idPagoSistemaExterno) {
+    public InscripcionProveedorDTO confirmarPago(Long idInscripcion, Long idPagoEvento) {
         // 1. Buscar la inscripción
         InscripcionProveedor inscripcion = inscripcionRepository.findById(idInscripcion)
                 .orElseThrow(() -> new CustomException("Inscripción no encontrada."));
@@ -104,20 +118,28 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
             throw new CustomException("Esta inscripción está cancelada y no puede ser reactivada.");
         }
 
-        // 3. Realizar la verificación del pago (Lógica externa, aquí se simula)
-        // Lógica: Se debe usar idPagoSistemaExterno para consultar la tabla 'Pagos'
-        // y validar que el monto, evento e inscripción coincidan.
-        // Asumimos que la tabla 'Pago' existe y tiene un repositorio para ser inyectado.
+        // 3. Buscar y validar el pago ✅ NUEVO
+        PagoEvento pagoEvento = pagoEventoRepository.findById(idPagoEvento)
+                .orElseThrow(() -> new CustomException("Pago no encontrado."));
+
+        if (pagoEvento.getEstado() != EstadoPago.EXITOSO) {
+            throw new CustomException("El pago no está en estado exitoso.");
+        }
 
         // 4. Confirmar Cupo
         inscripcion.setEstadoCupo(EstadoCupo.CONFIRMADO);
-        // Si tienes una entidad Pago, la asignas aquí: inscripcion.setPago(pagoEncontrado);
+        inscripcion.setPagoEvento(pagoEvento); // ✅ CONECTAR CON PAGO
+        inscripcion.setFechaConfirmacion(LocalDateTime.now());
+
+        // 5. Incrementar cupos ocupados del evento ✅ CRÍTICO
+        Evento evento = inscripcion.getEvento();
+        evento.setCuposOcupados(evento.getCuposOcupados() + 1);
+        eventoRepository.save(evento);
 
         InscripcionProveedor confirmada = inscripcionRepository.save(inscripcion);
 
-        // Notificación: Enviar correo al proveedor confirmando el cupo asegurado.
+        // TODO: Enviar correo al proveedor confirmando el cupo asegurado
 
-        // ✅ CAMBIO: Usar el método helper en lugar de mapeo simple
         return mapearConDatosVisualizacion(confirmada);
     }
 
@@ -127,18 +149,13 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
                 .orElseThrow(() -> new CustomException("Evento no encontrado."));
 
         // Usar el método de conteo y pasar el enum CONFIRMADO
-        Long cuposConfirmados = inscripcionRepository.countByEventoIdAndEstadoCupo(
+        Long cuposOcupados = inscripcionRepository.countByEventoIdAndEstadoCupo(
                 idEvento, EstadoCupo.CONFIRMADO
         );
-
-        // Incluir cupos PENDIENTES_PAGO en el conteo para prevenir sobreventa
-        Long cuposPendientes = inscripcionRepository.countByEventoIdAndEstadoCupo(
-                idEvento, EstadoCupo.PENDIENTE_PAGO
-        );
-
-        Long cuposOcupados = cuposConfirmados + cuposPendientes;
-
         return cuposOcupados < evento.getCuposMaximosProveedor();
+
+
+
     }
 
     @Override
@@ -193,4 +210,58 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
 
         return dto;
     }
+    // ✅ AGREGAR: Cancelar inscripción
+    @Override
+    public void cancelarInscripcion(Long idInscripcion, String motivo) {
+        InscripcionProveedor inscripcion = inscripcionRepository.findById(idInscripcion)
+                .orElseThrow(() -> new CustomException("Inscripción no encontrada."));
+
+        // Solo se puede cancelar si está PENDIENTE o CONFIRMADO
+        if (inscripcion.getEstadoCupo() == EstadoCupo.CANCELADO) {
+            throw new CustomException("La inscripción ya está cancelada.");
+        }
+
+        // Si estaba confirmado, liberar el cupo
+        if (inscripcion.getEstadoCupo() == EstadoCupo.CONFIRMADO) {
+            Evento evento = inscripcion.getEvento();
+            evento.setCuposOcupados(evento.getCuposOcupados() - 1);
+            eventoRepository.save(evento);
+        }
+
+        inscripcion.setEstadoCupo(EstadoCupo.CANCELADO);
+        inscripcionRepository.save(inscripcion);
+
+        // TODO: Enviar email al proveedor notificando cancelación
+        System.out.println("[InscripcionProveedor] Inscripción cancelada. Motivo: " + motivo);
+    }
+
+    // ✅ AGREGAR: Obtener cupos disponibles (número)
+    @Override
+    public Integer obtenerCuposDisponibles(Long idEvento) {
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new CustomException("Evento no encontrado."));
+
+        Long cuposOcupados = inscripcionRepository.countByEventoIdAndEstadoCupo(
+                idEvento, EstadoCupo.CONFIRMADO
+        );
+
+        return evento.getCuposMaximosProveedor() - cuposOcupados.intValue();
+    }
+
+    // ✅ AGREGAR: Todas las inscripciones del proveedor (no solo confirmadas)
+    @Override
+    public List<InscripcionProveedorDTO> obtenerTodasLasInscripcionesDeProveedor(Long idProveedor) {
+        return inscripcionRepository.findByProveedorId(idProveedor).stream()
+                .map(this::mapearConDatosVisualizacion)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ AGREGAR: Buscar por código de confirmación
+    @Override
+    public InscripcionProveedorDTO obtenerInscripcionPorCodigo(String codigoConfirmacion) {
+        InscripcionProveedor inscripcion = inscripcionRepository.findByCodigoConfirmacion(codigoConfirmacion)
+                .orElseThrow(() -> new CustomException("Código de confirmación inválido."));
+        return mapearConDatosVisualizacion(inscripcion);
+    }
+
 }

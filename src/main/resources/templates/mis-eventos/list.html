@@ -1,106 +1,133 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org"
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 <head>
-    <title>Mis Eventos - Campo Libre</title>
+    <title>Mis Eventos Guardados - Campo Libre</title>
 </head>
 <body>
 
 <main th:fragment="content">
-    <div class="list-container">
+    <div class="container mt-4 mb-5">
 
-        <!-- Header de la lista -->
-        <div class="list-header">
-            <h2>
-                <i class="bi bi-calendar-check"></i>
-                Mis Eventos Confirmados
-            </h2>
-            <div class="list-header-actions">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/dashboard}">Inicio</a></li>
+                <li class="breadcrumb-item active">Mis Eventos Guardados</li>
+            </ol>
+        </nav>
+
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-9">
+                <h1 class="display-6 text-primary">
+                    <i class="bi bi-bookmark-heart-fill me-2"></i>
+                    Mis Eventos Guardados
+                </h1>
+            </div>
+            <div class="col-md-3 text-end">
                 <a th:href="@{/eventos}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Volver a Eventos
+                    <i class="bi bi-calendar-event"></i> Explorar Eventos
                 </a>
             </div>
         </div>
 
-        <!-- Mensajes -->
-        <div th:if="${mensaje}" class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle"></i>
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
             <span th:text="${mensaje}">Operación exitosa</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <div th:if="${error}" class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-triangle"></i>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <span th:text="${error}">Error en la operación</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Contador de resultados -->
-        <div class="results-count">
-            <i class="bi bi-info-circle"></i>
-            Has confirmado <strong th:text="${misEventos.size()}">0</strong> evento(s)
-        </div>
+        <div class="card shadow border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 text-dark">
+                    Tienes <strong th:text="${misEventos.size()}">0</strong> evento(s) marcado(s) en tu lista.
+                </h5>
+            </div>
+            <div class="card-body p-0">
 
-        <!-- Tabla de mis eventos -->
-        <div class="table-responsive" th:if="${!misEventos.isEmpty()}">
-            <table class="data-table" id="misEventosTable">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Evento</th>
-                    <th>Fecha de Confirmación</th>
-                    <th style="text-align: center;">Acciones</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="me : ${misEventos}">
-                    <td data-label="ID">
-                        <span th:text="${me.id_mis_eventos}">1</span>
-                    </td>
+                <div class="table-responsive" th:if="${!misEventos.isEmpty()}">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Evento</th>
+                            <th>Fecha</th>
+                            <th>Ubicación</th>
+                            <th>Guardado Desde</th>
+                            <th style="text-align: center;">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="me : ${misEventos}">
+                            <td data-label="Evento">
+                                <a th:href="@{/mis-eventos/ver/{id}(id=${me.id_evento})}" class="link-primary fw-bold">
+                                    <span th:text="${me.nombreEvento}">Nombre del Evento</span>
+                                </a>
+                                <div class="small text-muted mt-1">
+                                    ID: <code th:text="${me.id_evento}">1</code>
+                                </div>
+                            </td>
 
-                    <td data-label="Evento">
-                        <!-- No se dispone del nombre del evento en el DTO; enlazamos al detalle del evento por id -->
-                        <a th:href="@{/eventos/ver/{id}(id=${me.id_evento})}" class="link-primary">
-                            Evento ID: <strong th:text="${me.id_evento}">1</strong>
-                        </a>
-                        <br>
-                        <small style="color: var(--color-text-light);">Ver información completa del evento</small>
-                    </td>
+                            <td data-label="Fecha">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                <span th:text="${#temporals.format(me.fechaEvento, 'dd/MM/yyyy')}">01/01/2024</span>
+                                <div class="small text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    <span th:text="${me.horaEvento}">10:00</span>
+                                </div>
+                            </td>
 
-                    <td data-label="Fecha de Confirmación">
-                        <span th:text="${#temporals.format(me.fecha_guardado, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</span>
-                    </td>
+                            <td data-label="Ubicación">
+                                <i class="bi bi-geo-alt me-1"></i>
+                                <span th:text="${me.ubicacionEvento}">Ciudad, País</span>
+                                <div class="small text-muted">Patrocina: <span th:text="${me.nombrePatrocinador} ?: 'N/A'"></span></div>
+                            </td>
 
-                    <td data-label="Acciones">
-                        <div class="table-actions" style="display:flex; gap:0.5rem; justify-content:center;">
-                            <!-- Ver detalle del evento -->
-                            <a th:href="@{/eventos/ver/{id}(id=${me.id_evento})}"
-                               class="btn-action btn-view"
-                               title="Ver evento">
-                                <i class="bi bi-eye"></i>
-                            </a>
+                            <td data-label="Guardado Desde">
+                                <span th:text="${#temporals.format(me.fecha_guardado, 'dd/MM/yyyy')}">01/01/2024</span>
+                                <div class="small text-muted">
+                                    <span th:text="${#temporals.format(me.fecha_guardado, 'HH:mm')}">10:00</span>
+                                </div>
+                            </td>
 
-                            <!-- Cancelar asistencia -->
-                            <a th:href="@{/mis-eventos/cancelar/{id}(id=${me.id_mis_eventos})}"
-                               class="btn-action btn-delete"
-                               title="Cancelar asistencia"
-                               onclick="return confirm('¿Deseas cancelar tu asistencia a este evento?')">
-                                <i class="bi bi-x-circle"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
+                            <td data-label="Acciones" style="text-align: center;">
+                                <div class="btn-group gap-2">
+                                    <a th:href="@{/mis-eventos/ver/{id}(id=${me.id_evento})}"
+                                       class="btn btn-info btn-sm"
+                                       title="Ver evento">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
 
-        <!-- Estado vacío -->
-        <div th:if="${misEventos.isEmpty()}" class="empty-list">
-            <i class="bi bi-calendar-x"></i>
-            <h3>No tienes asistencias confirmadas</h3>
-            <p>Cuando confirmes asistencia a un evento, aparecerá aquí.</p>
-            <a th:href="@{/eventos}" class="btn btn-primary">
-                <i class="bi bi-calendar-event"></i> Ver Eventos
-            </a>
+                                    <form th:action="@{/mis-eventos/remover/{id}(id=${me.id_evento})}" method="post" class="d-inline">
+                                        <button type="submit"
+                                                class="btn btn-danger btn-sm"
+                                                title="Remover de mi lista"
+                                                onclick="return confirm('¿Deseas remover este evento de tu lista de guardados?');">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div th:if="${misEventos.isEmpty()}" class="empty-list p-5 text-center">
+                <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+                <h3 class="mt-3 text-muted">Aún no tienes eventos guardados</h3>
+                <p>Marca eventos con el ícono de corazón para que aparezcan aquí.</p>
+                <a th:href="@{/eventos}" class="btn btn-primary mt-2">
+                    <i class="bi bi-calendar-event"></i> Ver Eventos
+                </a>
+            </div>
         </div>
 
     </div>
@@ -108,4 +135,3 @@
 
 </body>
 </html>
-

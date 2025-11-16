@@ -1,280 +1,403 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org"
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+
 <head>
     <title>Crear Evento - Campo Libre</title>
 </head>
 <body>
 
 <main th:fragment="content">
-    <div class="form-container">
 
-        <!-- Header del formulario -->
-        <div class="form-header">
-            <h2>
-                <i class="bi bi-calendar-plus"></i>
-                Crear Nuevo Evento
-            </h2>
-            <p>Completa todos los campos para solicitar la publicación de tu evento agrícola</p>
+    <div class="container mt-4 mb-5">
+
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-6">
+                    <i class="bi bi-calendar-plus text-success"></i>
+                    Crear Nuevo Evento
+                </h1>
+                <p class="text-muted">Complete el formulario para crear un evento agrícola</p>
+            </div>
         </div>
 
-        <!-- Mensajes de error -->
-        <div th:if="${error}" class="alert alert-danger" role="alert">
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle"></i>
-            <span th:text="${error}">Error en el formulario</span>
+            <strong>Error:</strong> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Alerta informativa -->
-        <div class="dashboard-alert info" style="margin-bottom: 2rem;">
-            <i class="bi bi-info-circle"></i>
-            <div>
-                <strong>Importante:</strong>
-                Tu evento será enviado para revisión y quedará en estado
-                <span class="status-badge pending" style="font-size: 0.85rem;">Pendiente</span>
-                hasta que un administrador lo apruebe. Una vez aprobado, será visible para todos los usuarios.
-            </div>
-        </div>
+        <form th:action="@{/eventos/crear}"
+              th:object="${evento}"
+              method="post"
+              enctype="multipart/form-data"
+              class="needs-validation"
+              novalidate>
 
-        <!-- Formulario -->
-        <form th:action="@{/eventos/crear}" th:object="${evento}" method="post" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-info-circle"></i> Información Básica
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label">
+                                    <i class="bi bi-card-heading text-success"></i>
+                                    Nombre del Evento <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="nombre"
+                                       th:field="*{nombre}"
+                                       placeholder="Ej: Feria Campesina de Bogotá 2025"
+                                       maxlength="150"
+                                       required>
+                                <div class="invalid-feedback">
+                                    El nombre del evento es obligatorio
+                                </div>
+                                <small class="text-muted">Máximo 150 caracteres</small>
+                            </div>
 
-            <!-- Sección: Información Básica -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-info-circle"></i>
-                    Información del Evento
-                </h3>
+                            <div class="mb-3">
+                                <label for="descripcion" class="form-label">
+                                    <i class="bi bi-card-text text-success"></i>
+                                    Descripción <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control"
+                                          id="descripcion"
+                                          th:field="*{descripcion}"
+                                          rows="6"
+                                          placeholder="Describe el evento: qué actividades habrá, qué pueden esperar los asistentes, etc."
+                                          maxlength="1000"
+                                          required></textarea>
+                                <div class="invalid-feedback">
+                                    La descripción es obligatoria
+                                </div>
+                                <small class="text-muted">Máximo 1000 caracteres</small>
+                            </div>
 
-                <!-- Nombre del Evento -->
-                <div class="form-group">
-                    <label for="nombre">
-                        <i class="bi bi-calendar-event"></i>
-                        Nombre del Evento
-                        <span class="required">*</span>
-                    </label>
-                    <input type="text"
-                           th:field="*{nombre}"
-                           class="form-control"
-                           id="nombre"
-                           placeholder="Ej: Feria Agrícola Regional 2024"
-                           maxlength="150"
-                           required>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Nombre claro y descriptivo del evento
-                    </small>
-                </div>
+                            <div class="mb-3">
+                                <label for="tipo_evento" class="form-label">
+                                    <i class="bi bi-tag text-success"></i>
+                                    Tipo de Evento <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select"
+                                        id="tipo_evento"
+                                        th:field="*{tipo_evento}"
+                                        required>
+                                    <option value="" selected>-- Seleccione el tipo --</option>
+                                    <option th:each="tipo : ${tiposEvento}"
+                                            th:value="${tipo}"
+                                            th:text="${tipo.name()}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Seleccione un tipo de evento
+                                </div>
+                            </div>
 
-                <!-- Descripción -->
-                <div class="form-group">
-                    <label for="descripcion">
-                        <i class="bi bi-card-text"></i>
-                        Descripción
-                        <span class="required">*</span>
-                    </label>
-                    <textarea th:field="*{descripcion}"
-                              class="form-control"
-                              id="descripcion"
-                              rows="5"
-                              placeholder="Describe el evento: qué se realizará, quiénes pueden asistir, qué actividades habrá..."
-                              maxlength="1000"
-                              required></textarea>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Máximo 1000 caracteres. <span id="charCount">0</span>/1000
-                    </small>
-                </div>
-
-                <!-- Tipo de Evento -->
-                <div class="form-group">
-                    <label for="tipo_evento">
-                        <i class="bi bi-tag"></i>
-                        Tipo de Evento
-                        <span class="required">*</span>
-                    </label>
-                    <select th:field="*{tipo_evento}"
-                            class="form-select"
-                            id="tipo_evento"
-                            required>
-                        <option value="">Seleccione un tipo...</option>
-                        <option value="FERIA">🎪 Feria - Exhibición y venta de productos</option>
-                        <option value="TALLER">👨‍🏫 Taller - Capacitación y aprendizaje</option>
-                        <option value="ACTIVIDAD">🎯 Actividad - Jornada o actividad específica</option>
-                        <option value="OTRO">📦 Otro - Otro tipo de evento</option>
-                    </select>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Selecciona la categoría que mejor describe tu evento
-                    </small>
-                </div>
-
-                <!-- Imagen del Evento -->
-                <div class="form-group">
-                    <label>
-                        <i class="bi bi-image"></i>
-                        Imagen del Evento
-                        <span class="required">*</span>
-                    </label>
-                    <div class="file-input-wrapper">
-                        <input type="file"
-                               name="imagen"
-                               id="imagen"
-                               accept="image/*"
-                               onchange="previewImage(event)"
-                               required>
-                        <label for="imagen" class="file-input-label">
-                            <i class="bi bi-cloud-upload"></i>
-                            <span>Haz clic para seleccionar una imagen</span>
-                        </label>
-                    </div>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Formatos: JPG, PNG, GIF. Tamaño máximo: 10MB. Usa una imagen representativa del evento.
-                    </small>
-                    <div id="imagePreview" class="file-preview" style="display: none;">
-                        <img id="preview" src="" alt="Vista previa">
-                        <span class="file-name" id="fileName"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección: Fecha y Hora -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-calendar-date"></i>
-                    Fecha y Hora
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Fecha del Evento -->
-                    <div class="form-group">
-                        <label for="fecha_evento">
-                            <i class="bi bi-calendar3"></i>
-                            Fecha del Evento
-                            <span class="required">*</span>
-                        </label>
-                        <input type="date"
-                               th:field="*{fecha_evento}"
-                               class="form-control"
-                               id="fecha_evento"
-                               required>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Selecciona la fecha en que se realizará el evento
-                        </small>
+                            <div class="mb-3">
+                                <label for="imagen" class="form-label">
+                                    <i class="bi bi-image text-success"></i>
+                                    Imagen del Evento
+                                </label>
+                                <input class="form-control"
+                                       type="file"
+                                       id="imagen"
+                                       name="imagen"
+                                       accept="image/*">
+                                <small class="text-muted">
+                                    Formatos aceptados: JPG, PNG, WebP. Tamaño máximo: 5MB
+                                </small>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Hora del Evento -->
-                    <div class="form-group">
-                        <label for="hora_evento">
-                            <i class="bi bi-clock"></i>
-                            Hora del Evento
-                            <span class="required">*</span>
-                        </label>
-                        <input type="time"
-                               th:field="*{hora_evento}"
-                               class="form-control"
-                               id="hora_evento"
-                               required>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Hora de inicio del evento
-                        </small>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-geo-alt"></i> Ubicación y Fecha
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="ciudad" class="form-label">
+                                    <i class="bi bi-building text-primary"></i>
+                                    Ciudad <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="ciudad"
+                                       th:field="*{ubicacion}"
+                                       placeholder="Ej: Bogotá"
+                                       maxlength="100"
+                                       required>
+                                <div class="invalid-feedback">
+                                    La ciudad es obligatoria
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="direccion_completa" class="form-label">
+                                    <i class="bi bi-signpost text-primary"></i>
+                                    Dirección Completa <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="direccion_completa"
+                                       th:field="*{direccionCompleta}"
+                                       placeholder="Ej: Parque Simón Bolívar, Entrada Principal"
+                                       maxlength="300"
+                                       required>
+                                <div class="invalid-feedback">
+                                    La dirección es obligatoria
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fecha_evento" class="form-label">
+                                        <i class="bi bi-calendar3 text-primary"></i>
+                                        Fecha <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date"
+                                           class="form-control"
+                                           id="fecha_evento"
+                                           th:field="*{fecha_evento}"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        La fecha es obligatoria
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="hora_evento" class="form-label">
+                                        <i class="bi bi-clock text-primary"></i>
+                                        Hora <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="time"
+                                           class="form-control"
+                                           id="hora_evento"
+                                           th:field="*{hora_evento}"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        La hora es obligatoria
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">
+                                <i class="bi bi-file-text"></i> Términos y Condiciones
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-0">
+                                <label for="terminos_condiciones" class="form-label">
+                                    <i class="bi bi-exclamation-triangle text-warning"></i>
+                                    Términos y Condiciones del Evento
+                                </label>
+                                <textarea class="form-control"
+                                          id="terminos_condiciones"
+                                          th:field="*{terminosCondiciones}"
+                                          rows="5"
+                                          placeholder="Ej: Campo Libre no se hace responsable por pérdidas o daños durante el evento. Los proveedores deben cumplir con todas las normativas sanitarias..."
+                                          maxlength="2000"></textarea>
+                                <small class="text-muted">
+                                    Información legal y condiciones especiales del evento. Máximo 2000 caracteres
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Sección: Ubicación -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-geo-alt"></i>
-                    Ubicación
-                </h3>
+                <div class="col-lg-4">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0">
+                                <i class="bi bi-award"></i> Patrocinador
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="id_patrocinador" class="form-label">
+                                    Seleccionar Patrocinador <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select"
+                                        id="id_patrocinador"
+                                        th:field="*{id_patrocinador}"
+                                        required>
+                                    <option value="" selected>-- Seleccione --</option>
+                                    <option th:each="patrocinador : ${patrocinadores}"
+                                            th:value="${patrocinador.id_patrocinador}"
+                                            th:text="${patrocinador.nombre}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Debe seleccionar un patrocinador
+                                </div>
+                            </div>
+                            <a th:href="@{/admin/patrocinadores/crear}"
+                               class="btn btn-sm btn-outline-warning w-100"
+                               target="_blank">
+                                <i class="bi bi-plus-circle"></i> Crear Nuevo Patrocinador
+                            </a>
+                        </div>
+                    </div>
 
-                <!-- Ubicación -->
-                <div class="form-group">
-                    <label for="ubicacion">
-                        <i class="bi bi-pin-map"></i>
-                        Dirección o Lugar
-                        <span class="required">*</span>
-                    </label>
-                    <input type="text"
-                           th:field="*{ubicacion}"
-                           class="form-control"
-                           id="ubicacion"
-                           placeholder="Ej: Plaza Central, Vereda El Rosal, Bogotá, Cundinamarca"
-                           maxlength="200"
-                           required>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Indica el lugar exacto donde se realizará el evento para que los asistentes puedan llegar
-                    </small>
+                    <div class="card shadow-sm mb-4 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shop"></i> Cupos para Proveedores
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="cuposMaximosProveedor" class="form-label">
+                                    <i class="bi bi-people text-success"></i>
+                                    Cupos Disponibles <span class="text-danger">*</span>
+                                </label>
+                                <input type="number"
+                                       class="form-control"
+                                       id="cuposMaximosProveedor"
+                                       th:field="*{cuposMaximosProveedor}"
+                                       min="1"
+                                       max="1000"
+                                       placeholder="Ej: 50"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Debe especificar cuántos cupos hay disponibles
+                                </div>
+                                <small class="text-muted">
+                                    Cantidad de espacios físicos disponibles para proveedores
+                                </small>
+                            </div>
+
+                            <div class="mb-0">
+                                <label for="costoEspacio" class="form-label">
+                                    <i class="bi bi-cash text-success"></i>
+                                    Costo por Espacio <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="costoEspacio"
+                                           th:field="*{costoEspacio}"
+                                           min="0"
+                                           step="1000"
+                                           placeholder="50000"
+                                           required>
+                                    <span class="input-group-text">COP</span>
+                                </div>
+                                <div class="invalid-feedback">
+                                    El costo del espacio es obligatorio
+                                </div>
+                                <small class="text-muted">
+                                    Precio que pagará cada proveedor por su espacio
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-lightbulb text-warning"></i>
+                                Información Importante
+                            </h6>
+                            <ul class="small mb-0">
+                                <li class="mb-2">El evento se creará en estado <strong>BORRADOR</strong></li>
+                                <li class="mb-2">Deberás <strong>publicarlo</strong> para que los proveedores puedan inscribirse</li>
+                                <li class="mb-2">Al publicarlo, se enviará <strong>notificación automática</strong> a todos los proveedores registrados</li>
+                                <li class="mb-0">Los cupos son <strong>limitados</strong> y se asignan por orden de pago</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-check-circle"></i> Crear Evento
+                                </button>
+                                <a th:href="@{/eventos/pendientes}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Información adicional -->
-            <div style="padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success); margin-bottom: 2rem;">
-                <h4 style="color: var(--color-success); margin-bottom: 0.5rem; font-size: 1rem;">
-                    <i class="bi bi-lightbulb"></i> Consejos para tu evento
-                </h4>
-                <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
-                    <li>Usa una imagen atractiva que represente tu evento</li>
-                    <li>Describe claramente qué actividades se realizarán</li>
-                    <li>Indica si hay costo de entrada o es gratuito</li>
-                    <li>Menciona si hay parqueadero o transporte disponible</li>
-                    <li>Especifica si es necesario confirmar asistencia con anticipación</li>
-                    <li>Una vez aprobado, podrás gestionar los asistentes</li>
-                </ul>
-            </div>
-
-            <!-- Botones de acción -->
-            <div class="form-actions">
-                <a th:href="@{/eventos/mis-eventos}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i> Cancelar
-                </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle"></i> Crear Evento
-                </button>
             </div>
         </form>
     </div>
 
-    <!-- Scripts -->
-    <script>
-        // Contador de caracteres para descripción
-        const descripcion = document.getElementById('descripcion');
-        const charCount = document.getElementById('charCount');
+</main>
 
-        descripcion.addEventListener('input', function() {
-            charCount.textContent = this.value.length;
-        });
-
-        // Preview de imagen
-        function previewImage(event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('preview');
-            const imagePreview = document.getElementById('imagePreview');
-            const fileName = document.getElementById('fileName');
-
-            if (file) {
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                    fileName.textContent = file.name;
+<script>
+    // Validación de Bootstrap
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
                 }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
 
-                reader.readAsDataURL(file);
+    // Validar que la fecha no sea en el pasado
+    document.getElementById('fecha_evento').addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (selectedDate < today) {
+            this.setCustomValidity('La fecha del evento no puede ser en el pasado');
+            this.reportValidity();
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Preview de imagen
+    document.getElementById('imagen').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                alert('La imagen no puede superar los 5MB');
+                this.value = '';
             }
         }
+    });
 
-        // Validar que la fecha no sea en el pasado
-        const fechaInput = document.getElementById('fecha_evento');
-        const today = new Date().toISOString().split('T')[0];
-        fechaInput.setAttribute('min', today);
-    </script>
-</main>
+    // Contador de caracteres para descripción
+    const descripcionField = document.getElementById('descripcion');
+    const maxLength = 1000;
+
+    descripcionField.addEventListener('input', function() {
+        const remaining = maxLength - this.value.length;
+        const helper = this.nextElementSibling.nextElementSibling;
+        helper.textContent = `${remaining} caracteres restantes`;
+
+        if (remaining < 100) {
+            helper.classList.add('text-warning');
+        } else {
+            helper.classList.remove('text-warning');
+        }
+    });
+</script>
 
 </body>
 </html>

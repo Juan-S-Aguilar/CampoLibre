@@ -26,6 +26,9 @@ public class MisEventos {
     @Column(name = "fecha_guardado", nullable = false)
     private LocalDateTime fecha_guardado;
 
+    @Column(name = "notificado", nullable = false)
+    private Boolean notificado = false; // Control de envío de email
+
     @PrePersist
     protected void onCreate() {
         fecha_guardado = LocalDateTime.now();

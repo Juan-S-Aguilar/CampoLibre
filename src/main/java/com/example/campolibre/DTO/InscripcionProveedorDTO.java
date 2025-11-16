@@ -14,12 +14,13 @@ public class InscripcionProveedorDTO {
     private Long id_evento;
     private EstadoCupo estadoCupo;
     private Double costoPagado;
-    private Long id_pago; // Referencia al pago
+    private Long id_pago_evento;
     private LocalDateTime fechaInscripcion;
-
+    private String codigoConfirmacion;
     // Campos de visualización (para el frontend)
     private String nombreProveedor;
     private String nombreEvento;
     private LocalDate fechaEvento;
     private String ubicacionEvento;
+    private String imagenEvento;
 }

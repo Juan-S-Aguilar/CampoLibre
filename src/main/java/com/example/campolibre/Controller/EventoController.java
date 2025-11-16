@@ -1,11 +1,9 @@
 package com.example.campolibre.Controller;
 
 // ⚠️ CAMBIO: Importar los nuevos DTOs y Servicios
-import com.example.campolibre.DTO.EventoCreacionDTO;
-import com.example.campolibre.DTO.EventoDTO;
-import com.example.campolibre.DTO.PatrocinadorDTO;
-import com.example.campolibre.DTO.UsuarioDTO;
+import com.example.campolibre.DTO.*;
 import com.example.campolibre.Enum.EstadoEvento;
+import com.example.campolibre.Enum.MetodoPago;
 import com.example.campolibre.Enum.TipoEvento;
 import com.example.campolibre.Service.*; // Importar todos los servicios
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +32,10 @@ public class EventoController {
     // ⚠️ NUEVAS INYECCIONES
     @Autowired private PatrocinadorService patrocinadorService;
     @Autowired private InscripcionProveedorService inscripcionProveedorService;
-    @Autowired private AsistenciaConsumidorService asistenciaConsumidorService;
+
+    @Autowired private PagoEventoService pagoEventoService;
+
+
 
     // --- Lógica del Administrador ---
 
@@ -88,6 +89,7 @@ public class EventoController {
         return "redirect:/eventos/pendientes"; // Redirigir a pendientes
     }
 
+
     /**
      * ⚠️ CAMBIO: Formulario de EDICIÓN ahora es solo para ADMIN.
      */
@@ -104,8 +106,13 @@ public class EventoController {
         EventoDTO evento = eventoService.obtenerEventoPorId(id);
         List<PatrocinadorDTO> patrocinadores = patrocinadorService.obtenerTodosLosPatrocinadores();
 
-// ✅ Mapeo completo
+        // Mapeo completo
         EventoCreacionDTO eventoEdit = new EventoCreacionDTO();
+
+        // 1. Agregar ID
+        eventoEdit.setId_evento(evento.getId_evento()); // ⬅️ AGREGADO: Necesario para la actualización
+
+        // 2. Agregar Propiedades de Evento
         eventoEdit.setNombre(evento.getNombre());
         eventoEdit.setDescripcion(evento.getDescripcion());
         eventoEdit.setUbicacion(evento.getUbicacion());
@@ -116,6 +123,13 @@ public class EventoController {
         eventoEdit.setCuposMaximosProveedor(evento.getCuposMaximosProveedor());
         eventoEdit.setCostoEspacio(evento.getCostoEspacio());
         eventoEdit.setTerminosCondiciones(evento.getTerminosCondiciones());
+
+        // 3. Agregar imagen_evento (para mostrar la actual)
+        eventoEdit.setImagen_evento(evento.getImagen_evento()); // ⬅️ AGREGADO: Imagen actual
+
+        // 4. Agregar cuposOcupados (para advertencias)
+        eventoEdit.setCuposOcupados(evento.getCuposOcupados()); // ⬅️ AGREGADO: Cupos ocupados
+
 
         model.addAttribute("evento", eventoEdit); // ✅ Enviar el DTO mapeado
         model.addAttribute("tiposEvento", TipoEvento.values());
@@ -220,31 +234,45 @@ public class EventoController {
     @GetMapping("/ver/{id}")
     public String verEvento(@PathVariable Long id, Model model, Authentication authentication) {
         EventoDTO evento = eventoService.obtenerEventoPorId(id);
-        boolean yaGuardoEvento = false; // ⚠️ Renombrado
-        boolean yaSeInscribio = false; // ⚠️ Nuevo: para Proveedor
-        boolean hayCupos = inscripcionProveedorService.hayCuposDisponibles(id);
 
+        // 1. CÁLCULO CONSISTENTE: Calcular cupos disponibles
+        int cuposOcupados = evento.getCuposOcupados() != null ? evento.getCuposOcupados() : 0;
+        int cuposMaximos = evento.getCuposMaximosProveedor() != null ? evento.getCuposMaximosProveedor() : 0;
+
+        // Aseguramos que el resultado no sea negativo
+        int cuposDisponibles = Math.max(0, cuposMaximos - cuposOcupados);
+
+        // 2. Usar el cálculo para la variable booleana
+        boolean hayCupos = cuposDisponibles > 0; // Se basa en el CÁLCULO 1, eliminando la llamada al servicio redundante
+
+        // Si necesitas que el DTO tenga el valor de cupos disponibles, puedes setearlo:
+        evento.setCuposDisponibles(cuposDisponibles);
+
+        boolean yaGuardoEvento = false;
+        boolean yaSeInscribio = false;
 
         if (authentication != null && !authentication.getName().equals("anonymousUser")) {
             String email = authentication.getName();
             UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-            // ⚠️ CAMBIO: Verificar si el Consumidor GUARDÓ el evento
+            // Lógica de Consumidor
             if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("CONSUMIDOR"))) {
                 yaGuardoEvento = misEventosService.usuarioTieneEventoGuardado(usuario.getId_usuario(), id);
             }
 
-            // ⚠️ NUEVO: Verificar si el Proveedor se INSCRIBIÓ
+            // Lógica de Proveedor
             if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
                 yaSeInscribio = inscripcionProveedorService.proveedorEstaInscrito(usuario.getId_usuario(), id);
             }
-
         }
 
+        // 3. AGREGAR AL MODEL: Ambos son necesarios para la vista view.html
         model.addAttribute("evento", evento);
-        model.addAttribute("yaGuardoEvento", yaGuardoEvento); // Para el botón del Consumidor
-        model.addAttribute("yaSeInscribio", yaSeInscribio); // Para el botón del Proveedor
-        model.addAttribute("hayCupos", hayCupos); // Para el botón del Proveedor
+        model.addAttribute("cuposDisponibles", cuposDisponibles); // ⬅️ ¡CRUCIAL! La vista lo necesita
+        model.addAttribute("yaGuardoEvento", yaGuardoEvento);
+        model.addAttribute("yaSeInscribio", yaSeInscribio);
+        model.addAttribute("hayCupos", hayCupos);
+
         return "evento/view";
     }
 
@@ -321,12 +349,16 @@ public class EventoController {
             String email = authentication.getName();
             UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
 
+            // ✅ AGREGAR: Validar cupos disponibles antes de crear inscripción
+            if (!inscripcionProveedorService.hayCuposDisponibles(idEvento)) {
+                redirectAttributes.addFlashAttribute("error", "Lo sentimos, no quedan cupos disponibles.");
+                return "redirect:/eventos/ver/" + idEvento;
+            }
+
             var inscripcion = inscripcionProveedorService.solicitarCupo(proveedor.getId_usuario(), idEvento);
 
-            // ⚠️ Redirigir a la pasarela de pago o a una página intermedia
-            redirectAttributes.addFlashAttribute("mensaje", "Cupo solicitado. Debes completar el pago.");
-            // En un caso real, aquí iría la integración con la pasarela de pago usando inscripcion.getId_inscripcion()
-            return "redirect:/pago/simular/" + inscripcion.getId_inscripcion(); // Simulación
+            redirectAttributes.addFlashAttribute("mensaje", "Cupo reservado. Completa el pago en los próximos 15 minutos.");
+            return "redirect:/eventos/pago/simular/" + inscripcion.getId_inscripcion();
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al solicitar cupo: " + e.getMessage());
@@ -334,73 +366,110 @@ public class EventoController {
         }
     }
 
-    /**
-     * ⚠️ NUEVO ENDPOINT (Simulación): Simula la confirmación de pago.
-     * En un caso real, esto sería un Webhook.
-     */
+    @GetMapping("/pago/simular/{idInscripcion}")
+    public String mostrarPaginaPago(@PathVariable Long idInscripcion,
+                                    Model model,
+                                    Authentication authentication) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            return "redirect:/login";
+        }
+
+        InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
+
+        model.addAttribute("inscripcion", inscripcion);
+        return "redirect:/pagos-eventos/checkout/" + inscripcion.getId_inscripcion();
+    }
+
+
     @PostMapping("/confirmar-pago-simulado/{idInscripcion}")
     public String confirmarPagoSimulado(@PathVariable Long idInscripcion,
                                         Authentication authentication,
                                         RedirectAttributes redirectAttributes) {
-        // Validar que sea el proveedor dueño de la inscripción
         if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
             return "redirect:/login";
         }
 
         try {
-            // En producción, el ID de pago vendría del sistema de pagos
-            Long idPagoSimulado = System.currentTimeMillis(); // Generar ID único
-            inscripcionProveedorService.confirmarPago(idInscripcion, idPagoSimulado);
+            // 1. Crear el pago
+            PagoEventoCreacionDTO pagoCreacion = new PagoEventoCreacionDTO();
+            pagoCreacion.setIdInscripcion(idInscripcion);
+            pagoCreacion.setMetodoPago(MetodoPago.TARJETA_CREDITO); // O el que sea
+
+            PagoEventoDTO pago = pagoEventoService.crearPago(pagoCreacion);
+
+            // 2. Procesar el pago (simulación)
+            pagoEventoService.procesarPago(pago.getIdPagoEvento());
+
             redirectAttributes.addFlashAttribute("mensaje", "¡Pago confirmado! Tu cupo está asegurado.");
             return "redirect:/eventos/mis-inscripciones";
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al confirmar el pago: " + e.getMessage());
             return "redirect:/eventos";
         }
     }
 
-    // --- Lógica de Asistencia (Admin Check-in) ---
+
+
 
     /**
-     * ⚠️ NUEVO ENDPOINT: Página de Admin para registrar asistencia (Check-in).
+     * Proveedor cancela su inscripción (si está PENDIENTE_PAGO o CONFIRMADO).
      */
-    @GetMapping("/admin/asistencia/{idEvento}")
-    public String adminRegistroAsistencia(@PathVariable Long idEvento, Model model, Authentication authentication) {
-        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
-            return "redirect:/eventos";
+    @PostMapping("/cancelar-inscripcion/{idInscripcion}")
+    public String cancelarInscripcion(@PathVariable Long idInscripcion,
+                                      Authentication authentication,
+                                      RedirectAttributes redirectAttributes) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            return "redirect:/login";
         }
 
-        EventoDTO evento = eventoService.obtenerEventoPorId(idEvento);
-        var asistentes = asistenciaConsumidorService.obtenerAsistentesPorEvento(idEvento);
-
-        model.addAttribute("evento", evento);
-        model.addAttribute("asistentes", asistentes); // Lista de los que YA asistieron
-        model.addAttribute("totalAsistentes", asistentes.size());
-
-        return "evento/admin-asistencia"; // ⚠️ Nueva vista
-    }
-
-    /**
-     * ⚠️ NUEVO ENDPOINT: Endpoint (API/Form) para que el Admin registre el check-in.
-     */
-    @PostMapping("/admin/registrar-asistencia")
-    public String registrarAsistenciaConsumidor(@RequestParam Long idEvento,
-                                                @RequestParam Long idConsumidor, // Se podría buscar por email/documento
-                                                RedirectAttributes redirectAttributes) {
         try {
-            asistenciaConsumidorService.registrarAsistencia(idConsumidor, idEvento);
-            redirectAttributes.addFlashAttribute("mensaje", "Asistencia registrada correctamente.");
+            String email = authentication.getName();
+            UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
+
+            // Validar que la inscripción pertenece al proveedor
+            InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
+
+            if (!inscripcion.getId_proveedor().equals(proveedor.getId_usuario())) {
+                redirectAttributes.addFlashAttribute("error", "No puedes cancelar una inscripción que no es tuya.");
+                return "redirect:/eventos/mis-inscripciones";
+            }
+
+            inscripcionProveedorService.cancelarInscripcion(idInscripcion, "Cancelado por el proveedor");
+            redirectAttributes.addFlashAttribute("mensaje", "Inscripción cancelada correctamente.");
+
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al registrar: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al cancelar: " + e.getMessage());
         }
-        return "redirect:/eventos/admin/asistencia/" + idEvento;
-    }
 
-
-    // ⚠️ CAMBIO: Método auxiliar obsoleto (Proveedor ya no edita)
-    /*
-    private boolean puedeEditarEvento(Authentication authentication, EventoDTO evento) {
-        // ... (Lógica antigua eliminada) ...
+        return "redirect:/eventos/mis-inscripciones";
     }
-    */
+    /**
+     * Proveedor ve su código de confirmación para presentar en el evento.
+     */
+    @GetMapping("/mi-codigo/{idInscripcion}")
+    public String verCodigoConfirmacion(@PathVariable Long idInscripcion,
+                                        Model model,
+                                        Authentication authentication) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            return "redirect:/login";
+        }
+
+        try {
+            String email = authentication.getName();
+            UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
+
+            InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
+
+            if (!inscripcion.getId_proveedor().equals(proveedor.getId_usuario())) {
+                return "redirect:/eventos/mis-inscripciones";
+            }
+
+            model.addAttribute("inscripcion", inscripcion);
+            return "evento/codigo-confirmacion"; // Vista con QR o código grande
+
+        } catch (Exception e) {
+            return "redirect:/eventos/mis-inscripciones";
+        }
+    }
 }

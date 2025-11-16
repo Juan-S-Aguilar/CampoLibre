@@ -26,11 +26,22 @@ public class Patrocinador {
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "contacto_email", length = 100)
+    private String contactoEmail;
+
+    @Column(name = "telefono_contacto", length = 20)
+    private String telefonoContacto;
+
+    @Column(name = "sitio_web", length = 255)
+    private String sitioWeb;
+
+    @Column(name = "activo", nullable = false)
+    private Boolean activo = true; // Para "archivar" patrocinadores sin borrarlos
+
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();
     }
 
-    @Column(name = "contacto_email", length = 100)
-    private String contactoEmail; // Por si necesitas comunicarte con el patrocinador
+
 }

@@ -34,6 +34,10 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     @Query("SELECT e FROM Evento e WHERE e.patrocinador.id_patrocinador = :idPatrocinador")
     List<Evento> findByPatrocinadorId(@Param("idPatrocinador") Long idPatrocinador);
 
+    // Buscar eventos publicados con cupos disponibles
+    @Query("SELECT e FROM Evento e WHERE e.estado = :estado " +
+            "AND e.cuposOcupados < e.cuposMaximosProveedor")
+    List<Evento> findEventosConCuposDisponibles(@Param("estado") EstadoEvento estado);
 
 
 }

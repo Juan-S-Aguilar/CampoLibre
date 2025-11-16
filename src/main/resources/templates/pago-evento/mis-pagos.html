@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title>Mis Pagos - Campo Libre</title>
+
+    <style>
+        .pago-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pago-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .alert-sm {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        code {
+            font-size: 0.9rem;
+            padding: 0.2rem 0.4rem;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+<main th:fragment="content">
+    <div class="container mt-4 mb-5">
+
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-6">
+                    <i class="bi bi-receipt text-primary"></i>
+                    Historial de Pagos
+                </h1>
+                <p class="text-muted">
+                    Todos tus pagos por eventos agrícolas
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/eventos/mis-inscripciones}" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-check"></i> Mis Inscripciones
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(pagos)}" class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-receipt-cutoff fs-1"></i>
+                        <h2 class="mt-2 mb-0" th:text="${pagos.size()}">0</h2>
+                        <small>Total de Pagos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-check-circle fs-1"></i>
+                        <h2 class="mt-2 mb-0"
+                            th:text="${#lists.size(pagos.?[estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO])}">
+                            0
+                        </h2>
+                        <small>Exitosos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-danger text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-x-circle fs-1"></i>
+                        <h2 class="mt-2 mb-0"
+                            th:text="${#lists.size(pagos.?[estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO])}">
+                            0
+                        </h2>
+                        <small>Fallidos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cash-stack fs-1"></i>
+                        <h3 class="mt-2 mb-0">
+                            $<span th:text="${#numbers.formatDecimal(#aggregates.sum(pagos.?[estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO].![monto]), 0, 'COMMA', 0, 'POINT')}">
+                                0
+                            </span>
+                        </h3>
+                        <small>Total Invertido</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(pagos)}" class="text-center py-5">
+            <i class="bi bi-receipt text-muted" style="font-size: 5rem;"></i>
+            <h3 class="mt-4 text-muted">No tienes pagos registrados</h3>
+            <p class="text-muted">Cuando realices pagos por eventos, aparecerán aquí</p>
+            <a th:href="@{/eventos}" class="btn btn-success btn-lg mt-3">
+                <i class="bi bi-search"></i> Ver Eventos Disponibles
+            </a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(pagos)}" class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-funnel"></i> Filtrar por Estado
+                        </label>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="filtroEstado" id="todos" value="todos" checked>
+                            <label class="btn btn-outline-secondary" for="todos" onclick="filtrarPagos('todos')">
+                                Todos
+                            </label>
+
+                            <input type="radio" class="btn-check" name="filtroEstado" id="exitosos" value="exitosos">
+                            <label class="btn btn-outline-success" for="exitosos" onclick="filtrarPagos('exitosos')">
+                                Exitosos
+                            </label>
+
+                            <input type="radio" class="btn-check" name="filtroEstado" id="fallidos" value="fallidos">
+                            <label class="btn btn-outline-danger" for="fallidos" onclick="filtrarPagos('fallidos')">
+                                Fallidos
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-search"></i> Buscar
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="buscarPago"
+                               placeholder="Buscar por evento o número de transacción..."
+                               onkeyup="buscarPago()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(pagos)}">
+            <div class="row row-cols-1 g-3" id="listaPagos">
+                <div class="col"
+                     th:each="pago : ${pagos}"
+                     th:attr="data-estado=${pago.estado}, data-evento=${pago.nombreEvento}, data-transaccion=${pago.numeroTransaccion}">
+
+                    <div class="card shadow-sm h-100 pago-card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2 text-center border-end">
+                                    <div class="mb-2">
+                                        <i class="fs-1"
+                                           th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO} ? 'bi bi-check-circle-fill text-success' :
+                                                               (${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO} ? 'bi bi-x-circle-fill text-danger' :
+                                                               'bi bi-hourglass-split text-warning')">
+                                        </i>
+                                    </div>
+                                    <span class="badge fs-6"
+                                          th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO} ? 'bg-success' :
+                                                               (${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO} ? 'bg-danger' :
+                                                               'bg-warning text-dark')"
+                                          th:text="${pago.estado}">
+                                    </span>
+                                    <div class="mt-2 small text-muted">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy')}">
+                                            01/01/2025
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-7">
+                                    <h5 class="card-title mb-2" th:text="${pago.nombreEvento}">
+                                        Nombre del Evento
+                                    </h5>
+
+                                    <div class="mb-2">
+                                        <small class="text-muted">Número de Transacción:</small>
+                                        <code class="ms-2" th:text="${pago.numeroTransaccion}">PEVT-202501-XXXX</code>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <i class="bi bi-credit-card text-primary"></i>
+                                        <small>Método:</small>
+                                        <span th:text="${pago.metodoPago}">TARJETA_CREDITO</span>
+                                    </div>
+
+                                    <div class="mb-2" th:if="${pago.codigoConfirmacion != null}">
+                                        <i class="bi bi-shield-check text-success"></i>
+                                        <small>Código:</small>
+                                        <code th:text="${pago.codigoConfirmacion}">EVT-202501-XXXX</code>
+                                    </div>
+
+                                    <div th:if="${pago.mensajeError != null && !pago.mensajeError.isEmpty()}"
+                                         class="alert alert-danger alert-sm mb-0 mt-2">
+                                        <small>
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <span th:text="${pago.mensajeError}">Error</span>
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 text-end">
+                                    <h3 class="text-success mb-3">
+                                        $<span th:text="${#numbers.formatDecimal(pago.monto, 0, 'COMMA', 0, 'POINT')}">
+                                            50,000
+                                        </span>
+                                    </h3>
+
+                                    <div class="d-grid gap-2">
+                                        <a th:href="@{/pagos-eventos/ver/{id}(id=${pago.idPagoEvento})}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Ver Detalles
+                                        </a>
+
+                                        <a th:if="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO}"
+                                           th:href="@{/eventos/mi-codigo/{id}(id=${pago.idInscripcion})}"
+                                           class="btn btn-sm btn-success">
+                                            <i class="bi bi-qr-code"></i> Ver Código
+                                        </a>
+
+                                        <a th:if="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO}"
+                                           th:href="@{/pagos-eventos/checkout/{id}(id=${pago.idInscripcion})}"
+                                           class="btn btn-sm btn-warning">
+                                            <i class="bi bi-arrow-clockwise"></i> Reintentar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light text-muted small">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="bi bi-clock"></i>
+                                    <span th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm')}">
+                                        01/01/2025 10:30
+                                    </span>
+                                </span>
+                                <span>
+                                    ID: <code th:text="${pago.idPagoEvento}">000</code>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sinResultados" class="alert alert-info text-center mt-4" style="display: none;">
+                <i class="bi bi-info-circle"></i>
+                No se encontraron pagos que coincidan con tu búsqueda
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Filtrar pagos por estado
+        function filtrarPagos(filtro) {
+            const pagos = document.querySelectorAll('.pago-card');
+            let visibles = 0;
+
+            pagos.forEach(card => {
+                const cardContainer = card.closest('.col');
+                const estado = cardContainer.getAttribute('data-estado');
+
+                if (filtro === 'todos') {
+                    cardContainer.style.display = '';
+                    visibles++;
+                } else if (filtro === 'exitosos' && estado === 'EXITOSO') {
+                    cardContainer.style.display = '';
+                    visibles++;
+                } else if (filtro === 'fallidos' && estado === 'FALLIDO') {
+                    cardContainer.style.display = '';
+                    visibles++;
+                } else {
+                    cardContainer.style.display = 'none';
+                }
+            });
+
+            mostrarMensajeSinResultados(visibles);
+        }
+
+        // Buscar pagos por evento o transacción
+        function buscarPago() {
+            const input = document.getElementById('buscarPago').value.toLowerCase();
+            const pagos = document.querySelectorAll('.pago-card');
+            let visibles = 0;
+
+            pagos.forEach(card => {
+                const cardContainer = card.closest('.col');
+                const evento = cardContainer.getAttribute('data-evento').toLowerCase();
+                const transaccion = cardContainer.getAttribute('data-transaccion').toLowerCase();
+
+                if (evento.includes(input) || transaccion.includes(input)) {
+                    cardContainer.style.display = '';
+                    visibles++;
+                } else {
+                    cardContainer.style.display = 'none';
+                }
+            });
+
+            mostrarMensajeSinResultados(visibles);
+        }
+
+        // Mostrar/ocultar mensaje cuando no hay resultados
+        function mostrarMensajeSinResultados(visibles) {
+            const mensaje = document.getElementById('sinResultados');
+            if (visibles === 0) {
+                mensaje.style.display = 'block';
+            } else {
+                mensaje.style.display = 'none';
+            }
+        }
+    </script>
+
+
+</main>
+</body>
+</html>

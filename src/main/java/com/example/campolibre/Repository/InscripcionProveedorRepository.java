@@ -24,10 +24,10 @@ public interface InscripcionProveedorRepository extends JpaRepository<Inscripcio
     @Query("SELECT i FROM InscripcionProveedor i WHERE i.evento.id_evento = :idEvento")
     List<InscripcionProveedor> findByEventoId(@Param("idEvento") Long idEvento);
 
+    // Solo contar cupos CONFIRMADOS (los que realmente pagaron)
     @Query("SELECT COUNT(i) FROM InscripcionProveedor i WHERE i.evento.id_evento = :idEvento " +
-            "AND (i.estadoCupo = com.example.campolibre.Enum.EstadoCupo.CONFIRMADO " +
-            "OR i.estadoCupo = com.example.campolibre.Enum.EstadoCupo.PENDIENTE_PAGO)")
-    Long countCuposOcupadosParaEvento(Long idEvento);
+            "AND i.estadoCupo = com.example.campolibre.Enum.EstadoCupo.CONFIRMADO")
+    Long countCuposConfirmadosPorEvento(@Param("idEvento") Long idEvento);
 
     // 4. Listar todas las inscripciones de un proveedor (para Mis Eventos Proveedor)
     @Query("SELECT i FROM InscripcionProveedor i WHERE i.proveedor.id_usuario = :idUsuario")
@@ -36,4 +36,13 @@ public interface InscripcionProveedorRepository extends JpaRepository<Inscripcio
     // 5. Contar cupos por evento y estado (LA SOLUCIÓN FUNCIONAL)
     @Query("SELECT COUNT(i) FROM InscripcionProveedor i WHERE i.evento.id_evento = :idEvento AND i.estadoCupo = :estadoCupo")
     Long countByEventoIdAndEstadoCupo(@Param("idEvento") Long idEvento, @Param("estadoCupo") EstadoCupo estadoCupo);
+
+    // Buscar inscripción por código (útil para validar entrada al evento)
+    @Query("SELECT i FROM InscripcionProveedor i WHERE i.codigoConfirmacion = :codigo")
+    Optional<InscripcionProveedor> findByCodigoConfirmacion(@Param("codigo") String codigo);
+
+    // Listar inscripciones confirmadas de un proveedor (sus eventos activos)
+    @Query("SELECT i FROM InscripcionProveedor i WHERE i.proveedor.id_usuario = :idUsuario " +
+            "AND i.estadoCupo = com.example.campolibre.Enum.EstadoCupo.CONFIRMADO")
+    List<InscripcionProveedor> findEventosConfirmadosPorProveedor(@Param("idUsuario") Long idUsuario);
 }

@@ -229,7 +229,7 @@ public class PqrsController {
         if (!permitido) {
             if (pqrsEvento != null && pqrsEvento.getId_evento() != null) {
                 EventoDTO evento = eventoService.obtenerEventoPorId(pqrsEvento.getId_evento());
-                if (evento != null && evento.getCreado_por() != null && evento.getCreado_por().equals(idUsuarioActual)) {
+                if (evento != null && evento.getId_creador() != null && evento.getId_creador().equals(idUsuarioActual)) {
                     permitido = true; // creador del evento
                 }
             }

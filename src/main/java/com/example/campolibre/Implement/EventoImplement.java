@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,6 +77,19 @@ public class EventoImplement implements EventoService {
             throw new CustomException("Solo los administradores pueden crear eventos");
         }
 
+        // Después de validar que es admin, agregar:
+        if (eventoCreacionDTO.getCuposMaximosProveedor() <= 0) {
+            throw new CustomException("Los cupos máximos deben ser mayores a cero");
+        }
+
+        if (eventoCreacionDTO.getCostoEspacio() < 0) {
+            throw new CustomException("El costo del espacio no puede ser negativo");
+        }
+
+        if (eventoCreacionDTO.getFecha_evento().isBefore(LocalDate.now())) {
+            throw new CustomException("La fecha del evento no puede ser en el pasado");
+        }
+
         // 2. Verificar Patrocinador
         Patrocinador patrocinador = patrocinadorRepository.findById(eventoCreacionDTO.getId_patrocinador())
                 .orElseThrow(() -> new CustomException("Patrocinador no encontrado"));
@@ -102,19 +116,7 @@ public class EventoImplement implements EventoService {
         Evento nuevoEvento = eventoRepository.save(evento);
 
         // 5. Mapeo a DTO de salida
-        EventoDTO resultado = modelMapper.map(nuevoEvento, EventoDTO.class);
-        resultado.setCreado_por(nuevoEvento.getCreado_por().getId_usuario());
-
-        // Datos del patrocinador
-        resultado.setId_patrocinador(nuevoEvento.getPatrocinador().getId_patrocinador());
-        resultado.setNombrePatrocinador(nuevoEvento.getPatrocinador().getNombre());
-
-        // Calcular cupos disponibles
-        Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(nuevoEvento.getId_evento());
-
-        resultado.setCuposDisponibles(nuevoEvento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-        return resultado;
+        return convertirADTO(nuevoEvento);
     }
 
     @Override
@@ -122,73 +124,24 @@ public class EventoImplement implements EventoService {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
 
-        // Mapeo a DTO
-        EventoDTO resultado = modelMapper.map(evento, EventoDTO.class);
-
-        // Incluir el ID del creador
-        if (evento.getCreado_por() != null) {
-            resultado.setCreado_por(evento.getCreado_por().getId_usuario());
-        }
-
-        // Incluir datos del patrocinador
-        if (evento.getPatrocinador() != null) {
-            resultado.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-            resultado.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-        }
-
-        // Calcular cupos disponibles
-        Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(id);
-
-        int cuposDisponibles = evento.getCuposMaximosProveedor() - cuposOcupados.intValue();
-        resultado.setCuposDisponibles(cuposDisponibles);
-
-        return resultado;
+        return convertirADTO(evento);
     }
+
 
     @Override
     public List<EventoDTO> obtenerTodosLosEventos() {
         List<Evento> eventos = eventoRepository.findAll();
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-
-                    // Opcional: agregar datos completos del patrocinador
-                    if (evento.getPatrocinador() != null) {
-                        dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-                        dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-                    }
-
-                    // Opcional: calcular cupos disponibles
-                    Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(evento.getId_evento());
-                    dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
 
+
     @Override
     public List<EventoDTO> obtenerEventosPublicados() {
-        List<Evento> eventos = eventoRepository.findByEstado(EstadoEvento.PUBLICADO);
-        return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-
-                    // Opcional: agregar datos completos del patrocinador
-                    if (evento.getPatrocinador() != null) {
-                        dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-                        dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-                    }
-
-                    // Opcional: calcular cupos disponibles
-                    Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(evento.getId_evento());
-
-                    dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-                    return dto;
-                })
+        return eventoRepository.findByEstado(EstadoEvento.PUBLICADO)
+                .stream()
+                .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
 
@@ -196,96 +149,37 @@ public class EventoImplement implements EventoService {
     public List<EventoDTO> obtenerEventosBorrador() {
         List<Evento> eventos = eventoRepository.findByEstado(EstadoEvento.BORRADOR);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-
-                    // Opcional: agregar datos completos del patrocinador
-                    if (evento.getPatrocinador() != null) {
-                        dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-                        dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-                    }
-
-                    // Opcional: calcular cupos disponibles
-                    Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(evento.getId_evento());
-
-                    dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<EventoDTO> obtenerEventosPorCreador(Long idCreador) {
         List<Evento> eventos = eventoRepository.findByCreadorId(idCreador);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-
-                    // Opcional: agregar datos completos del patrocinador
-                    if (evento.getPatrocinador() != null) {
-                        dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-                        dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-                    }
-
-                    // Opcional: calcular cupos disponibles
-                    Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(evento.getId_evento());
-                    dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<EventoDTO> obtenerEventosPorTipo(TipoEvento tipoEvento) {
-        // CORRECCIÓN: Usar el parámetro 'tipoEvento' de la función.
         List<Evento> eventos = eventoRepository.findByTipoEventoAndEstado(tipoEvento, EstadoEvento.PUBLICADO);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-
-                    // Opcional: agregar datos completos del patrocinador
-                    if (evento.getPatrocinador() != null) {
-                        dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-                        dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-                    }
-
-                    // Opcional: calcular cupos disponibles
-                    Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(evento.getId_evento());
-                    dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<EventoDTO> obtenerEventosProximos(LocalDate fecha) {
-        // CORRECCIÓN: Usar el parámetro 'fecha' de la función.
         List<Evento> eventos = eventoRepository.findEventosProximosAndEstado(fecha, EstadoEvento.PUBLICADO);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-
-                    // Opcional: agregar datos completos del patrocinador
-                    if (evento.getPatrocinador() != null) {
-                        dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
-                        dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
-                    }
-
-                    // Opcional: calcular cupos disponibles
-                    Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(evento.getId_evento());
-                    dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposOcupados.intValue());
-
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
+
 
     // --- LÓGICA DE ACTUALIZACIÓN DE EVENTOS REDISEÑADA ---
     @Override
@@ -293,9 +187,8 @@ public class EventoImplement implements EventoService {
         Evento eventoExistente = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
 
-        // 1. Validar que los nuevos cupos no sean menores a los ya ocupados (PRIMERO)
-        Long cuposOcupados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(id);
-
+        // 1. Validar que los nuevos cupos no sean menores a los ya ocupados
+        Long cuposOcupados = inscripcionProveedorRepository.countCuposConfirmadosPorEvento(id);
         if (eventoCreacionDTO.getCuposMaximosProveedor() < cuposOcupados.intValue()) {
             throw new CustomException("No puedes reducir los cupos por debajo de los ya confirmados (" + cuposOcupados + ")");
         }
@@ -322,11 +215,9 @@ public class EventoImplement implements EventoService {
 
         // 5. Manejo de imagen
         if (imagen != null && !imagen.isEmpty()) {
-            // Eliminar imagen anterior del sistema de archivos
             if (eventoExistente.getImagen_evento() != null) {
                 fileStorageService.eliminarArchivo(eventoExistente.getImagen_evento());
             }
-            // Guardar la nueva imagen y actualizar la URL
             String rutaImagen = fileStorageService.guardarArchivo(imagen, "eventos");
             eventoExistente.setImagen_evento(rutaImagen);
         }
@@ -334,29 +225,23 @@ public class EventoImplement implements EventoService {
         // 6. Guardar evento actualizado
         Evento eventoActualizado = eventoRepository.save(eventoExistente);
 
-        // 7. Mapeo a DTO de salida
-        EventoDTO resultado = modelMapper.map(eventoActualizado, EventoDTO.class);
-        resultado.setCreado_por(eventoActualizado.getCreado_por().getId_usuario());
-
-        // Incluir datos del patrocinador
-        if (eventoActualizado.getPatrocinador() != null) {
-            resultado.setId_patrocinador(eventoActualizado.getPatrocinador().getId_patrocinador());
-            resultado.setNombrePatrocinador(eventoActualizado.getPatrocinador().getNombre());
-        }
-
-        // Calcular cupos disponibles actualizados
-        Long cuposOcupadosActualizados = inscripcionProveedorRepository.countCuposOcupadosParaEvento(id);
-        int cuposDisponibles = eventoActualizado.getCuposMaximosProveedor() - cuposOcupadosActualizados.intValue();
-        resultado.setCuposDisponibles(cuposDisponibles);
-
-        return resultado;
+        // 7. Retornar DTO usando método reutilizable
+        return convertirADTO(eventoActualizado);
     }
+
 
     @Override
     public void cambiarEstadoEvento(Long id, EstadoEvento estado) {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
+
         evento.setEstado(estado);
+
+        // Registrar fecha de publicación
+        if (estado == EstadoEvento.PUBLICADO && evento.getFechaPublicacion() == null) {
+            evento.setFechaPublicacion(LocalDateTime.now());
+        }
+
         eventoRepository.save(evento);
 
         if (estado == EstadoEvento.PUBLICADO) {
@@ -398,4 +283,52 @@ public class EventoImplement implements EventoService {
 
         System.out.println("[EventoImplement] Notificación completada para el evento: " + evento.getNombre());
     }
+
+    // Agregar este método privado al final de la clase
+    private EventoDTO convertirADTO(Evento evento) {
+        EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
+
+        // ID del creador
+        if (evento.getCreado_por() != null) {
+            dto.setId_creador(evento.getCreado_por().getId_usuario());
+            dto.setNombreCreador(evento.getCreado_por().getNombre());
+        }
+
+        // Datos del patrocinador
+        if (evento.getPatrocinador() != null) {
+            dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
+            dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
+            dto.setLogoPatrocinador(evento.getPatrocinador().getLogoUrl());
+        }
+
+        // Calcular cupos disponibles
+        Long cuposConfirmados = inscripcionProveedorRepository.countCuposConfirmadosPorEvento(evento.getId_evento());
+        dto.setCuposOcupados(cuposConfirmados.intValue());
+        dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposConfirmados.intValue());
+
+        return dto;
+    }
+
+    @Override
+    public void publicarEvento(Long idEvento) {
+        cambiarEstadoEvento(idEvento, EstadoEvento.PUBLICADO);
+    }
+
+    @Override
+    public List<EventoDTO> obtenerEventosConCuposDisponibles() {
+        return eventoRepository.findEventosConCuposDisponibles(EstadoEvento.PUBLICADO)
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventoDTO> obtenerEventosPorPatrocinador(Long idPatrocinador) {
+        return eventoRepository.findByPatrocinadorId(idPatrocinador)
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+
 }

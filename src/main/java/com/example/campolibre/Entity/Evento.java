@@ -55,23 +55,35 @@ public class Evento {
     protected void onCreate() {
         fecha_creacion = LocalDateTime.now();
     }
-   //_______________________________________________________________________________________
-    // --- NUEVOS CAMPOS PARA EL CONTROL DEL EVENTO ---
 
-    // Relación con el Patrocinador
+    // --- NUEVOS CAMPOS PARA EL CONTROL DEL EVENTO ---
     @ManyToOne
     @JoinColumn(name = "id_patrocinador", nullable = false)
-    private Patrocinador patrocinador; // FK a la nueva entidad Patrocinador
+    private Patrocinador patrocinador;
 
-    // Control de cupos para Proveedores
     @Column(name = "cupos_proveedor_max", nullable = false)
-    private Integer cuposMaximosProveedor; // Por ejemplo, 50
+    private Integer cuposMaximosProveedor;
 
-    // Costo por espacio/cupo para Proveedores
     @Column(name = "costo_espacio", nullable = false)
     private Double costoEspacio;
 
-    // Apartado para los Términos y Condiciones
     @Column(name = "terminos_condiciones", length = 2000)
-    private String terminosCondiciones; // Texto sobre la responsabilidad de Campo Libre
+    private String terminosCondiciones;
+
+    @Column(name = "cupos_ocupados", nullable = false)
+    private Integer cuposOcupados = 0;
+
+    @Column(name = "direccion_completa", length = 300)
+    private String direccionCompleta;
+
+    @Column(name = "ciudad", length = 100)
+    private String ciudad;
+
+    @Column(name = "fecha_publicacion")
+    private LocalDateTime fechaPublicacion;
+
+    // MÉTODO HELPER (no se guarda en BD)
+    public Integer getCuposDisponibles() {
+        return cuposMaximosProveedor - cuposOcupados;
+    }
 }

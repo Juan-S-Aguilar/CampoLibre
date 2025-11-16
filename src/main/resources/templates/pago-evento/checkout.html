@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+
+    <title>Checkout - Campo Libre</title>
+    <style>
+        .btn-check:checked + .btn-outline-success {
+            background-color: #198754;
+            border-color: #198754;
+            color: white;
+        }
+
+        .sticky-top {
+            position: -webkit-sticky;
+            position: sticky;
+        }
+    </style>
+
+</head>
+<body class="bg-light">
+
+
+<main th:fragment="content">
+    <div class="container mt-4 mb-5">
+
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="display-6">
+                <i class="bi bi-credit-card text-success"></i>
+                Confirmar Pago
+            </h1>
+            <p class="text-muted">
+                Completa tu inscripción al evento
+            </p>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row justify-content-center">
+            <!-- Columna Izquierda: Resumen del Pedido -->
+            <div class="col-lg-5 mb-4">
+                <div class="card shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt"></i>
+                            Resumen de tu Inscripción
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Información del Evento -->
+                        <div class="mb-4">
+                            <img th:if="${inscripcion.imagenEvento != null}"
+                                 th:src="@{'/uploads/' + ${inscripcion.imagenEvento}}"
+                                 class="img-fluid rounded mb-3"
+                                 style="max-height: 200px; width: 100%; object-fit: cover;"
+                                 th:alt="${inscripcion.nombreEvento}">
+                            <img th:unless="${inscripcion.imagenEvento != null}"
+                                 src="https://via.placeholder.com/400x200/28a745/ffffff?text=Evento"
+                                 class="img-fluid rounded mb-3"
+                                 style="max-height: 200px; width: 100%; object-fit: cover;"
+                                 alt="Evento">
+
+                            <h5 class="card-title" th:text="${inscripcion.nombreEvento}">
+                                Nombre del Evento
+                            </h5>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>
+                                    <i class="bi bi-calendar3 text-success"></i> Fecha:
+                                </span>
+                                <strong th:text="${#temporals.format(inscripcion.fechaEvento, 'dd/MM/yyyy')}">
+                                    15/12/2025
+                                </strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>
+                                    <i class="bi bi-geo-alt text-danger"></i> Ubicación:
+                                </span>
+                                <strong th:text="${inscripcion.ubicacionEvento}">
+                                    Bogotá
+                                </strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>
+                                    <i class="bi bi-person text-primary"></i> Proveedor:
+                                </span>
+                                <strong th:text="${inscripcion.nombreProveedor}">
+                                    Mi Empresa
+                                </strong>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Desglose de Precio -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Espacio físico en el evento:</span>
+                                <span>1 x $<span th:text="${#numbers.formatDecimal(inscripcion.costoPagado, 0, 'COMMA', 0, 'POINT')}">50,000</span></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between text-muted mb-2">
+                                <span>
+                                    <i class="bi bi-info-circle"></i> Comisión de plataforma:
+                                </span>
+                                <span>Incluida</span>
+                            </div>
+                        </div>
+
+                        <hr class="border-success">
+
+                        <!-- Total -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="mb-0">Total a Pagar:</h4>
+                            <h2 class="mb-0 text-success">
+                                $<span th:text="${#numbers.formatDecimal(inscripcion.costoPagado, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                            </h2>
+                        </div>
+
+                        <!-- Beneficios -->
+                        <div class="alert alert-info small mb-0">
+                            <strong>
+                                <i class="bi bi-check-circle"></i> Incluye:
+                            </strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Espacio físico confirmado</li>
+                                <li>Código de confirmación único</li>
+                                <li>Soporte el día del evento</li>
+                                <li>Certificado de participación</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Formulario de Pago -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lock"></i>
+                            Método de Pago
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <!-- Formulario de Pago -->
+                        <form th:action="@{/pagos-eventos/procesar/{id}(id=${inscripcion.id_inscripcion})}"
+                              method="post"
+                              id="formPago"
+                              class="needs-validation"
+                              novalidate>
+
+                            <!-- Selección de Método de Pago -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-credit-card"></i>
+                                    Selecciona tu método de pago
+                                </label>
+
+                                <div class="row g-3">
+                                    <!-- Tarjeta de Crédito -->
+                                    <div class="col-md-6">
+                                        <input type="radio"
+                                               class="btn-check"
+                                               name="metodoPago"
+                                               id="tarjeta_credito"
+                                               value="TARJETA_CREDITO"
+                                               checked
+                                               required>
+                                        <label class="btn btn-outline-success w-100 p-3" for="tarjeta_credito">
+                                            <i class="bi bi-credit-card fs-3"></i>
+                                            <div class="mt-2">Tarjeta de Crédito</div>
+                                            <small class="text-muted">Visa, Mastercard</small>
+                                        </label>
+                                    </div>
+
+                                    <!-- Tarjeta Débito -->
+                                    <div class="col-md-6">
+                                        <input type="radio"
+                                               class="btn-check"
+                                               name="metodoPago"
+                                               id="tarjeta_debito"
+                                               value="TARJETA_DEBITO"
+                                               required>
+                                        <label class="btn btn-outline-success w-100 p-3" for="tarjeta_debito">
+                                            <i class="bi bi-credit-card-2-front fs-3"></i>
+                                            <div class="mt-2">Tarjeta Débito</div>
+                                            <small class="text-muted">Débito</small>
+                                        </label>
+                                    </div>
+
+                                    <!-- PSE -->
+                                    <div class="col-md-6">
+                                        <input type="radio"
+                                               class="btn-check"
+                                               name="metodoPago"
+                                               id="pse"
+                                               value="PSE"
+                                               required>
+                                        <label class="btn btn-outline-success w-100 p-3" for="pse">
+                                            <i class="bi bi-bank fs-3"></i>
+                                            <div class="mt-2">PSE</div>
+                                            <small class="text-muted">Pago en línea</small>
+                                        </label>
+                                    </div>
+
+                                    <!-- Transferencia -->
+                                    <div class="col-md-6">
+                                        <input type="radio"
+                                               class="btn-check"
+                                               name="metodoPago"
+                                               id="transferencia"
+                                               value="TRANSFERENCIA_BANCARIA"
+                                               required>
+                                        <label class="btn btn-outline-success w-100 p-3" for="transferencia">
+                                            <i class="bi bi-arrow-left-right fs-3"></i>
+                                            <div class="mt-2">Transferencia</div>
+                                            <small class="text-muted">Bancaria</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Información del Titular (Simulada) -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-person-badge"></i>
+                                    Información del Titular
+                                </h6>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="nombreTitular" class="form-label">
+                                            Nombre Completo <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               class="form-control"
+                                               id="nombreTitular"
+                                               th:value="${inscripcion.nombreProveedor}"
+                                               placeholder="Nombre del titular"
+                                               required>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="emailTitular" class="form-label">
+                                            Email <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="email"
+                                               class="form-control"
+                                               id="emailTitular"
+                                               placeholder="correo@ejemplo.com"
+                                               required>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="numeroTarjeta" class="form-label">
+                                            Número de Tarjeta <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               class="form-control"
+                                               id="numeroTarjeta"
+                                               placeholder="1234 5678 9012 3456"
+                                               maxlength="19"
+                                               required>
+                                    </div>
+
+                                    <div class="col-md-3 mb-3">
+                                        <label for="fechaExpiracion" class="form-label">
+                                            Vencimiento <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               class="form-control"
+                                               id="fechaExpiracion"
+                                               placeholder="MM/AA"
+                                               maxlength="5"
+                                               required>
+                                    </div>
+
+                                    <div class="col-md-3 mb-3">
+                                        <label for="cvv" class="form-label">
+                                            CVV <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               class="form-control"
+                                               id="cvv"
+                                               placeholder="123"
+                                               maxlength="4"
+                                               required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Términos y Condiciones -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="aceptoTerminos"
+                                           required>
+                                    <label class="form-check-label" for="aceptoTerminos">
+                                        Acepto los
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalTerminos">
+                                            términos y condiciones
+                                        </a>
+                                        y las
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalPoliticas">
+                                            políticas de privacidad
+                                        </a>
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        Debes aceptar los términos y condiciones
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón de Pago -->
+                            <div class="d-grid gap-2">
+                                <button type="submit"
+                                        class="btn btn-success btn-lg"
+                                        id="btnPagar">
+                                    <i class="bi bi-lock"></i>
+                                    Pagar $<span th:text="${#numbers.formatDecimal(inscripcion.costoPagado, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                </button>
+                                <a th:href="@{/eventos/ver/{id}(id=${inscripcion.id_evento})}"
+                                   class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Información de Seguridad -->
+                        <div class="alert alert-light mt-4 text-center small">
+                            <i class="bi bi-shield-check text-success fs-4"></i>
+                            <div class="mt-2">
+                                <strong>Pago 100% Seguro</strong>
+                                <p class="mb-0 text-muted">
+                                    Tu información está protegida con encriptación SSL de 256 bits
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card de Simulación (solo en desarrollo) -->
+                <div class="card border-warning mt-3">
+                    <div class="card-body">
+                        <h6 class="text-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Modo Simulación
+                        </h6>
+                        <p class="small mb-0">
+                            Este es un entorno de prueba. El pago se simulará automáticamente.
+                            En producción, aquí se integraría con una pasarela de pagos real (Wompi, PayU, Stripe, etc.).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Términos y Condiciones -->
+    <div class="modal fade" id="modalTerminos" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Términos y Condiciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Aceptación de Términos</h6>
+                    <p>Al realizar el pago, aceptas estos términos y condiciones...</p>
+
+                    <h6>2. Cancelaciones y Reembolsos</h6>
+                    <p>Las cancelaciones realizadas con más de 48 horas de anticipación tendrán derecho a un reembolso del 70%...</p>
+
+                    <h6>3. Responsabilidades</h6>
+                    <p>Campo Libre actúa como intermediario entre proveedores y organizadores de eventos...</p>
+
+                    <h6>4. Política de Privacidad</h6>
+                    <p>Tus datos personales serán tratados conforme a nuestra política de privacidad...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Políticas de Privacidad -->
+    <div class="modal fade" id="modalPoliticas" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Políticas de Privacidad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Recopilación de Información</h6>
+                    <p>Recopilamos información necesaria para procesar tu pago de forma segura...</p>
+
+                    <h6>Uso de la Información</h6>
+                    <p>Tu información se utiliza exclusivamente para procesar el pago y confirmar tu inscripción...</p>
+
+                    <h6>Seguridad</h6>
+                    <p>Utilizamos tecnología de encriptación SSL para proteger tu información...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Validación de Bootstrap
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else {
+                    // Mostrar loading en el botón
+                    const btnPagar = document.getElementById('btnPagar');
+                    btnPagar.disabled = true;
+                    btnPagar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    // Formatear número de tarjeta
+    document.getElementById('numeroTarjeta').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        e.target.value = formattedValue;
+    });
+
+    // Formatear fecha de expiración
+    document.getElementById('fechaExpiracion').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+        }
+        e.target.value = value;
+    });
+
+    // Solo números en CVV
+    document.getElementById('cvv').addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+</script>
+
+
+</body>
+</html>
