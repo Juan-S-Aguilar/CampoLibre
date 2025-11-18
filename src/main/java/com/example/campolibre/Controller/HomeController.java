@@ -52,6 +52,9 @@ public class HomeController {
     @Autowired
     private com.example.campolibre.Service.EmailService emailService;
 
+    @Autowired
+    private InscripcionProveedorService inscripcionService;
+
 
     // ==================== RUTAS PÚBLICAS ====================
 
@@ -177,24 +180,18 @@ public class HomeController {
             String email = authentication.getName();
             UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-            // Estadísticas para el dashboard de PROVEEDOR
+            // ========== ESTADÍSTICAS BÁSICAS (mantener) ==========
             Long misTiendas = (long) tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario()).size();
+
             Long misProductos = productoService.obtenerTodosLosProductos().stream()
                     .filter(p -> tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario())
                             .stream().anyMatch(t -> t.getId_tienda().equals(p.getId_tienda())))
                     .count();
-            Long misEventos = (long) eventoService.obtenerEventosPorCreador(usuario.getId_usuario()).size();
-            Long eventosAprobados = eventoService.obtenerEventosPorCreador(usuario.getId_usuario()).stream()
-                    .filter(e -> e.getEstado().name().equals("APROBADO"))
-                    .count();
-            Long eventosPendientes = eventoService.obtenerEventosPorCreador(usuario.getId_usuario()).stream()
-                    .filter(e -> e.getEstado().name().equals("PENDIENTE"))
-                    .count();
+
             Long misPqrs = (long) pqrsService.obtenerPqrsPorEmisor(usuario.getId_usuario()).size();
 
-            // ✅ NUEVAS ESTADÍSTICAS DE VENTAS DEL PROVEEDOR
+            // ========== ESTADÍSTICAS DE VENTAS (mantener) ==========
             List<TiendaDTO> misTiendasList = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
-
             Double gananciasTotales = 0.0;
             Long totalVentas = 0L;
 
@@ -203,18 +200,45 @@ public class HomeController {
                 totalVentas += pedidoService.obtenerPedidosPagadosPorTienda(tienda.getId_tienda()).size();
             }
 
-            model.addAttribute("gananciasTotales", gananciasTotales);
-            model.addAttribute("totalVentas", totalVentas);
+            // ========== ✅ NUEVAS ESTADÍSTICAS DE INSCRIPCIONES A EVENTOS ==========
 
+            // Total de inscripciones confirmadas (cupos asegurados)
+            Long inscripcionesConfirmadas = inscripcionService
+                    .obtenerEventosConfirmadosDeProveedor(usuario.getId_usuario())
+                    .stream()
+                    .count();
+
+            // Total de inscripciones pendientes de pago
+            Long inscripcionesPendientes = inscripcionService
+                    .obtenerTodasLasInscripcionesDeProveedor(usuario.getId_usuario())
+                    .stream()
+                    .filter(i -> i.getEstadoCupo() == com.example.campolibre.Enum.EstadoCupo.PENDIENTE)
+                    .count();
+
+            // Total invertido en eventos (solo pagos confirmados)
+            Double totalInvertido = inscripcionService
+                    .obtenerTodasLasInscripcionesDeProveedor(usuario.getId_usuario())
+                    .stream()
+                    .filter(i -> i.getEstadoCupo() == com.example.campolibre.Enum.EstadoCupo.CONFIRMADO)
+                    .mapToDouble(com.example.campolibre.DTO.InscripcionProveedorDTO::getCostoPagado)
+                    .sum();
+
+            // ========== AGREGAR AL MODELO ==========
             model.addAttribute("usuario", usuario);
             model.addAttribute("misTiendas", misTiendas);
             model.addAttribute("misProductos", misProductos);
-            model.addAttribute("misEventos", misEventos);
-            model.addAttribute("eventosAprobados", eventosAprobados);
-            model.addAttribute("eventosPendientes", eventosPendientes);
             model.addAttribute("misPqrs", misPqrs);
+            model.addAttribute("gananciasTotales", gananciasTotales);
+            model.addAttribute("totalVentas", totalVentas);
+
+            // ✅ NUEVAS VARIABLES PARA INSCRIPCIONES
+            model.addAttribute("inscripcionesConfirmadas", inscripcionesConfirmadas);
+            model.addAttribute("inscripcionesPendientes", inscripcionesPendientes);
+            model.addAttribute("totalInvertido", totalInvertido);
+
         } catch (Exception e) {
-            model.addAttribute("error", "Error al cargar estadísticas");
+            model.addAttribute("error", "Error al cargar estadísticas: " + e.getMessage());
+            e.printStackTrace(); // Para debugging
         }
 
         return "dashboard/proveedor";

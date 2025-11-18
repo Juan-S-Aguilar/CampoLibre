@@ -18,6 +18,7 @@ import com.example.campolibre.Service.InscripcionProveedorService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -88,11 +89,11 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
             throw new CustomException("No puedes inscribirte a un evento que ya pasó.");
         }
 
-        // 4. Crear la inscripción PENDIENTE_PAGO
+        // 4. Crear la inscripción PENDIENTE
         InscripcionProveedor inscripcion = new InscripcionProveedor();
         inscripcion.setProveedor(proveedor);
         inscripcion.setEvento(evento);
-        inscripcion.setEstadoCupo(EstadoCupo.PENDIENTE_PAGO);
+        inscripcion.setEstadoCupo(EstadoCupo.PENDIENTE);
         inscripcion.setCostoPagado(evento.getCostoEspacio());
 
         InscripcionProveedor nuevaInscripcion = inscripcionRepository.save(inscripcion);
@@ -104,6 +105,7 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
     /**
      * Lógica que se llama desde el Webhook o pasarela de pago para confirmar la transacción.
      */
+    @Transactional
     @Override
     public InscripcionProveedorDTO confirmarPago(Long idInscripcion, Long idPagoEvento) {
         // 1. Buscar la inscripción
@@ -132,11 +134,28 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
         inscripcion.setFechaConfirmacion(LocalDateTime.now());
 
         // 5. Incrementar cupos ocupados del evento ✅ CRÍTICO
-        Evento evento = inscripcion.getEvento();
-        evento.setCuposOcupados(evento.getCuposOcupados() + 1);
-        eventoRepository.save(evento);
+        // A. OBTENER EL EVENTO CON BLOQUEO
+        Evento evento = eventoRepository.findByIdWithLock(inscripcion.getEvento().getId_evento())
+                .orElseThrow(() -> new CustomException("Evento no encontrado (al intentar bloquear)."));
 
+        // B. DOBLE VERIFICACIÓN (CRÍTICA DENTRO DE LA TRANSACCIÓN BLOQUEADA)
+        if (evento.getCuposOcupados() >= evento.getCuposMaximosProveedor()) {
+            // Liberar este cupo pendiente y lanzar excepción, ya que el cupo se agotó
+            // Mantenemos la inscripcion en PENDIENTE o la marcamos CANCELADA si el tiempo de espera expiró.
+            // Aquí simplificaremos con una excepción:
+            throw new CustomException("¡Lo sentimos! El cupo se agotó durante el procesamiento del pago.");
+        }
+
+        // C. INCREMENTAR Y GUARDAR
+        evento.setCuposOcupados(evento.getCuposOcupados() + 1);
+        eventoRepository.save(evento); // Se guarda bajo el bloqueo
+
+        // 6. Finalizar la Inscripción (se mantiene)
+        inscripcion.setEstadoCupo(EstadoCupo.CONFIRMADO);
+        inscripcion.setPagoEvento(pagoEvento);
+        inscripcion.setFechaConfirmacion(LocalDateTime.now());
         InscripcionProveedor confirmada = inscripcionRepository.save(inscripcion);
+
 
         // TODO: Enviar correo al proveedor confirmando el cupo asegurado
 
@@ -188,8 +207,18 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
     public boolean proveedorEstaInscrito(Long idProveedor, Long idEvento) {
         return inscripcionRepository.findByProveedorIdUsuarioAndEventoId(idProveedor, idEvento)
                 .map(i -> i.getEstadoCupo() == EstadoCupo.CONFIRMADO ||
-                        i.getEstadoCupo() == EstadoCupo.PENDIENTE_PAGO)
+                        i.getEstadoCupo() == EstadoCupo.PENDIENTE)
                 .orElse(false);
+    }
+
+    @Override
+    public InscripcionProveedorDTO obtenerInscripcionPorUsuarioYEvento(Long idProveedor, Long idEvento) {
+        // 1. Buscar la inscripción usando el método del Repositorio que ya existe.
+        // Retorna un Optional, que puede estar vacío.
+        return inscripcionRepository
+                .findByProveedorIdUsuarioAndEventoId(idProveedor, idEvento)
+                .map(this::mapearConDatosVisualizacion) // 2. Si existe (map), la mapeamos a DTO
+                .orElse(null); // 3. Si no existe, devolvemos NULL, tal como espera el Controlador.
     }
 
     // ✅ Método helper para mapeo completo (ya lo tenías bien)
@@ -198,14 +227,22 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
 
         // Datos del proveedor
         if (inscripcion.getProveedor() != null) {
+            dto.setId_proveedor(inscripcion.getProveedor().getId_usuario()); // ⬅️ AGREGADO
             dto.setNombreProveedor(inscripcion.getProveedor().getNombre());
         }
 
         // Datos del evento
         if (inscripcion.getEvento() != null) {
+            dto.setId_evento(inscripcion.getEvento().getId_evento()); // ⬅️ AGREGADO
             dto.setNombreEvento(inscripcion.getEvento().getNombre());
             dto.setFechaEvento(inscripcion.getEvento().getFecha_evento());
             dto.setUbicacionEvento(inscripcion.getEvento().getUbicacion());
+            dto.setImagenEvento(inscripcion.getEvento().getImagen_evento()); // ⬅️ OPCIONAL (útil para la vista)
+        }
+
+        // Datos del pago (si existe)
+        if (inscripcion.getPagoEvento() != null) {
+            dto.setId_pago_evento(inscripcion.getPagoEvento().getIdPagoEvento()); // ⬅️ AGREGADO
         }
 
         return dto;

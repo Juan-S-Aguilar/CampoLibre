@@ -183,10 +183,15 @@
 
                                     <!-- Cupos -->
                                     <td class="text-center">
-                                            <span class="badge"
-                                                  th:classappend="${evento.cuposDisponibles > 10} ? 'bg-success' : (${evento.cuposDisponibles > 0} ? 'bg-warning text-dark' : 'bg-danger')"
-                                                  th:text="${evento.cuposDisponibles} + '/' + ${evento.cuposMaximosProveedor}">
-                                            </span>
+                                        <span class="badge"
+                                                  th:classappend="${evento.cuposDisponibles > 10} ? 'bg-success' :
+                                                                  (${evento.cuposDisponibles > 0} ? 'bg-warning text-dark' : 'bg-danger')"
+                                                  th:text="${evento.cuposOcupados} + '/' + ${evento.cuposMaximosProveedor}">
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            <span th:text="${evento.cuposDisponibles}"></span> disponibles
+                                        </small>
                                     </td>
 
                                     <!-- Precio -->

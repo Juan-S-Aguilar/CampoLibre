@@ -45,4 +45,6 @@ public interface InscripcionProveedorRepository extends JpaRepository<Inscripcio
     @Query("SELECT i FROM InscripcionProveedor i WHERE i.proveedor.id_usuario = :idUsuario " +
             "AND i.estadoCupo = com.example.campolibre.Enum.EstadoCupo.CONFIRMADO")
     List<InscripcionProveedor> findEventosConfirmadosPorProveedor(@Param("idUsuario") Long idUsuario);
+
+
 }

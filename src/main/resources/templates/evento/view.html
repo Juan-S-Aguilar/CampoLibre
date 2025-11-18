@@ -4,13 +4,11 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 
 <head>
-
     <title th:text="${evento.nombre} + ' - Campo Libre'">Evento - Campo Libre</title>
-
 </head>
 <body>
 
-<mai th:fragment="content">
+<main th:fragment="content">
     <div class="container mt-4 mb-5">
 
         <!-- Mensajes de alerta -->
@@ -22,9 +20,8 @@
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-
         <div class="row">
-            <!-- Columna Principal: Información del Evento -->
+            <!-- ==================== COLUMNA PRINCIPAL (col-lg-8) ==================== -->
             <div class="col-lg-8">
                 <!-- Imagen Principal -->
                 <div class="card mb-4 shadow-sm">
@@ -115,7 +112,12 @@
                     </div>
                 </div>
 
-                <!-- Botones de Administrador -->
+            </div>
+            <!-- ==================== FIN COLUMNA PRINCIPAL ==================== -->
+
+            <!-- ==================== COLUMNA LATERAL (col-lg-4) ==================== -->
+            <div class="col-lg-4">
+                <!-- ==================== informacion para administrador==================== -->
                 <div sec:authorize="hasAuthority('ADMINISTRADOR')" class="card mb-4 shadow-sm">
                     <div class="card-header bg-warning">
                         <h5 class="mb-0">
@@ -123,52 +125,63 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="d-grid gap-2 d-md-flex">
+                        <div class="d-grid gap-2">
                             <a th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
                                class="btn btn-primary">
                                 <i class="bi bi-pencil"></i> Editar Evento
                             </a>
+
+                            <a th:if="${evento.estado == T(com.example.campolibre.Enum.EstadoEvento).BORRADOR}"
+                               th:href="@{/eventos/aprobar/{id}(id=${evento.id_evento})}"
+                               class="btn btn-success"
+                               onclick="return confirm('¿Publicar este evento? Se notificará a todos los proveedores registrados.')">
+                                <i class="bi bi-check-circle"></i> Publicar Evento
+                            </a>
+
                             <a th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
                                class="btn btn-danger"
                                onclick="return confirm('¿Estás seguro de cancelar este evento?')">
                                 <i class="bi bi-trash"></i> Cancelar Evento
                             </a>
+
+                            <hr>
+
+                            <a th:href="@{/eventos/pendientes}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver a Gestión
+                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Columna Lateral: Acciones e Información Clave -->
-            <div class="col-lg-4">
-                <!-- Card de Información para Proveedores -->
-                <div sec:authorize="hasAuthority('PROVEEDOR')" class="card shadow-sm mb-4">
+                <!-- ==================== informacion para proveedor ==================== -->
+                <div sec:authorize="hasAuthority('PROVEEDOR') and !hasAuthority('ADMINISTRADOR')" class="card shadow-sm mb-4">
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
                             <i class="bi bi-shop"></i> Información para Proveedores
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Cupos Disponibles -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Cupos Disponibles</span>
-                                <span class="badge fs-5"
-                                      th:classappend="${cuposDisponibles > 10} ? 'bg-success' : (${cuposDisponibles > 0} ? 'bg-warning' : 'bg-danger')"
-                                      th:text="${cuposDisponibles} + ' / ' + ${evento.cuposMaximosProveedor}">
-                                </span>
+                                <span class="badge"
+                                      th:classappend="${evento.cuposDisponibles > 10} ? 'bg-success' :
+                                        (${evento.cuposDisponibles > 0} ? 'bg-warning text-dark' : 'bg-danger')"
+                                      th:text="${evento.cuposDisponibles}"> </span>
                             </div>
                             <div class="progress mt-2" style="height: 8px;">
                                 <div class="progress-bar bg-success"
                                      role="progressbar"
-                                     th:style="'width: ' + ${(cuposDisponibles * 100.0) / evento.cuposMaximosProveedor} + '%'"
-                                     th:aria-valuenow="${cuposDisponibles}"
+                                     th:style="'width: ' + ${(evento.cuposDisponibles * 100.0) / evento.cuposMaximosProveedor} + '%'"
+                                     th:aria-valuenow="${evento.cuposDisponibles}"
                                      aria-valuemin="0"
                                      th:aria-valuemax="${evento.cuposMaximosProveedor}">
                                 </div>
                             </div>
+                            <small class="text-muted">
+                                <span th:text="${evento.cuposDisponibles}"></span> cupos libres
+                            </small>
                         </div>
 
-                        <!-- Costo del Espacio -->
                         <div class="mb-4">
                             <span class="text-muted d-block mb-1">Costo por Espacio</span>
                             <h2 class="text-success mb-0">
@@ -178,7 +191,6 @@
 
                         <hr>
 
-                        <!-- Botón de Inscripción -->
                         <div th:if="${!yaSeInscribio}">
                             <div th:if="${hayCupos}">
                                 <form th:action="@{/eventos/inscribir-proveedor/{id}(id=${evento.id_evento})}"
@@ -199,8 +211,20 @@
                             </div>
                         </div>
 
-                        <!-- Si ya está inscrito -->
                         <div th:if="${yaSeInscribio}">
+                            <div th:if="${isPagoPendiente}">
+                            <div class="alert alert-warning text-center">
+                                <i class="bi bi-clock-history fs-1"></i>
+                                <h5 class="mt-2">Pago Pendiente</h5>
+                                <p class="mb-0 small">Tu cupo está reservado, pero debes completar el pago.</p>
+                            </div>
+                            <a th:href="@{/pagos-eventos/checkout/{id}(id=${inscripcionPendienteId})}"
+                               class="btn btn-warning w-100">
+                                <i class="bi bi-cash-coin"></i> Completar Pago
+                            </a>
+                            </div>
+
+                            <div th:if="${yaSeInscribio == true and isPagoPendiente != true}">
                             <div class="alert alert-success text-center">
                                 <i class="bi bi-check-circle-fill fs-1"></i>
                                 <h5 class="mt-2">¡Ya estás inscrito!</h5>
@@ -209,12 +233,12 @@
                             <a th:href="@{/eventos/mis-inscripciones}" class="btn btn-outline-success w-100">
                                 <i class="bi bi-calendar-check"></i> Ver Mis Inscripciones
                             </a>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Card para Consumidores -->
-                <div sec:authorize="hasAuthority('CONSUMIDOR')" class="card shadow-sm mb-4">
+                <!-- ==================== informacion consumidor==================== -->
+                <div sec:authorize="hasAuthority('CONSUMIDOR') and !hasAuthority('ADMINISTRADOR')" class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
                             <i class="bi bi-heart"></i> Guardar Evento
@@ -248,82 +272,11 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Card de Información General (visible para todos) -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">
-                            <i class="bi bi-info-circle"></i> Información del Evento
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="mb-2">
-                                <i class="bi bi-building text-warning"></i>
-                                <strong>Patrocinador:</strong>
-                                <span th:text="${evento.nombrePatrocinador}"></span>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-tag text-success"></i>
-                                <strong>Tipo:</strong>
-                                <span th:text="${evento.tipo_evento}"></span>
-                            </li>
-                            <li class="mb-2">
-                                <i class="bi bi-globe text-info"></i>
-                                <strong>Ciudad:</strong>
-                                <span th:text="${evento.ciudad}"></span>
-                            </li>
-                            <li class="mb-2" sec:authorize="hasAuthority('PROVEEDOR')">
-                                <i class="bi bi-people text-primary"></i>
-                                <strong>Total Cupos:</strong>
-                                <span th:text="${evento.cuposMaximosProveedor}"></span>
-                            </li>
-                            <li sec:authorize="hasAuthority('ADMINISTRADOR')">
-                                <i class="bi bi-shield-check text-success"></i>
-                                <strong>Estado:</strong>
-                                <span class="badge"
-                                      th:classappend="${evento.estado == T(com.example.campolibre.Enum.EstadoEvento).PUBLICADO} ? 'bg-success' : 'bg-warning'"
-                                      th:text="${evento.estado}">
-                                </span>
-                            </li>
-                        </ul>
-
-                        <hr>
-
-                        <!-- Compartir en Redes Sociales (opcional) -->
-                        <div class="text-center">
-                            <small class="text-muted d-block mb-2">Compartir este evento</small>
-                            <div class="btn-group" role="group">
-                                <a th:href="'https://www.facebook.com/sharer/sharer.php?u=' + ${#request.requestURL}"
-                                   target="_blank"
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-facebook"></i>
-                                </a>
-                                <a th:href="'https://twitter.com/intent/tweet?url=' + ${#request.requestURL} + '&text=' + ${evento.nombre}"
-                                   target="_blank"
-                                   class="btn btn-sm btn-outline-info">
-                                    <i class="bi bi-twitter"></i>
-                                </a>
-                                <a th:href="'https://wa.me/?text=' + ${evento.nombre} + ' ' + ${#request.requestURL}"
-                                   target="_blank"
-                                   class="btn btn-sm btn-outline-success">
-                                    <i class="bi bi-whatsapp"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </div>
-
-        <!-- Botón de regresar -->
-        <div class="mt-4">
-            <a th:href="@{/eventos}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Volver a Eventos
-            </a>
+            <!-- ==================== FIN COLUMNA LATERAL ==================== -->
         </div>
     </div>
-</mai>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

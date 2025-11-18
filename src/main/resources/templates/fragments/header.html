@@ -80,11 +80,33 @@
                                 <i class="bi bi-shop"></i> Tiendas
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/eventos/pendientes}">
-                                <i class="bi bi-clock-history"></i> Eventos Pendientes
+
+                        <!-- ✅ NUEVO: Dropdown de Eventos con Patrocinadores -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="eventosDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-calendar-event"></i> Eventos
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="eventosDropdown">
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/eventos}">
+                                        <i class="bi bi-calendar-check"></i> Ver todos los eventos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/eventos/pendientes}">
+                                        <i class="bi bi-clock-history"></i> Eventos pendientes
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/admin/patrocinadores}">
+                                        <i class="bi bi-building"></i> Gestionar patrocinadores
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link" th:href="@{/pqrs/pendientes}">
                                 <i class="bi bi-chat-square-dots"></i> PQRS Pendientes
@@ -104,16 +126,27 @@
                                 <i class="bi bi-shop"></i> Mis Tiendas
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/eventos/mis-eventos}">
-                                <i class="bi bi-calendar-check"></i> Mis Eventos
+
+                        <!-- ✅ Proveedores también ven dropdown pero SIN patrocinadores -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="eventosProveedorDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-calendar-event"></i> Eventos
                             </a>
+                            <ul class="dropdown-menu" aria-labelledby="eventosProveedorDropdown">
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/eventos}">
+                                        <i class="bi bi-calendar-check"></i> Ver eventos disponibles
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" th:href="@{/eventos/mis-inscripciones}">
+                                        <i class="bi bi-bookmark-check"></i> Mis inscripciones
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" th:href="@{/eventos/crear}">
-                                <i class="bi bi-calendar-plus"></i> Crear Evento
-                            </a>
-                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link" th:href="@{/pqrs}">
                                 <i class="bi bi-chat-square-dots"></i> Mis PQRS
@@ -194,18 +227,6 @@
                                     <i class="bi bi-bag-check"></i> Mis Pedidos
                                 </a>
                             </li>
-
-
-                            <!-- Mis Ventas (solo proveedores)
-                            <li sec:authorize="hasAuthority('PROVEEDOR')">
-                                <a class="dropdown-item position-relative" th:href="@{/pedidos/ventas}">
-                                    <i class="bi bi-graph-up"></i> Mis Ventas
-                                    <span th:if="${pedidosPendientes != null and pedidosPendientes > 0}"
-                                          class="badge bg-warning rounded-pill position-absolute"
-                                          style="top: 8px; right: 15px; font-size: 0.7rem;"
-                                          th:text="${pedidosPendientes}">0</span>
-                                </a>
-                            </li> -->
 
                             <li><hr class="dropdown-divider"></li>
 

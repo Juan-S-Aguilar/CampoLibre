@@ -10,6 +10,7 @@ import com.example.campolibre.Enum.EstadoPago;
 import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Repository.InscripcionProveedorRepository;
 import com.example.campolibre.Repository.PagoEventoRepository;
+import com.example.campolibre.Service.InscripcionProveedorService;
 import com.example.campolibre.Service.PagoEventoService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,19 +30,22 @@ public class PagoEventoImplement implements PagoEventoService {
     private final InscripcionProveedorRepository inscripcionProveedorRepository;
     private final ModelMapper modelMapper;
     private  final EmailService emailService;
+    private  final InscripcionProveedorService inscripcionProveedorService;
     // Si tienes EmailService, inyéctalo para notificaciones
 
     @Autowired
     public PagoEventoImplement(PagoEventoRepository pagoEventoRepository,
                                InscripcionProveedorRepository inscripcionProveedorRepository,
                                ModelMapper modelMapper,
-                               EmailService emailService
+                               EmailService emailService, InscripcionProveedorService inscripcionProveedorService
+
                                ) {
         this.pagoEventoRepository = pagoEventoRepository;
         this.inscripcionProveedorRepository = inscripcionProveedorRepository;
         this.modelMapper = modelMapper;
 
         this.emailService = emailService;
+        this.inscripcionProveedorService = inscripcionProveedorService;
     }
 
     /**
@@ -55,8 +59,8 @@ public class PagoEventoImplement implements PagoEventoService {
         InscripcionProveedor inscripcion = inscripcionProveedorRepository.findById(pagoCreacionDTO.getIdInscripcion())
                 .orElseThrow(() -> new CustomException("Inscripción no encontrada."));
 
-        // 2. Validar que la inscripción esté en estado PENDIENTE_PAGO
-        if (inscripcion.getEstadoCupo() != EstadoCupo.PENDIENTE_PAGO) {
+        // 2. Validar que la inscripción esté en estado PENDIENTE
+        if (inscripcion.getEstadoCupo() != EstadoCupo.PENDIENTE) {
             throw new CustomException("La inscripción no está en estado pendiente de pago. Estado actual: "
                     + inscripcion.getEstadoCupo());
         }
@@ -130,26 +134,33 @@ public class PagoEventoImplement implements PagoEventoService {
         PagoEvento pagoEvento = pagoEventoRepository.findById(idPagoEvento)
                 .orElseThrow(() -> new CustomException("Pago no encontrado."));
 
-        // Marcar pago como exitoso
-        pagoEvento.marcarExitoso();
-        PagoEvento pagoActualizado = pagoEventoRepository.save(pagoEvento);
+        // 1. Validar y Marcar pago como exitoso (Responsabilidad de PagoEventoImplement)
+        if (pagoEvento.getEstado() != EstadoPago.EXITOSO) { // Previene re-procesar si ya es exitoso
+            pagoEvento.marcarExitoso();
+            pagoEventoRepository.save(pagoEvento);
+        }
 
-        // Actualizar inscripción a CONFIRMADO
+        // 2. Delegar la confirmación del cupo al servicio especializado (InscripcionProveedorService)
+        // El servicio delegado manejará:
+        // a) El cambio de estado de la Inscripción a CONFIRMADO.
+        // b) El incremento seguro del contador cuposOcupados (con @Transactional y Lock).
         InscripcionProveedor inscripcion = pagoEvento.getInscripcionProveedor();
-        inscripcion.setEstadoCupo(EstadoCupo.CONFIRMADO);
-        inscripcion.setPagoEvento(pagoEvento);
 
-        // Incrementar cupos ocupados del evento
-        inscripcion.getEvento().setCuposOcupados(
-                inscripcion.getEvento().getCuposOcupados() + 1
+        // ✅ CORRECCIÓN 1: Llama al método que existe en la interfaz.
+        // Este método ya es seguro y transaccional.
+        inscripcionProveedorService.confirmarPago(
+                inscripcion.getId_inscripcion(),
+                pagoEvento.getIdPagoEvento()
         );
 
-        inscripcionProveedorRepository.save(inscripcion);
+        // 3. Notificación (puede usar los datos del pago y la inscripción para el email)
+        // No es necesario llamar inscripcionProveedorRepository.save(inscripcion) aquí,
+        // ya que el servicio delegado se encarga de guardar el estado CONFIRMADO.
 
         System.out.println("[PagoEventoImplement] Pago exitoso: " + pagoEvento.getNumeroTransaccion()
-                + " - Cupo confirmado para proveedor: " + inscripcion.getProveedor().getNombre());
+                + " - Cupo delegado para confirmación. Proveedor: " + inscripcion.getProveedor().getNombre());
 
-        // ✅ ENVIAR EMAIL DE CONFIRMACIÓN
+        // 4. Enviar email de confirmación (uso de los datos del objeto pago/inscripcion)
         try {
             emailService.enviarConfirmacionPago(
                     inscripcion.getProveedor().getEmail(),
@@ -161,10 +172,10 @@ public class PagoEventoImplement implements PagoEventoService {
             );
         } catch (Exception e) {
             System.err.println("[PagoEventoImplement] Error al enviar email de confirmación: " + e.getMessage());
-            // No fallar la operación si el email falla
         }
 
-        return convertirADTO(pagoActualizado);
+        // Retorna el DTO del pago actualizado
+        return convertirADTO(pagoEvento);
     }
 
     /**

@@ -39,4 +39,7 @@ public interface InscripcionProveedorService {
 
     // Verificar si proveedor ya está inscrito
     boolean proveedorEstaInscrito(Long idProveedor, Long idEvento);
+
+    // Permite obtener el objeto completo para verificar estado (PENDIENTE, CONFIRMADO)
+    InscripcionProveedorDTO obtenerInscripcionPorUsuarioYEvento(Long idProveedor, Long idEvento);
 }

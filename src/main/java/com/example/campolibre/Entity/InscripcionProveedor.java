@@ -26,7 +26,7 @@ public class InscripcionProveedor {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_cupo", nullable = false)
-    private EstadoCupo estadoCupo;
+    private EstadoCupo estadoCupo = EstadoCupo.PENDIENTE;
 
     @Column(name = "costo_pagado", nullable = false)
     private Double costoPagado;
@@ -40,6 +40,9 @@ public class InscripcionProveedor {
 
     @Column(name = "codigo_confirmacion", unique = true, length = 20)
     private String codigoConfirmacion;
+
+    @Column(name = "fecha_confirmacion")
+    private LocalDateTime fechaConfirmacion;
 
     @PrePersist
     protected void onCreate() {
@@ -55,7 +58,25 @@ public class InscripcionProveedor {
             this.codigoConfirmacion = String.format("EVT-%s-%s", yearMonth, uuid);
         }
     }
-   @Column(name = "fecha_confirmacion")
-   private LocalDateTime fechaConfirmacion;
 
+    // ✅ MÉTODO HELPER PARA CONFIRMAR LA INSCRIPCIÓN (recomendado)
+    public void confirmarInscripcion() {
+        this.estadoCupo = EstadoCupo.CONFIRMADO;
+        this.fechaConfirmacion = LocalDateTime.now();
+    }
+
+    // ✅ MÉTODO HELPER PARA CANCELAR LA INSCRIPCIÓN (recomendado)
+    public void cancelarInscripcion() {
+        this.estadoCupo = EstadoCupo.CANCELADO;
+    }
+
+    // ✅ MÉTODO HELPER PARA VERIFICAR SI ESTÁ CONFIRMADA (recomendado)
+    public boolean estaConfirmada() {
+        return this.estadoCupo == EstadoCupo.CONFIRMADO;
+    }
+
+    // ✅ MÉTODO HELPER PARA VERIFICAR SI ESTÁ PENDIENTE (recomendado)
+    public boolean estaPendiente() {
+        return this.estadoCupo == EstadoCupo.PENDIENTE;
+    }
 }

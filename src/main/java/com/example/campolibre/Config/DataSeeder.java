@@ -525,7 +525,7 @@ public class DataSeeder implements CommandLineRunner {
             inscripcionesCreadas += crearInscripcionConPago(
                     proveedores.get(3),
                     evento1,
-                    EstadoCupo.PENDIENTE_PAGO,
+                    EstadoCupo.PENDIENTE,
                     EstadoPago.PENDIENTE,
                     MetodoPago.PSE,
                     null
@@ -625,7 +625,7 @@ public class DataSeeder implements CommandLineRunner {
             inscripcionesCreadas += crearInscripcionConPago(
                     proveedores.get(3),
                     evento5,
-                    EstadoCupo.PENDIENTE_PAGO,
+                    EstadoCupo.PENDIENTE,
                     EstadoPago.PENDIENTE,
                     MetodoPago.PSE,
                     null

@@ -16,14 +16,14 @@
                     <i class="bi bi-shop"></i>
                     Bienvenido, <span th:text="${usuario.nombre}">Proveedor</span>
                 </h1>
-                <p>Gestiona tus tiendas, productos y eventos desde un solo lugar</p>
+                <p>Gestiona tus tiendas, productos e inscripciones a eventos desde un solo lugar</p>
             </div>
             <div class="quick-actions">
                 <a th:href="@{/tiendas/nueva}" class="btn">
                     <i class="bi bi-plus-circle"></i> Nueva Tienda
                 </a>
-                <a th:href="@{/eventos/crear}" class="btn">
-                    <i class="bi bi-calendar-plus"></i> Crear Evento
+                <a th:href="@{/eventos}" class="btn">
+                    <i class="bi bi-search"></i> Buscar Eventos
                 </a>
                 <a th:href="@{/pqrs/crear}" class="btn">
                     <i class="bi bi-chat-dots"></i> Nueva PQRS
@@ -32,22 +32,22 @@
         </div>
     </div>
 
-    <!-- Alertas importantes -->
-    <div th:if="${eventosPendientes > 0}" class="dashboard-alert warning">
-        <i class="bi bi-clock-history"></i>
+    <!-- ✅ NUEVO: Alertas de Inscripciones -->
+    <div th:if="${inscripcionesPendientes != null && inscripcionesPendientes > 0}" class="dashboard-alert warning">
+        <i class="bi bi-exclamation-triangle"></i>
         <div>
-            <strong>Eventos Pendientes:</strong>
-            Tienes <span th:text="${eventosPendientes}">0</span> evento(s) esperando aprobación del administrador.
-            <a th:href="@{/eventos/mis-eventos}">Ver mis eventos</a>
+            <strong>Inscripciones Pendientes de Pago:</strong>
+            Tienes <span th:text="${inscripcionesPendientes}">0</span> inscripción(es) sin completar el pago.
+            <a th:href="@{/eventos/mis-inscripciones}">Completar pago ahora</a>
         </div>
     </div>
 
-    <div th:if="${eventosAprobados > 0}" class="dashboard-alert info">
+    <div th:if="${inscripcionesConfirmadas != null && inscripcionesConfirmadas > 0}" class="dashboard-alert info">
         <i class="bi bi-check-circle"></i>
         <div>
-            <strong>¡Felicitaciones!</strong>
-            Tienes <span th:text="${eventosAprobados}">0</span> evento(s) aprobado(s) y publicado(s).
-            <a th:href="@{/eventos/mis-eventos}">Ver eventos</a>
+            <strong>¡Eventos Confirmados!</strong>
+            Tienes <span th:text="${inscripcionesConfirmadas}">0</span> evento(s) con cupo confirmado.
+            <a th:href="@{/eventos/mis-inscripciones}">Ver mis inscripciones</a>
         </div>
     </div>
 
@@ -62,7 +62,7 @@
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-number" th:text="${misTiendas}">0</div>
+                <div class="stat-number" th:text="${misTiendas != null ? misTiendas : 0}">0</div>
                 <div class="stat-label">Tiendas registradas</div>
             </div>
             <div class="stat-card-footer">
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-number" th:text="${misProductos}">0</div>
+                <div class="stat-number" th:text="${misProductos != null ? misProductos : 0}">0</div>
                 <div class="stat-label">Productos publicados</div>
             </div>
             <div class="stat-card-footer">
@@ -91,50 +91,57 @@
             </div>
         </div>
 
-        <!-- Mis Eventos -->
-        <div class="stat-card" onclick="window.location.href='/eventos/mis-eventos'">
+        <!-- ✅ ACTUALIZADO: Inscripciones Confirmadas -->
+        <div class="stat-card" onclick="window.location.href='/eventos/mis-inscripciones'">
             <div class="stat-card-header">
-                <h3>Mis Eventos</h3>
-                <div class="stat-card-icon info">
-                    <i class="bi bi-calendar-event"></i>
-                </div>
-            </div>
-            <div class="stat-card-body">
-                <div class="stat-number" th:text="${misEventos}">0</div>
-                <div class="stat-label">Eventos creados</div>
-            </div>
-            <div class="stat-card-footer">
-                <a th:href="@{/eventos/mis-eventos}">
-                    <i class="bi bi-arrow-right"></i> Gestionar eventos
-                </a>
-            </div>
-        </div>
-
-        <!-- Eventos Aprobados -->
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Eventos Aprobados</h3>
+                <h3>Eventos Confirmados</h3>
                 <div class="stat-card-icon success">
                     <i class="bi bi-calendar-check"></i>
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-number" th:text="${eventosAprobados}">0</div>
-                <div class="stat-label">Publicados</div>
+                <div class="stat-number" th:text="${inscripcionesConfirmadas != null ? inscripcionesConfirmadas : 0}">0</div>
+                <div class="stat-label">Cupos asegurados</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/eventos/mis-inscripciones}">
+                    <i class="bi bi-arrow-right"></i> Ver mis inscripciones
+                </a>
             </div>
         </div>
 
-        <!-- Eventos Pendientes -->
-        <div class="stat-card">
+        <!-- ✅ NUEVO: Inscripciones Pendientes -->
+        <div class="stat-card" onclick="window.location.href='/eventos/mis-inscripciones'">
             <div class="stat-card-header">
-                <h3>Eventos Pendientes</h3>
+                <h3>Pagos Pendientes</h3>
                 <div class="stat-card-icon warning">
-                    <i class="bi bi-clock-history"></i>
+                    <i class="bi bi-hourglass-split"></i>
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-number" th:text="${eventosPendientes}">0</div>
-                <div class="stat-label">En revisión</div>
+                <div class="stat-number" th:text="${inscripcionesPendientes != null ? inscripcionesPendientes : 0}">0</div>
+                <div class="stat-label">Sin completar pago</div>
+            </div>
+            <div class="stat-card-footer">
+                <a th:href="@{/eventos/mis-inscripciones}">
+                    <i class="bi bi-arrow-right"></i> Completar pagos
+                </a>
+            </div>
+        </div>
+
+        <!-- ✅ NUEVO: Total Invertido en Eventos -->
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <h3>Total Invertido</h3>
+                <div class="stat-card-icon info">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+            </div>
+            <div class="stat-card-body">
+                <div class="stat-number" style="font-size: 1.5rem;">
+                    $<span th:text="${totalInvertido != null ? #numbers.formatDecimal(totalInvertido, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                </div>
+                <div class="stat-label">En eventos</div>
             </div>
         </div>
 
@@ -147,7 +154,7 @@
                 </div>
             </div>
             <div class="stat-card-body">
-                <div class="stat-number" th:text="${misPqrs}">0</div>
+                <div class="stat-number" th:text="${misPqrs != null ? misPqrs : 0}">0</div>
                 <div class="stat-label">PQRS enviadas</div>
             </div>
             <div class="stat-card-footer">
@@ -170,7 +177,7 @@
                 </h2>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <!-- Card de acción -->
+                <!-- Card de acción: Tiendas -->
                 <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-primary); text-align: center;">
                     <i class="bi bi-shop" style="font-size: 2.5rem; color: var(--color-primary);"></i>
                     <h4 style="margin: 1rem 0 0.5rem; color: var(--color-primary);">Tiendas</h4>
@@ -182,7 +189,7 @@
                     </a>
                 </div>
 
-                <!-- Card de acción -->
+                <!-- Card de acción: Productos -->
                 <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-success); text-align: center;">
                     <i class="bi bi-basket" style="font-size: 2.5rem; color: var(--color-success);"></i>
                     <h4 style="margin: 1rem 0 0.5rem; color: var(--color-success);">Productos</h4>
@@ -191,19 +198,19 @@
                     </a>
                 </div>
 
-                <!-- Card de acción -->
+                <!-- ✅ ACTUALIZADO: Card de acción: Eventos -->
                 <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-info); text-align: center;">
                     <i class="bi bi-calendar-event" style="font-size: 2.5rem; color: var(--color-info);"></i>
                     <h4 style="margin: 1rem 0 0.5rem; color: var(--color-info);">Eventos</h4>
-                    <a th:href="@{/eventos/crear}" class="btn btn-info" style="width: 100%; margin-top: 0.5rem;">
-                        <i class="bi bi-plus"></i> Crear Evento
+                    <a th:href="@{/eventos}" class="btn btn-info" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-search"></i> Buscar Eventos
                     </a>
-                    <a th:href="@{/eventos/mis-eventos}" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
-                        <i class="bi bi-list"></i> Mis Eventos
+                    <a th:href="@{/inscripciones/mis-inscripciones}" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="bi bi-calendar-check"></i> Mis Inscripciones
                     </a>
                 </div>
 
-                <!-- Card de acción -->
+                <!-- Card de acción: PQRS -->
                 <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--color-warning); text-align: center;">
                     <i class="bi bi-chat-square-dots" style="font-size: 2.5rem; color: var(--color-warning);"></i>
                     <h4 style="margin: 1rem 0 0.5rem; color: var(--color-warning);">PQRS</h4>
@@ -217,7 +224,7 @@
             </div>
         </div>
 
-        <!-- Guía Rápida -->
+        <!-- ✅ ACTUALIZADO: Guía Rápida -->
         <div class="dashboard-section">
             <div class="dashboard-section-header">
                 <h2>
@@ -249,10 +256,10 @@
                 <li class="list-item">
                     <div class="list-item-content">
                         <div class="list-item-title">
-                            <i class="bi bi-3-circle" style="color: var(--color-primary);"></i> Crea eventos
+                            <i class="bi bi-3-circle" style="color: var(--color-primary);"></i> Inscríbete en eventos
                         </div>
                         <div class="list-item-description">
-                            Solicita eventos que serán revisados por un administrador
+                            Busca ferias y eventos para exhibir tus productos pagando por un espacio
                         </div>
                     </div>
                 </li>
@@ -268,14 +275,14 @@
                 </li>
             </ul>
 
-            <!-- Información adicional -->
+            <!-- ✅ ACTUALIZADO: Información adicional -->
             <div style="margin-top: 1.5rem; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
                 <h4 style="color: var(--color-primary); margin-bottom: 0.5rem; font-size: 1rem;">
                     <i class="bi bi-lightbulb"></i> Consejo
                 </h4>
                 <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
-                    Agrega fotos de buena calidad a tus productos y tiendas para atraer más clientes.
-                    Recuerda mantener actualizado el stock de tus productos.
+                    Inscríbete temprano a los eventos para asegurar tu espacio. Los cupos son limitados y se agotan rápido.
+                    Revisa regularmente la sección de eventos para no perderte nuevas oportunidades.
                 </p>
             </div>
         </div>
@@ -291,7 +298,7 @@
         </div>
 
         <!-- Estado vacío si no tiene tiendas -->
-        <div th:if="${misTiendas == 0}" class="empty-state">
+        <div th:if="${misTiendas == null || misTiendas == 0}" class="empty-state">
             <i class="bi bi-shop"></i>
             <h3>¡Aún no tienes tiendas!</h3>
             <p>Crea tu primera tienda y comienza a vender tus productos del campo</p>
@@ -301,7 +308,7 @@
         </div>
 
         <!-- Si tiene tiendas, mostrar resumen -->
-        <div th:if="${misTiendas > 0}" class="row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+        <div th:if="${misTiendas != null && misTiendas > 0}" class="row" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem;">
             <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
                 <i class="bi bi-shop" style="font-size: 2.5rem; color: var(--color-primary);"></i>
                 <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-primary); margin: 0.75rem 0;">
@@ -313,23 +320,33 @@
             <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
                 <i class="bi bi-basket" style="font-size: 2.5rem; color: var(--color-success);"></i>
                 <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-success); margin: 0.75rem 0;">
-                    <span th:text="${misProductos}">0</span>
+                    <span th:text="${misProductos != null ? misProductos : 0}">0</span>
                 </p>
                 <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Productos</p>
             </div>
 
+            <!-- ✅ ACTUALIZADO -->
             <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
                 <i class="bi bi-calendar-check" style="font-size: 2.5rem; color: var(--color-info);"></i>
                 <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-info); margin: 0.75rem 0;">
-                    <span th:text="${eventosAprobados}">0</span>
+                    <span th:text="${inscripcionesConfirmadas != null ? inscripcionesConfirmadas : 0}">0</span>
                 </p>
-                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Eventos Publicados</p>
+                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Eventos Confirmados</p>
+            </div>
+
+            <!-- ✅ NUEVO -->
+            <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
+                <i class="bi bi-cash-coin" style="font-size: 2.5rem; color: var(--color-success);"></i>
+                <p style="font-size: 1.25rem; font-weight: 700; color: var(--color-success); margin: 0.75rem 0;">
+                    $<span th:text="${totalInvertido != null ? #numbers.formatDecimal(totalInvertido, 0, 'COMMA', 0, 'POINT') : '0'}">0</span>
+                </p>
+                <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">Invertido</p>
             </div>
 
             <div style="text-align: center; padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px;">
                 <i class="bi bi-chat-square-dots" style="font-size: 2.5rem; color: var(--color-warning);"></i>
                 <p style="font-size: 1.75rem; font-weight: 700; color: var(--color-warning); margin: 0.75rem 0;">
-                    <span th:text="${misPqrs}">0</span>
+                    <span th:text="${misPqrs != null ? misPqrs : 0}">0</span>
                 </p>
                 <p style="margin: 0; color: var(--color-text-light); font-size: 0.9rem;">PQRS Enviadas</p>
             </div>

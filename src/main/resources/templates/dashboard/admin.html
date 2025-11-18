@@ -22,8 +22,8 @@
                 <a th:href="@{/usuarios/nuevo}" class="btn">
                     <i class="bi bi-person-plus"></i> Nuevo Usuario
                 </a>
-                <a th:href="@{/eventos/pendientes}" class="btn">
-                    <i class="bi bi-clock-history"></i> Eventos Pendientes
+                <a th:href="@{/eventos}" class="btn">
+                    <i class="bi bi-calendar-event"></i> Ver Eventos
                 </a>
                 <a th:href="@{/pqrs/pendientes}" class="btn">
                     <i class="bi bi-chat-square-dots"></i> PQRS Pendientes
@@ -110,12 +110,12 @@
             </div>
         </div>
 
-        <!-- Eventos Aprobados -->
+        <!-- ✅ CAMBIADO: Eventos Aprobados → Eventos -->
         <div class="stat-card" onclick="window.location.href='/eventos'">
             <div class="stat-card-header">
-                <h3>Eventos Aprobados</h3>
+                <h3>Eventos</h3>
                 <div class="stat-card-icon success">
-                    <i class="bi bi-calendar-check"></i>
+                    <i class="bi bi-calendar-event"></i>
                 </div>
             </div>
             <div class="stat-card-body">
@@ -129,7 +129,7 @@
             </div>
         </div>
 
-        <!-- Eventos Pendientes -->
+        <!-- ✅ MANTENIDO: Eventos Pendientes (acceso rápido) -->
         <div class="stat-card" onclick="window.location.href='/eventos/pendientes'">
             <div class="stat-card-header">
                 <h3>Eventos Pendientes</h3>
@@ -249,14 +249,17 @@
                 <a th:href="@{/usuarios/nuevo}" class="btn btn-primary" style="width: 100%;">
                     <i class="bi bi-person-plus"></i> Crear Usuario
                 </a>
+                <a th:href="@{/eventos/crear}" class="btn btn-success" style="width: 100%;">
+                    <i class="bi bi-calendar-plus"></i> Crear Evento
+                </a>
+                <a th:href="@{/patrocinadores/nuevo}" class="btn btn-info" style="width: 100%;">
+                    <i class="bi bi-building"></i> Nuevo Patrocinador
+                </a>
                 <a th:href="@{/eventos/pendientes}" class="btn btn-warning" style="width: 100%;">
                     <i class="bi bi-calendar-check"></i> Aprobar Eventos
                 </a>
-                <a th:href="@{/pqrs/pendientes}" class="btn btn-info" style="width: 100%;">
+                <a th:href="@{/pqrs/pendientes}" class="btn btn-secondary" style="width: 100%;">
                     <i class="bi bi-chat-square-dots"></i> Responder PQRS
-                </a>
-                <a th:href="@{/usuarios}" class="btn btn-secondary" style="width: 100%;">
-                    <i class="bi bi-people"></i> Gestionar Usuarios
                 </a>
             </div>
 

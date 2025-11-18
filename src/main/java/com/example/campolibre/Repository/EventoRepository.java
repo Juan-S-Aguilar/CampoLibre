@@ -9,6 +9,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+
+
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 @Repository
 public interface EventoRepository extends JpaRepository<Evento, Long> {
@@ -38,6 +43,12 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     @Query("SELECT e FROM Evento e WHERE e.estado = :estado " +
             "AND e.cuposOcupados < e.cuposMaximosProveedor")
     List<Evento> findEventosConCuposDisponibles(@Param("estado") EstadoEvento estado);
+
+
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM Evento e WHERE e.id_evento = :id")
+    Optional<Evento> findByIdWithLock(@Param("id") Long id);
 
 
 }

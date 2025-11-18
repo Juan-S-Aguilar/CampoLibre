@@ -233,45 +233,59 @@ public class EventoController {
     // DETALLE DE EVENTO
     @GetMapping("/ver/{id}")
     public String verEvento(@PathVariable Long id, Model model, Authentication authentication) {
+        // 1. Obtener información del evento
         EventoDTO evento = eventoService.obtenerEventoPorId(id);
 
-        // 1. CÁLCULO CONSISTENTE: Calcular cupos disponibles
-        int cuposOcupados = evento.getCuposOcupados() != null ? evento.getCuposOcupados() : 0;
-        int cuposMaximos = evento.getCuposMaximosProveedor() != null ? evento.getCuposMaximosProveedor() : 0;
+        // El DTO ya tiene cuposDisponibles calculado
+        boolean hayCupos = evento.getCuposDisponibles() != null && evento.getCuposDisponibles() > 0;
 
-        // Aseguramos que el resultado no sea negativo
-        int cuposDisponibles = Math.max(0, cuposMaximos - cuposOcupados);
-
-        // 2. Usar el cálculo para la variable booleana
-        boolean hayCupos = cuposDisponibles > 0; // Se basa en el CÁLCULO 1, eliminando la llamada al servicio redundante
-
-        // Si necesitas que el DTO tenga el valor de cupos disponibles, puedes setearlo:
-        evento.setCuposDisponibles(cuposDisponibles);
-
+        // 2. INICIALIZAR VARIABLES (Esto evita el error de NULL en la vista)
         boolean yaGuardoEvento = false;
         boolean yaSeInscribio = false;
+        boolean isPagoPendiente = false;       // <--- Nueva variable crítica
+        Long idInscripcionPendiente = null;    // <--- Nueva variable para el link de pago
 
+        // 3. Lógica si el usuario está logueado
         if (authentication != null && !authentication.getName().equals("anonymousUser")) {
             String email = authentication.getName();
             UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-            // Lógica de Consumidor
+            // --- Lógica CONSUMIDOR ---
             if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("CONSUMIDOR"))) {
                 yaGuardoEvento = misEventosService.usuarioTieneEventoGuardado(usuario.getId_usuario(), id);
             }
 
-            // Lógica de Proveedor
+            // --- Lógica PROVEEDOR ---
             if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
-                yaSeInscribio = inscripcionProveedorService.proveedorEstaInscrito(usuario.getId_usuario(), id);
+
+                // Intentamos obtener la inscripción específica de este usuario en este evento
+                // NOTA: Asegúrate de tener este método en tu servicio, o uno similar que devuelva el objeto InscripcionDTO
+                // Si no tienes este método exacto, úsalo como guía de lo que necesitas recuperar.
+                InscripcionProveedorDTO inscripcion = inscripcionProveedorService
+                        .obtenerInscripcionPorUsuarioYEvento(usuario.getId_usuario(), id);
+
+                if (inscripcion != null) {
+                    yaSeInscribio = true;
+
+                    // Verificamos si el estado es PENDIENTE
+                    if (inscripcion.getEstadoCupo() == com.example.campolibre.Enum.EstadoCupo.PENDIENTE) {
+                        isPagoPendiente = true;
+                        idInscripcionPendiente = inscripcion.getId_inscripcion();
+                    }
+                }
             }
         }
 
-        // 3. AGREGAR AL MODEL: Ambos son necesarios para la vista view.html
+        // 4. Enviar TODO al modelo (Blindaje contra nulos)
         model.addAttribute("evento", evento);
-        model.addAttribute("cuposDisponibles", cuposDisponibles); // ⬅️ ¡CRUCIAL! La vista lo necesita
+        model.addAttribute("hayCupos", hayCupos);
+
         model.addAttribute("yaGuardoEvento", yaGuardoEvento);
         model.addAttribute("yaSeInscribio", yaSeInscribio);
-        model.addAttribute("hayCupos", hayCupos);
+
+        // ESTAS DOS LÍNEAS ARREGLAN TU ERROR EN PANTALLA BLANCA:
+        model.addAttribute("isPagoPendiente", isPagoPendiente);
+        model.addAttribute("idInscripcionPendiente", idInscripcionPendiente);
 
         return "evento/view";
     }
@@ -349,7 +363,7 @@ public class EventoController {
             String email = authentication.getName();
             UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
 
-            // ✅ AGREGAR: Validar cupos disponibles antes de crear inscripción
+            // Validación temprana (opcional pero buena práctica)
             if (!inscripcionProveedorService.hayCuposDisponibles(idEvento)) {
                 redirectAttributes.addFlashAttribute("error", "Lo sentimos, no quedan cupos disponibles.");
                 return "redirect:/eventos/ver/" + idEvento;
@@ -357,58 +371,17 @@ public class EventoController {
 
             var inscripcion = inscripcionProveedorService.solicitarCupo(proveedor.getId_usuario(), idEvento);
 
-            redirectAttributes.addFlashAttribute("mensaje", "Cupo reservado. Completa el pago en los próximos 15 minutos.");
-            return "redirect:/eventos/pago/simular/" + inscripcion.getId_inscripcion();
+            redirectAttributes.addFlashAttribute("mensaje",
+                    "Cupo reservado temporalmente. Completa el pago para confirmarlo.");
+
+            // ✅ Redirigir al controller de pagos
+            return "redirect:/pagos-eventos/checkout/" + inscripcion.getId_inscripcion();
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al solicitar cupo: " + e.getMessage());
             return "redirect:/eventos/ver/" + idEvento;
         }
     }
-
-    @GetMapping("/pago/simular/{idInscripcion}")
-    public String mostrarPaginaPago(@PathVariable Long idInscripcion,
-                                    Model model,
-                                    Authentication authentication) {
-        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
-            return "redirect:/login";
-        }
-
-        InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
-
-        model.addAttribute("inscripcion", inscripcion);
-        return "redirect:/pagos-eventos/checkout/" + inscripcion.getId_inscripcion();
-    }
-
-
-    @PostMapping("/confirmar-pago-simulado/{idInscripcion}")
-    public String confirmarPagoSimulado(@PathVariable Long idInscripcion,
-                                        Authentication authentication,
-                                        RedirectAttributes redirectAttributes) {
-        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
-            return "redirect:/login";
-        }
-
-        try {
-            // 1. Crear el pago
-            PagoEventoCreacionDTO pagoCreacion = new PagoEventoCreacionDTO();
-            pagoCreacion.setIdInscripcion(idInscripcion);
-            pagoCreacion.setMetodoPago(MetodoPago.TARJETA_CREDITO); // O el que sea
-
-            PagoEventoDTO pago = pagoEventoService.crearPago(pagoCreacion);
-
-            // 2. Procesar el pago (simulación)
-            pagoEventoService.procesarPago(pago.getIdPagoEvento());
-
-            redirectAttributes.addFlashAttribute("mensaje", "¡Pago confirmado! Tu cupo está asegurado.");
-            return "redirect:/eventos/mis-inscripciones";
-
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al confirmar el pago: " + e.getMessage());
-            return "redirect:/eventos";
-        }
-    }
-
 
 
 

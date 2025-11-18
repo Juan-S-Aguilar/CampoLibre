@@ -55,7 +55,7 @@ public class PagoEventoController {
             }
 
             // Validar que esté en estado PENDIENTE_PAGO
-            if (inscripcion.getEstadoCupo() != com.example.campolibre.Enum.EstadoCupo.PENDIENTE_PAGO) {
+            if (inscripcion.getEstadoCupo() != com.example.campolibre.Enum.EstadoCupo.PENDIENTE) {
                 redirectAttributes.addFlashAttribute("error",
                         "Esta inscripción no está pendiente de pago. Estado actual: " + inscripcion.getEstadoCupo());
                 return "redirect:/eventos/mis-inscripciones";

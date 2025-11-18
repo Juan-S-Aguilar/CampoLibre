@@ -65,6 +65,11 @@ public class EventoImplement implements EventoService {
 //_________________________________________________________________
     @Override
     public EventoDTO crearEvento(EventoCreacionDTO eventoCreacionDTO, Long idAdmin, MultipartFile imagen) {
+
+        if (eventoCreacionDTO.getId_evento() != null) {
+            throw new CustomException("No se puede especificar ID al crear un evento nuevo");
+        }
+
         // 1. Verificar Usuario (Debe ser un Administrador)
         Usuario creador = usuarioRepository.findById(idAdmin)
                 .orElseThrow(() -> new CustomException("Administrador no encontrado"));
@@ -106,6 +111,10 @@ public class EventoImplement implements EventoService {
         evento.setCostoEspacio(eventoCreacionDTO.getCostoEspacio());
         evento.setTerminosCondiciones(eventoCreacionDTO.getTerminosCondiciones());
         evento.setEstado(EstadoEvento.BORRADOR);
+        evento.setCuposOcupados(0);
+
+        evento.setDireccionCompleta(eventoCreacionDTO.getDireccionCompleta());
+
 
         // 4. Manejo de imagen
         if (imagen != null && !imagen.isEmpty()) {
@@ -235,15 +244,40 @@ public class EventoImplement implements EventoService {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
 
-        evento.setEstado(estado);
+        // VALIDACIONES ANTES DE PUBLICAR
+        if (estado == EstadoEvento.PUBLICADO) {
+            if (evento.getNombre() == null || evento.getNombre().trim().isEmpty()) {
+                throw new CustomException("El evento debe tener un nombre para publicarse");
+            }
+            if (evento.getDescripcion() == null || evento.getDescripcion().trim().isEmpty()) {
+                throw new CustomException("El evento debe tener una descripción para publicarse");
+            }
+            if (evento.getFecha_evento() == null) {
+                throw new CustomException("El evento debe tener una fecha para publicarse");
+            }
+            if (evento.getFecha_evento().isBefore(LocalDate.now())) {
+                throw new CustomException("No se puede publicar un evento con fecha pasada");
+            }
+            if (evento.getPatrocinador() == null) {
+                throw new CustomException("El evento debe tener un patrocinador para publicarse");
+            }
+            if (evento.getCuposMaximosProveedor() == null || evento.getCuposMaximosProveedor() <= 0) {
+                throw new CustomException("El evento debe tener cupos disponibles para publicarse");
+            }
+            if (evento.getCostoEspacio() == null || evento.getCostoEspacio() < 0) {
+                throw new CustomException("El evento debe tener un costo de espacio válido");
+            }
 
-        // Registrar fecha de publicación
-        if (estado == EstadoEvento.PUBLICADO && evento.getFechaPublicacion() == null) {
-            evento.setFechaPublicacion(LocalDateTime.now());
+            // Registrar fecha de publicación solo la primera vez
+            if (evento.getFechaPublicacion() == null) {
+                evento.setFechaPublicacion(LocalDateTime.now());
+            }
         }
 
+        evento.setEstado(estado);
         eventoRepository.save(evento);
 
+        // Notificar DESPUÉS de guardar exitosamente
         if (estado == EstadoEvento.PUBLICADO) {
             notificarProveedoresEventoPublicado(evento);
         }
@@ -301,8 +335,10 @@ public class EventoImplement implements EventoService {
             dto.setLogoPatrocinador(evento.getPatrocinador().getLogoUrl());
         }
 
-        // Calcular cupos disponibles
-        Long cuposConfirmados = inscripcionProveedorRepository.countCuposConfirmadosPorEvento(evento.getId_evento());
+        // Calcular cupos disponibles SIEMPRE desde la BD (fuente de verdad)
+        Long cuposConfirmados = inscripcionProveedorRepository
+                .countByEventoIdAndEstadoCupo(evento.getId_evento(), EstadoCupo.CONFIRMADO);
+
         dto.setCuposOcupados(cuposConfirmados.intValue());
         dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposConfirmados.intValue());
 

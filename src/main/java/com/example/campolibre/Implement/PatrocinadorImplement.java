@@ -38,7 +38,13 @@ public class PatrocinadorImplement implements PatrocinadorService {
                     throw new CustomException("Ya existe un patrocinador con ese nombre");
                 });
 
+
+
         Patrocinador patrocinador = modelMapper.map(patrocinadorDTO, Patrocinador.class);
+
+        if (patrocinador.getActivo() == null) {
+            patrocinador.setActivo(true);
+        }
         Patrocinador nuevoPatrocinador = patrocinadorRepository.save(patrocinador);
         return modelMapper.map(nuevoPatrocinador, PatrocinadorDTO.class);
     }
