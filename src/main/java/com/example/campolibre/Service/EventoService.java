@@ -1,6 +1,7 @@
 package com.example.campolibre.Service;
 
 import com.example.campolibre.DTO.EventoDTO;
+import com.example.campolibre.Entity.Evento;
 import com.example.campolibre.Enum.EstadoEvento;
 import com.example.campolibre.Enum.TipoEvento;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +39,8 @@ public interface EventoService {
     // Objetivo: Obtener la lista completa de eventos creados por el administrador.
     List<EventoDTO> obtenerTodosLosEventosCreadosPorAdministrador(Long idAdmin);
 
+    // Método que trae todos los eventos que NO son BORRADOR.
+    List<EventoDTO> obtenerEventosVisiblesParaPublico();
 
 
 }

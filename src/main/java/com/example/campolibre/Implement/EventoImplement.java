@@ -42,8 +42,6 @@ public class EventoImplement implements EventoService {
     private final InscripcionProveedorRepository inscripcionProveedorRepository;
     private final EmailService emailService;
 
-
-
     @Autowired
     public EventoImplement(EventoRepository eventoRepository,
                            UsuarioRepository usuarioRepository,
@@ -377,6 +375,21 @@ public class EventoImplement implements EventoService {
                 .map(evento -> modelMapper.map(evento, EventoDTO.class))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<EventoDTO> obtenerEventosVisiblesParaPublico() {
+        // 1. Obtenemos todos los eventos
+        return eventoRepository.findAll().stream()
+
+                // 2. Filtro: Excluir BORRADOR
+                .filter(evento -> evento.getEstado() != EstadoEvento.BORRADOR)
+
+                // 3. Mapeamos a DTO (CORREGIDO: Usar convertirADTO)
+                .map(this::convertirADTO) // <--- CAMBIO AQUÍ: De 'mapearADTO' a 'convertirADTO'
+                .collect(Collectors.toList());
+    }
+
+
 
 
 }

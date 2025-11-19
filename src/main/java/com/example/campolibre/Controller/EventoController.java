@@ -7,6 +7,7 @@ import com.example.campolibre.Enum.MetodoPago;
 import com.example.campolibre.Enum.TipoEvento;
 import com.example.campolibre.Service.*; // Importar todos los servicios
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -477,5 +478,20 @@ public class EventoController {
 
         // IMPORTANTE: Necesitas una vista llamada "evento/admin-list" o similar.
         return "evento/admin-list";
+    }
+
+    @GetMapping("/proveedor/todos")
+    @PreAuthorize("hasAuthority('PROVEEDOR')")
+    public String listarEventosProveedor(Model model) {
+
+        // ✅ Usamos el método que trae TODOS menos los BORRADOR
+        List<EventoDTO> eventos = eventoService.obtenerEventosVisiblesParaPublico();
+
+        // Usar la vista del administrador para el listado, pero con restricciones.
+        // Usaremos "evento/proveedor-list" para evitar modificar la vista pública "list.html".
+        model.addAttribute("eventos", eventos);
+
+        // Necesitas una vista dedicada o modificar list.html, ver Paso 4.
+        return "evento/proveedor-list";
     }
 }
