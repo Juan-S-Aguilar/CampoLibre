@@ -1,35 +1,41 @@
 package com.example.campolibre.Implement;
 
-import com.example.campolibre.Exception.CustomException;
-import com.example.campolibre.Service.FileStorageService;
 import com.example.campolibre.DTO.ProductoDTO;
+import com.example.campolibre.DTO.ResumenInventarioDTO;
 import com.example.campolibre.Entity.Producto;
 import com.example.campolibre.Entity.Tienda;
-import com.example.campolibre.Enum.CategoriaProducto;
 import com.example.campolibre.Enum.SubcategoriaProducto;
+import com.example.campolibre.Enum.UnidadMedida;
+import com.example.campolibre.Repository.ItemPedidoRepository;
+import com.example.campolibre.DTO.ProductoMasVendidoDTO;
+import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Repository.ProductoRepository;
 import com.example.campolibre.Repository.TiendaRepository;
+import com.example.campolibre.Service.FileStorageService;
 import com.example.campolibre.Service.ProductoService;
+import com.example.campolibre.Util.MapeoCategoria;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class ProductoImplement implements ProductoService {
 
+    @Autowired
+    private ItemPedidoRepository itemPedidoRepository;
+
     private final ProductoRepository productoRepository;
     private final TiendaRepository tiendaRepository;
     private final FileStorageService fileStorageService;
     private final ModelMapper modelMapper;
 
-    public ProductoImplement(ProductoRepository productoRepository,
-                                    TiendaRepository tiendaRepository,
-                                    FileStorageService fileStorageService,
-                                    ModelMapper modelMapper) {
+    @Autowired
+    public ProductoImplement(ProductoRepository productoRepository, TiendaRepository tiendaRepository,
+                             FileStorageService fileStorageService, ModelMapper modelMapper) {
         this.productoRepository = productoRepository;
         this.tiendaRepository = tiendaRepository;
         this.fileStorageService = fileStorageService;
@@ -37,22 +43,40 @@ public class ProductoImplement implements ProductoService {
     }
 
     @Override
-    @Transactional
     public ProductoDTO crearProducto(ProductoDTO productoDTO, MultipartFile imagen) {
-        // Validar que la tienda existe
         Tienda tienda = tiendaRepository.findById(productoDTO.getId_tienda())
                 .orElseThrow(() -> new CustomException("Tienda no encontrada"));
 
-        // Validar que la subcategoría pertenece a la categoría
-        if (!productoDTO.esSubcategoriaValida()) {
-            throw new CustomException("La subcategoría no corresponde a la categoría seleccionada");
+        // ✅ VALIDACIÓN 1: Subcategoría debe estar definida
+        if (productoDTO.getSubcategoria() == null) {
+            throw new CustomException("Debe seleccionar una subcategoría para el producto.");
+        }
+
+        // ✅ VALIDACIÓN 2: Subcategoría coherente con categoría de tienda
+        if (!MapeoCategoria.esSubcategoriaValida(
+                tienda.getCategoriaPrincipal(),
+                productoDTO.getSubcategoria())) {
+            throw new CustomException(
+                    "La subcategoría '" + productoDTO.getSubcategoria().getDisplayName() +
+                            "' no corresponde con la categoría de la tienda '" +
+                            tienda.getCategoriaPrincipal().getDisplayName() + "'."
+            );
+        }
+
+        // ✅ VALIDACIÓN 3: Unidad de medida debe estar definida
+        if (productoDTO.getUnidadMedida() == null) {
+            throw new CustomException("Debe especificar una unidad de medida para el producto.");
         }
 
         Producto producto = modelMapper.map(productoDTO, Producto.class);
         producto.setTienda(tienda);
         producto.setEstado("ACTIVO");
 
-        // Guardar imagen si existe
+        // ✅ Desactivar automáticamente si stock es 0
+        if (producto.getStock() == 0) {
+            producto.desactivarPorSinStock();
+        }
+
         if (imagen != null && !imagen.isEmpty()) {
             String rutaImagen = fileStorageService.guardarArchivo(imagen, "productos");
             producto.setImagen_producto(rutaImagen);
@@ -60,9 +84,7 @@ public class ProductoImplement implements ProductoService {
 
         Producto nuevoProducto = productoRepository.save(producto);
 
-        ProductoDTO resultado = modelMapper.map(nuevoProducto, ProductoDTO.class);
-        resultado.setId_tienda(nuevoProducto.getTienda().getId_tienda());
-        resultado.setNombre_tienda(nuevoProducto.getTienda().getNombre());
+        ProductoDTO resultado = convertirADTO(nuevoProducto);
         return resultado;
     }
 
@@ -71,91 +93,100 @@ public class ProductoImplement implements ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
 
-        ProductoDTO resultado = modelMapper.map(producto, ProductoDTO.class);
-        resultado.setId_tienda(producto.getTienda().getId_tienda());
-        resultado.setNombre_tienda(producto.getTienda().getNombre());
-        return resultado;
+        return convertirADTO(producto);
     }
 
     @Override
     public List<ProductoDTO> obtenerTodosLosProductos() {
         List<Producto> productos = productoRepository.findAll();
-        return convertirListaADTO(productos);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductoDTO> obtenerProductosActivos() {
         List<Producto> productos = productoRepository.findAllActive();
-        return convertirListaADTO(productos);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductoDTO> obtenerProductosPorTienda(Long idTienda) {
-        List<Producto> productos = productoRepository.findByTiendaIdAndEstadoActivo(idTienda);
-        return convertirListaADTO(productos);
-    }
-
-    @Override
-    public List<ProductoDTO> obtenerProductosPorCategoria(CategoriaProducto categoria) {
-        List<Producto> productos = productoRepository.findByCategoriaAndEstadoActivo(categoria);
-        return convertirListaADTO(productos);
-    }
-
-    @Override
-    public List<ProductoDTO> obtenerProductosPorSubcategoria(SubcategoriaProducto subcategoria) {
-        List<Producto> productos = productoRepository.findBySubcategoriaAndEstadoActivo(subcategoria);
-        return convertirListaADTO(productos);
-    }
-
-    @Override
-    public List<ProductoDTO> obtenerProductosPorCategoriaYSubcategoria(CategoriaProducto categoria, SubcategoriaProducto subcategoria) {
-        List<Producto> productos = productoRepository.findByCategoriaAndSubcategoriaAndEstadoActivo(categoria, subcategoria);
-        return convertirListaADTO(productos);
+        List<Producto> productos = productoRepository.findAllByTiendaId(idTienda);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductoDTO> obtenerProductosEliminados() {
         List<Producto> productos = productoRepository.findAllDeleted();
-        return convertirListaADTO(productos);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional
     public ProductoDTO actualizarProducto(Long id, ProductoDTO productoDTO, MultipartFile imagen) {
         Producto productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
 
-        // Validar subcategoría
-        if (!productoDTO.esSubcategoriaValida()) {
-            throw new CustomException("La subcategoría no corresponde a la categoría seleccionada");
+        // ✅ VALIDACIÓN: Si se cambia subcategoría, validar coherencia
+        if (productoDTO.getSubcategoria() != null &&
+                !productoDTO.getSubcategoria().equals(productoExistente.getSubcategoria())) {
+
+            Tienda tienda = productoExistente.getTienda();
+            if (!MapeoCategoria.esSubcategoriaValida(
+                    tienda.getCategoriaPrincipal(),
+                    productoDTO.getSubcategoria())) {
+                throw new CustomException(
+                        "La subcategoría '" + productoDTO.getSubcategoria().getDisplayName() +
+                                "' no corresponde con la categoría de la tienda."
+                );
+            }
+            productoExistente.setSubcategoria(productoDTO.getSubcategoria());
         }
 
-        // Actualizar campos
+        // Actualizar campos básicos
         productoExistente.setNombre(productoDTO.getNombre());
         productoExistente.setDescripcion(productoDTO.getDescripcion());
         productoExistente.setPrecio(productoDTO.getPrecio());
         productoExistente.setStock(productoDTO.getStock());
-        productoExistente.setCategoria(productoDTO.getCategoria());
-        productoExistente.setSubcategoria(productoDTO.getSubcategoria());
-        productoExistente.setCantidad(productoDTO.getCantidad());
-        productoExistente.setUnidadMedida(productoDTO.getUnidadMedida());
 
-        // Actualizar imagen si se proporciona una nueva
+        if (productoDTO.getStockMinimo() != null) {
+            productoExistente.setStockMinimo(productoDTO.getStockMinimo());
+        }
+
+        if (productoDTO.getUnidadMedida() != null) {
+            productoExistente.setUnidadMedida(productoDTO.getUnidadMedida());
+        }
+
+        // ✅ Manejar estado según stock
+        if (productoExistente.getStock() == 0) {
+            productoExistente.desactivarPorSinStock();
+        } else if ("SIN_STOCK".equals(productoExistente.getEstado())) {
+            productoExistente.setEstado("ACTIVO");
+        }
+
+        // Manejar imagen
         if (imagen != null && !imagen.isEmpty()) {
+            if (productoExistente.getImagen_producto() != null) {
+                fileStorageService.eliminarArchivo(productoExistente.getImagen_producto());
+            }
             String rutaImagen = fileStorageService.guardarArchivo(imagen, "productos");
             productoExistente.setImagen_producto(rutaImagen);
+        } else if (productoDTO.getImagen_producto() != null) {
+            productoExistente.setImagen_producto(productoDTO.getImagen_producto());
         }
 
         Producto productoActualizado = productoRepository.save(productoExistente);
 
-        ProductoDTO resultado = modelMapper.map(productoActualizado, ProductoDTO.class);
-        resultado.setId_tienda(productoActualizado.getTienda().getId_tienda());
-        resultado.setNombre_tienda(productoActualizado.getTienda().getNombre());
-        return resultado;
+        return convertirADTO(productoActualizado);
     }
 
     @Override
-    @Transactional
     public void eliminarProducto(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
@@ -163,156 +194,220 @@ public class ProductoImplement implements ProductoService {
         productoRepository.save(producto);
     }
 
-    @Override
-    @Transactional
-    public boolean descontarStock(Long idProducto, Integer cantidad) {
-        if (cantidad == null || cantidad <= 0) {
-            throw new CustomException("La cantidad debe ser mayor a cero");
-        }
-        int filasActualizadas = productoRepository.descontarStock(idProducto, cantidad);
-        return filasActualizadas > 0;
-    }
+    // ========== NUEVOS MÉTODOS - BÚSQUEDA POR SUBCATEGORÍA ==========
 
     @Override
-    @Transactional
-    public boolean incrementarStock(Long idProducto, Integer cantidad) {
-        if (cantidad == null || cantidad <= 0) {
-            throw new CustomException("La cantidad debe ser mayor a cero");
-        }
-        int filasActualizadas = productoRepository.incrementarStock(idProducto, cantidad);
-        return filasActualizadas > 0;
-    }
-
-    @Override
-    @Transactional
-    public ProductoDTO aumentarStockManual(Long idProducto, Integer cantidad) {
-        if (cantidad == null || cantidad <= 0) {
-            throw new CustomException("La cantidad a aumentar debe ser mayor a cero");
-        }
-
-        Producto producto = productoRepository.findById(idProducto)
-                .orElseThrow(() -> new CustomException("Producto no encontrado"));
-
-        int stockAnterior = producto.getStock();
-        producto.setStock(stockAnterior + cantidad);
-        Producto productoActualizado = productoRepository.save(producto);
-
-        System.out.println(String.format("✓ Stock aumentado: Producto '%s' | Stock anterior: %d | Cantidad agregada: %d | Stock actual: %d",
-                producto.getNombre(), stockAnterior, cantidad, productoActualizado.getStock()));
-
-        ProductoDTO resultado = modelMapper.map(productoActualizado, ProductoDTO.class);
-        resultado.setId_tienda(productoActualizado.getTienda().getId_tienda());
-        resultado.setNombre_tienda(productoActualizado.getTienda().getNombre());
-        return resultado;
-    }
-
-    @Override
-    @Transactional
-    public ProductoDTO disminuirStockManual(Long idProducto, Integer cantidad) {
-        if (cantidad == null || cantidad <= 0) {
-            throw new CustomException("La cantidad a disminuir debe ser mayor a cero");
-        }
-
-        Producto producto = productoRepository.findById(idProducto)
-                .orElseThrow(() -> new CustomException("Producto no encontrado"));
-
-        int stockActual = producto.getStock();
-
-        if (stockActual < cantidad) {
-            throw new CustomException(String.format(
-                    "Stock insuficiente. Stock actual: %d, Cantidad solicitada: %d",
-                    stockActual, cantidad));
-        }
-
-        int stockAnterior = producto.getStock();
-        producto.setStock(stockActual - cantidad);
-        Producto productoActualizado = productoRepository.save(producto);
-
-        System.out.println(String.format("✓ Stock disminuido: Producto '%s' | Stock anterior: %d | Cantidad restada: %d | Stock actual: %d",
-                producto.getNombre(), stockAnterior, cantidad, productoActualizado.getStock()));
-
-        ProductoDTO resultado = modelMapper.map(productoActualizado, ProductoDTO.class);
-        resultado.setId_tienda(productoActualizado.getTienda().getId_tienda());
-        resultado.setNombre_tienda(productoActualizado.getTienda().getNombre());
-        return resultado;
-    }
-
-    @Override
-    public List<ProductoDTO> obtenerProductosConStockBajo(Integer umbral) {
-        if (umbral == null || umbral < 0) {
-            umbral = 10; // Valor por defecto
-        }
-        List<Producto> productos = productoRepository.findProductosConStockBajo(umbral);
-        return convertirListaADTO(productos);
-    }
-
-    @Override
-    public List<ProductoDTO> buscarProductosPorNombre(String nombre) {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return obtenerProductosActivos();
-        }
-        List<Producto> productos = productoRepository.buscarPorNombre(nombre.trim());
-        return convertirListaADTO(productos);
-    }
-
-    @Override
-    public List<ProductoDTO> obtenerProductosPorRangoPrecio(Double precioMin, Double precioMax) {
-        if (precioMin == null) precioMin = 0.0;
-        if (precioMax == null) precioMax = Double.MAX_VALUE;
-
-        if (precioMin > precioMax) {
-            throw new CustomException("El precio mínimo no puede ser mayor al precio máximo");
-        }
-
-        List<Producto> productos = productoRepository.findByRangoPrecio(precioMin, precioMax);
-        return convertirListaADTO(productos);
-    }
-
-    @Override
-    public Long contarProductosActivosPorTienda(Long idTienda) {
-        return productoRepository.contarProductosActivosPorTienda(idTienda);
-    }
-
-    @Override
-    @Transactional
-    public ProductoDTO cambiarEstadoProducto(Long id, String nuevoEstado) {
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new CustomException("Producto no encontrado"));
-
-        if (!nuevoEstado.equals("ACTIVO") && !nuevoEstado.equals("INACTIVO") && !nuevoEstado.equals("ELIMINADO")) {
-            throw new CustomException("Estado no válido. Use: ACTIVO, INACTIVO o ELIMINADO");
-        }
-
-        producto.setEstado(nuevoEstado);
-        Producto productoActualizado = productoRepository.save(producto);
-
-        ProductoDTO resultado = modelMapper.map(productoActualizado, ProductoDTO.class);
-        resultado.setId_tienda(productoActualizado.getTienda().getId_tienda());
-        resultado.setNombre_tienda(productoActualizado.getTienda().getNombre());
-        return resultado;
-    }
-
-    @Override
-    @Transactional
-    public ProductoDTO activarProducto(Long id) {
-        return cambiarEstadoProducto(id, "ACTIVO");
-    }
-
-    @Override
-    @Transactional
-    public ProductoDTO inactivarProducto(Long id) {
-        return cambiarEstadoProducto(id, "INACTIVO");
-    }
-
-    // Método auxiliar para convertir lista
-    private List<ProductoDTO> convertirListaADTO(List<Producto> productos) {
+    public List<ProductoDTO> obtenerProductosPorSubcategoria(SubcategoriaProducto subcategoria) {
+        List<Producto> productos = productoRepository.findBySubcategoriaAndEstadoActivo(subcategoria);
         return productos.stream()
-                .map(producto -> {
-                    ProductoDTO dto = modelMapper.map(producto, ProductoDTO.class);
-                    dto.setId_tienda(producto.getTienda().getId_tienda());
-                    dto.setNombre_tienda(producto.getTienda().getNombre());
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // ========== NUEVOS MÉTODOS - BÚSQUEDA POR UNIDAD DE MEDIDA ==========
+
+    @Override
+    public List<ProductoDTO> obtenerProductosPorUnidadMedida(UnidadMedida unidad) {
+        List<Producto> productos = productoRepository.findByUnidadMedidaAndEstadoActivo(unidad);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // ========== NUEVOS MÉTODOS - GESTIÓN DE INVENTARIO ==========
+
+    @Override
+    @Transactional
+    public ProductoDTO incrementarStock(Long idProducto, Integer cantidad) {
+        Producto producto = productoRepository.findById(idProducto)
+                .orElseThrow(() -> new CustomException("Producto no encontrado"));
+
+        if (cantidad <= 0) {
+            throw new CustomException("La cantidad debe ser mayor a 0");
+        }
+
+        producto.setStock(producto.getStock() + cantidad);
+
+        // Si estaba sin stock, reactivar
+        if ("SIN_STOCK".equals(producto.getEstado())) {
+            producto.setEstado("ACTIVO");
+        }
+
+        Producto actualizado = productoRepository.save(producto);
+        return convertirADTO(actualizado);
+    }
+
+    @Override
+    @Transactional
+    public ProductoDTO reducirStock(Long idProducto, Integer cantidad) {
+        Producto producto = productoRepository.findById(idProducto)
+                .orElseThrow(() -> new CustomException("Producto no encontrado"));
+
+        if (cantidad <= 0) {
+            throw new CustomException("La cantidad debe ser mayor a 0");
+        }
+
+        if (producto.getStock() < cantidad) {
+            throw new CustomException("Stock insuficiente. Disponible: " + producto.getStock());
+        }
+
+        producto.setStock(producto.getStock() - cantidad);
+
+        // Si llega a 0, desactivar automáticamente
+        if (producto.getStock() == 0) {
+            producto.desactivarPorSinStock();
+        }
+
+        Producto actualizado = productoRepository.save(producto);
+        return convertirADTO(actualizado);
+    }
+
+    @Override
+    @Transactional
+    public ProductoDTO actualizarStock(Long idProducto, Integer nuevoStock) {
+        Producto producto = productoRepository.findById(idProducto)
+                .orElseThrow(() -> new CustomException("Producto no encontrado"));
+
+        if (nuevoStock < 0) {
+            throw new CustomException("El stock no puede ser negativo");
+        }
+
+        producto.setStock(nuevoStock);
+
+        if (nuevoStock == 0) {
+            producto.desactivarPorSinStock();
+        } else if ("SIN_STOCK".equals(producto.getEstado())) {
+            producto.setEstado("ACTIVO");
+        }
+
+        Producto actualizado = productoRepository.save(producto);
+        return convertirADTO(actualizado);
+    }
+
+    @Override
+    @Transactional
+    public ProductoDTO reactivarProducto(Long idProducto, Integer nuevoStock) {
+        Producto producto = productoRepository.findById(idProducto)
+                .orElseThrow(() -> new CustomException("Producto no encontrado"));
+
+        if (nuevoStock <= 0) {
+            throw new CustomException("El stock debe ser mayor a 0 para reactivar el producto");
+        }
+
+        producto.reactivarConStock(nuevoStock);
+        Producto actualizado = productoRepository.save(producto);
+
+        return convertirADTO(actualizado);
+    }
+
+    @Override
+    public List<ProductoDTO> obtenerProductosConStockBajo(Long idTienda) {
+        List<Producto> productos = productoRepository.findProductosConStockBajo(idTienda);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductoDTO> obtenerProductosSinStock(Long idTienda) {
+        List<Producto> productos = productoRepository.findByTiendaIdAndStock(idTienda, 0);
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ResumenInventarioDTO obtenerResumenInventario(Long idTienda) {
+        List<Producto> todosProductos = productoRepository.findAllByTiendaId(idTienda);
+
+        ResumenInventarioDTO resumen = new ResumenInventarioDTO();
+        resumen.setIdTienda(idTienda);
+
+        if (!todosProductos.isEmpty()) {
+            resumen.setNombreTienda(todosProductos.get(0).getTienda().getNombre());
+        }
+
+        resumen.setTotalProductos(todosProductos.size());
+
+        long activos = todosProductos.stream()
+                .filter(p -> "ACTIVO".equals(p.getEstado()))
+                .count();
+        resumen.setProductosActivos((int) activos);
+
+        long stockBajo = todosProductos.stream()
+                .filter(Producto::tieneStockBajo)
+                .count();
+        resumen.setProductosConStockBajo((int) stockBajo);
+
+        long sinStock = todosProductos.stream()
+                .filter(Producto::sinStock)
+                .count();
+        resumen.setProductosSinStock((int) sinStock);
+
+        long inactivos = todosProductos.stream()
+                .filter(p -> "INACTIVO".equals(p.getEstado()) ||
+                        "SIN_STOCK".equals(p.getEstado()))
+                .count();
+        resumen.setProductosInactivos((int) inactivos);
+
+        double valorTotal = todosProductos.stream()
+                .mapToDouble(p -> p.getPrecio() * p.getStock())
+                .sum();
+        resumen.setValorTotalInventario(valorTotal);
+
+        // Productos con alerta (stock bajo o sin stock)
+        List<ProductoDTO> productosAlerta = todosProductos.stream()
+                .filter(p -> p.tieneStockBajo() || p.sinStock())
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+        resumen.setProductosAlerta(productosAlerta);
+
+        return resumen;
+    }
+
+    @Override
+    public Long contarProductosConStockBajo(Long idTienda) {
+        return productoRepository.contarProductosConStockBajo(idTienda);
+    }
+
+    @Override
+    public Long contarProductosSinStock(Long idTienda) {
+        return productoRepository.contarProductosSinStock(idTienda);
+    }
+
+    // ========== MÉTODO PRIVADO HELPER ==========
+
+    private ProductoDTO convertirADTO(Producto producto) {
+        ProductoDTO dto = modelMapper.map(producto, ProductoDTO.class);
+        dto.setId_tienda(producto.getTienda().getId_tienda());
+        dto.setTieneStockBajo(producto.tieneStockBajo());
+        dto.setSinStock(producto.sinStock());
+        return dto;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductoMasVendidoDTO> obtenerProductosMasVendidos(Long idTienda, Integer limite) {
+        // Obtener datos desde el repository
+        List<Object[]> resultados = itemPedidoRepository.findProductosMasVendidosPorTienda(idTienda);
+
+        // Aplicar límite si no está definido, usar 10 por defecto
+        int limiteAplicar = (limite != null && limite > 0) ? limite : 10;
+
+        // Convertir resultados a DTOs
+        return resultados.stream()
+                .limit(limiteAplicar)
+                .map(obj -> {
+                    String nombreProducto = (String) obj[0];
+                    Long cantidadVendida = ((Number) obj[1]).longValue();
+
+                    ProductoMasVendidoDTO dto = new ProductoMasVendidoDTO();
+                    dto.setNombreProducto(nombreProducto);
+                    dto.setCantidadVendida(cantidadVendida);
+
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
+
 }

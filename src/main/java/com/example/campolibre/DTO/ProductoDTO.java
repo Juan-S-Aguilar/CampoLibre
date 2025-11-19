@@ -1,6 +1,5 @@
 package com.example.campolibre.DTO;
 
-import com.example.campolibre.Enum.CategoriaProducto;
 import com.example.campolibre.Enum.SubcategoriaProducto;
 import com.example.campolibre.Enum.UnidadMedida;
 import lombok.*;
@@ -17,29 +16,15 @@ public class ProductoDTO {
     private String descripcion;
     private Double precio;
     private Integer stock;
-    private CategoriaProducto categoria;
+    private Integer stockMinimo = 5;  // ✅ Valor por defecto en clase
     private SubcategoriaProducto subcategoria;
-    private Double cantidad;
     private UnidadMedida unidadMedida;
     private Long id_tienda;
-    private String nombre_tienda;
     private String imagen_producto;
     private LocalDateTime fecha_creacion;
-    private LocalDateTime fecha_actualizacion;
-    private String estado = "ACTIVO";
-    // Método auxiliar para validar que la subcategoría pertenezca a la categoría
-    public boolean esSubcategoriaValida() {
-        if (categoria == null || subcategoria == null) {
-            return false;
-        }
-        return subcategoria.getCategoriaProducto() == categoria;
-    }
+    private String estado = "ACTIVO";  // ✅ Valor por defecto en clase
 
-    // Método auxiliar para obtener la cantidad formateada
-    public String getCantidadFormateada() {
-        if (cantidad == null || unidadMedida == null) {
-            return "N/A";
-        }
-        return unidadMedida.formatearConCantidad(cantidad);
-    }
+    // Campos calculados para la vista
+    private Boolean tieneStockBajo;
+    private Boolean sinStock;
 }

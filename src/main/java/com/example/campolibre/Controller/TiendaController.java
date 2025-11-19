@@ -2,6 +2,7 @@ package com.example.campolibre.Controller;
 
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
+import com.example.campolibre.Enum.CategoriaTienda;
 import com.example.campolibre.Enum.EstadoTienda;
 import com.example.campolibre.Service.TiendaService;
 import com.example.campolibre.Service.UsuarioService;
@@ -75,7 +76,7 @@ public class TiendaController {
         return "tienda/view";
     }
 
-    // Crear tienda (PROVEEDOR)
+    // ✅ CORREGIDO: Crear tienda (PROVEEDOR)
     @GetMapping("/nueva")
     public String mostrarFormularioCreacion(Model model, Authentication authentication) {
         if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
@@ -83,6 +84,8 @@ public class TiendaController {
         }
 
         model.addAttribute("tienda", new TiendaDTO());
+        // ✅ CRÍTICO: Pasar lista de categorías al formulario
+        model.addAttribute("categoriasTienda", CategoriaTienda.values());
         return "tienda/form";
     }
 
@@ -108,7 +111,7 @@ public class TiendaController {
         return "redirect:/tiendas/mis-tiendas";
     }
 
-    // Editar tienda (PROVEEDOR/ADMIN)
+    // ✅ CORREGIDO: Editar tienda (PROVEEDOR/ADMIN)
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEdicion(@PathVariable Long id, Model model,
                                            Authentication authentication,
@@ -122,6 +125,8 @@ public class TiendaController {
         }
 
         model.addAttribute("tienda", tienda);
+        // ✅ CRÍTICO: Pasar lista de categorías al formulario de edición
+        model.addAttribute("categoriasTienda", CategoriaTienda.values());
         return "tienda/edit";
     }
 
@@ -139,39 +144,35 @@ public class TiendaController {
             }
 
             tiendaService.actualizarTienda(tiendaDTO.getId_tienda(), tiendaDTO, imagen);
-            redirectAttributes.addFlashAttribute("mensaje", "Tienda actualizada correctamente.");
+            redirectAttributes.addFlashAttribute("mensaje", "Tienda actualizada exitosamente.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al actualizar tienda: " + e.getMessage());
         }
         return "redirect:/tiendas/mis-tiendas";
     }
 
-    // Cambiar estado tienda (PROVEEDOR/ADMIN)
-    @GetMapping("/cambiar-estado/{id}")
+    // Cambiar estado (ADMIN)
+    @PostMapping("/cambiar-estado/{id}")
     public String cambiarEstado(@PathVariable Long id,
-                                @RequestParam EstadoTienda nuevoEstado,
+                                @RequestParam EstadoTienda estado,
                                 Authentication authentication,
                                 RedirectAttributes redirectAttributes) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
+            return "redirect:/tiendas";
+        }
+
         try {
-            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(id);
-
-            if (!puedeEditarTienda(authentication, tienda)) {
-                redirectAttributes.addFlashAttribute("error", "No tienes permisos para cambiar el estado.");
-                return "redirect:/tiendas";
-            }
-
-            tiendaService.cambiarEstadoTienda(id, nuevoEstado);
-            redirectAttributes.addFlashAttribute("mensaje", "Estado de tienda actualizado.");
+            tiendaService.cambiarEstadoTienda(id, estado);
+            redirectAttributes.addFlashAttribute("mensaje", "Estado actualizado.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al cambiar estado: " + e.getMessage());
         }
-        return "redirect:/tiendas/mis-tiendas";
+        return "redirect:/tiendas";
     }
 
-    // Eliminar tienda (PROVEEDOR/ADMIN)
-    @GetMapping("/eliminar/{id}")
-    public String eliminarTienda(@PathVariable Long id,
-                                 Authentication authentication,
+    // Eliminar (PROVEEDOR/ADMIN)
+    @PostMapping("/eliminar/{id}")
+    public String eliminarTienda(@PathVariable Long id, Authentication authentication,
                                  RedirectAttributes redirectAttributes) {
         try {
             TiendaDTO tienda = tiendaService.obtenerTiendaPorId(id);

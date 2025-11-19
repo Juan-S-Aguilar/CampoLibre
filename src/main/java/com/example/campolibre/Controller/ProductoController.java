@@ -3,197 +3,261 @@ package com.example.campolibre.Controller;
 import com.example.campolibre.DTO.ProductoDTO;
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
-import com.example.campolibre.Enum.CategoriaProducto;
 import com.example.campolibre.Enum.SubcategoriaProducto;
+import com.example.campolibre.Enum.UnidadMedida;
 import com.example.campolibre.Service.ProductoService;
 import com.example.campolibre.Service.TiendaService;
 import com.example.campolibre.Service.UsuarioService;
+import com.example.campolibre.Service.FileStorageService;
+import com.example.campolibre.Service.CarritoService;
+import com.example.campolibre.Util.MapeoCategoria;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Controller
 @RequestMapping("/productos")
 public class ProductoController {
 
-    private final ProductoService productoService;
-    private final TiendaService tiendaService;
-    private final UsuarioService usuarioService;
+    @Autowired
+    private ProductoService productoService;
 
-    public ProductoController(ProductoService productoService,
-                              TiendaService tiendaService,
-                              UsuarioService usuarioService) {
-        this.productoService = productoService;
-        this.tiendaService = tiendaService;
-        this.usuarioService = usuarioService;
-    }
+    @Autowired
+    private TiendaService tiendaService;
 
-    // Listar todos los productos activos (Para CONSUMIDORES)
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private CarritoService carritoService;
+
+    // ========== LISTAR PRODUCTOS ==========
+
     @GetMapping
     public String listarProductos(Model model) {
         List<ProductoDTO> productos = productoService.obtenerProductosActivos();
         model.addAttribute("productos", productos);
-        model.addAttribute("categorias", CategoriaProducto.values());
         return "producto/list";
     }
 
-    // Ver detalle de un producto
-    @GetMapping("/detalle/{id}")
-    public String verDetalleProducto(@PathVariable Long id, Model model) {
-        ProductoDTO producto = productoService.obtenerProductoPorId(id);
-        TiendaDTO tienda = tiendaService.obtenerTiendaPorId(producto.getId_tienda());
-
-        model.addAttribute("producto", producto);
-        model.addAttribute("tienda", tienda);
-        return "producto/view";
-    }
-
-    // Ver productos de una tienda específica
     @GetMapping("/tienda/{idTienda}")
-    public String verProductosPorTienda(@PathVariable Long idTienda, Model model) {
+    public String listarProductosPorTienda(@PathVariable Long idTienda, Model model) {
         TiendaDTO tienda = tiendaService.obtenerTiendaPorId(idTienda);
         List<ProductoDTO> productos = productoService.obtenerProductosPorTienda(idTienda);
 
         model.addAttribute("tienda", tienda);
         model.addAttribute("productos", productos);
-        return "producto/list-by-store";
+        return "producto/list_by_tienda";
     }
 
-    // Filtrar por categoría
-    @GetMapping("/categoria/{categoria}")
-    public String filtrarPorCategoria(@PathVariable CategoriaProducto categoria, Model model) {
-        List<ProductoDTO> productos = productoService.obtenerProductosPorCategoria(categoria);
-        model.addAttribute("productos", productos);
-        model.addAttribute("categoriaSeleccionada", categoria);
-        model.addAttribute("categorias", CategoriaProducto.values());
-        return "producto/list";
+    // ========== VER DETALLE DE PRODUCTO ==========
+
+    @GetMapping("/ver/{id}")
+    public String verProducto(@PathVariable Long id, Model model, Authentication authentication) {
+        ProductoDTO producto = productoService.obtenerProductoPorId(id);
+        TiendaDTO tienda = tiendaService.obtenerTiendaPorId(producto.getId_tienda());
+
+        model.addAttribute("producto", producto);
+        model.addAttribute("tienda", tienda);
+
+        if (authentication != null) {
+            try {
+                String email = authentication.getName();
+                UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+                Integer itemsCarrito = carritoService.contarItemsCarrito(usuario.getId_usuario());
+                model.addAttribute("itemsCarrito", itemsCarrito);
+            } catch (Exception e) {
+                model.addAttribute("itemsCarrito", 0);
+            }
+        }
+
+        return "producto/view";
     }
 
-    // Buscar productos
-    @GetMapping("/buscar")
-    public String buscarProductos(@RequestParam(required = false) String nombre, Model model) {
-        List<ProductoDTO> productos = productoService.buscarProductosPorNombre(nombre);
-        model.addAttribute("productos", productos);
-        model.addAttribute("terminoBusqueda", nombre);
-        return "producto/list";
-    }
+    // ========== CREAR PRODUCTO (PROVEEDOR) ==========
 
-    // Formulario para crear nuevo producto (PROVEEDOR/ADMIN)
     @GetMapping("/nuevo")
     public String mostrarFormularioCreacion(@RequestParam Long idTienda,
                                             Model model,
                                             Authentication authentication,
                                             RedirectAttributes redirectAttributes) {
-        TiendaDTO tienda = tiendaService.obtenerTiendaPorId(idTienda);
+        // ✅ DEBUG
+        System.out.println("🔹 GET /productos/nuevo - idTienda: " + idTienda);
 
-        if (!tienePuedeGestionarProductos(authentication, tienda)) {
-            redirectAttributes.addFlashAttribute("error", "No tienes permisos para agregar productos a esta tienda.");
-            return "redirect:/tiendas";
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            return "redirect:/productos";
         }
 
-        ProductoDTO nuevoProducto = new ProductoDTO();
-        nuevoProducto.setId_tienda(idTienda);
-
-        model.addAttribute("producto", nuevoProducto);
-        model.addAttribute("tienda", tienda);
-        model.addAttribute("categorias", CategoriaProducto.values());
-        model.addAttribute("unidadesMedida", Arrays.asList(
-                com.example.campolibre.Enum.UnidadMedida.values()
-        ));
-        return "producto/create";
-    }
-
-    // Crear producto
-    @PostMapping("/guardar")
-    public String crearProducto(@ModelAttribute("producto") ProductoDTO productoDTO,
-                                BindingResult result,
-                                @RequestParam(value = "imagen", required = false) MultipartFile imagen,
-                                Authentication authentication,
-                                RedirectAttributes redirectAttributes,
-                                Model model) {
         try {
-            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(productoDTO.getId_tienda());
+            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(idTienda);
+
+            // ✅ DEBUG
+            System.out.println("🔹 Tienda encontrada: " + tienda.getNombre());
+            System.out.println("🔹 Categoría de tienda: " + tienda.getCategoriaPrincipal());
 
             if (!tienePuedeGestionarProductos(authentication, tienda)) {
-                redirectAttributes.addFlashAttribute("error", "No tienes permisos para crear productos en esta tienda.");
+                redirectAttributes.addFlashAttribute("error", "No tienes permisos para agregar productos a esta tienda.");
                 return "redirect:/tiendas";
             }
 
-            if (result.hasErrors()) {
-                model.addAttribute("tienda", tienda);
-                model.addAttribute("categorias", CategoriaProducto.values());
-                model.addAttribute("unidadesMedida", Arrays.asList(
-                        com.example.campolibre.Enum.UnidadMedida.values()
-                ));
-                return "producto/create";
-            }
+            // ✅ CREAR PRODUCTO CON VALORES POR DEFECTO ROBUSTOS
+            ProductoDTO producto = new ProductoDTO();
+            producto.setId_tienda(idTienda);
+            producto.setNombre("");
+            producto.setDescripcion("");
+            producto.setPrecio(100.0);        // ✅ Precio mínimo válido
+            producto.setStock(0);             // ✅ 0 por defecto (usuario debe llenar)
+            producto.setStockMinimo(5);       // ✅ 5 por defecto (recomendado)
+            producto.setEstado("ACTIVO");
 
-            // Validar que la subcategoría corresponde a la categoría
-            if (!productoDTO.esSubcategoriaValida()) {
-                model.addAttribute("error", "La subcategoría seleccionada no corresponde a la categoría");
-                model.addAttribute("tienda", tienda);
-                model.addAttribute("categorias", CategoriaProducto.values());
-                model.addAttribute("unidadesMedida", Arrays.asList(
-                        com.example.campolibre.Enum.UnidadMedida.values()
-                ));
-                return "producto/create";
-            }
+            // ✅ DEBUG
+            System.out.println("🔹 Producto DTO creado con id_tienda: " + producto.getId_tienda());
+            System.out.println("🔹 Valores por defecto: precio=" + producto.getPrecio() + ", stock=" + producto.getStock() + ", stockMinimo=" + producto.getStockMinimo());
 
-            productoService.crearProducto(productoDTO, imagen);
-            redirectAttributes.addFlashAttribute("mensaje", "Producto creado exitosamente.");
+            model.addAttribute("producto", producto);
+            model.addAttribute("tienda", tienda);
+
+            // ✅ CRÍTICO: Subcategorías permitidas
+            List<SubcategoriaProducto> subcategoriasPermitidas =
+                    MapeoCategoria.obtenerSubcategoriasOrdenadas(tienda.getCategoriaPrincipal());
+
+            // ✅ DEBUG
+            System.out.println("🔹 Subcategorías disponibles: " + subcategoriasPermitidas.size());
+            subcategoriasPermitidas.forEach(sub -> System.out.println("   - " + sub.getDisplayName()));
+
+            model.addAttribute("subcategorias", subcategoriasPermitidas);
+            model.addAttribute("unidadesMedida", UnidadMedida.values());
+
+            // ✅ DEBUG - Verificar modelo
+            System.out.println("🔹 Modelo preparado - Redirigiendo a form.html");
+            System.out.println("   producto.id_tienda = " + producto.getId_tienda());
+            System.out.println("   subcategorias.size = " + subcategoriasPermitidas.size());
+            System.out.println("   unidadesMedida.length = " + UnidadMedida.values().length);
+
+            return "producto/form";
 
         } catch (Exception e) {
-            System.err.println("✗ Error al crear producto: " + e.getMessage());
+            // ✅ DEBUG
+            System.err.println("❌ Error en GET /productos/nuevo: " + e.getMessage());
             e.printStackTrace();
-            redirectAttributes.addFlashAttribute("error", "Error al crear producto: " + e.getMessage());
-            return "redirect:/productos/nuevo?idTienda=" + productoDTO.getId_tienda();
+            redirectAttributes.addFlashAttribute("error", "Error al cargar formulario: " + e.getMessage());
+            return "redirect:/tiendas";
         }
-
-        return "redirect:/productos/tienda/" + productoDTO.getId_tienda();
     }
 
-    // Editar producto (PROVEEDOR/ADMIN)
+    @PostMapping("/crear")
+    public String crearProducto(@ModelAttribute ProductoDTO productoDTO,
+                                @RequestParam(value = "imagen", required = false) MultipartFile imagen,
+                                Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        // ✅ DEBUG COMPLETO
+        System.out.println("🔹 POST /productos/crear");
+        System.out.println("   Nombre: " + productoDTO.getNombre());
+        System.out.println("   Descripción length: " + (productoDTO.getDescripcion() != null ? productoDTO.getDescripcion().length() : "null"));
+        System.out.println("   Subcategoría: " + productoDTO.getSubcategoria());
+        System.out.println("   UnidadMedida: " + productoDTO.getUnidadMedida());
+        System.out.println("   Precio: " + productoDTO.getPrecio());
+        System.out.println("   Stock: " + productoDTO.getStock());
+        System.out.println("   StockMinimo: " + productoDTO.getStockMinimo());
+        System.out.println("   ID Tienda: " + productoDTO.getId_tienda());
+        System.out.println("   Imagen presente: " + (imagen != null && !imagen.isEmpty()));
+
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            return "redirect:/productos";
+        }
+
+        try {
+            // ✅ VALIDACIÓN CRÍTICA
+            if (productoDTO.getId_tienda() == null) {
+                System.err.println("❌ ERROR CRÍTICO: id_tienda es NULL");
+                redirectAttributes.addFlashAttribute("error", "Error: ID de tienda no válido");
+                return "redirect:/tiendas";
+            }
+
+            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(productoDTO.getId_tienda());
+            System.out.println("🔹 Tienda verificada: " + tienda.getNombre());
+
+            if (!tienePuedeGestionarProductos(authentication, tienda)) {
+                redirectAttributes.addFlashAttribute("error", "No tienes permisos para agregar productos a esta tienda.");
+                return "redirect:/tiendas";
+            }
+
+            // ✅ GUARDAR IMAGEN
+            if (imagen != null && !imagen.isEmpty()) {
+                System.out.println("🔹 Guardando imagen: " + imagen.getOriginalFilename());
+                String rutaImagen = fileStorageService.guardarArchivo(imagen, "productos");
+                productoDTO.setImagen_producto(rutaImagen);
+                System.out.println("🔹 Imagen guardada en: " + rutaImagen);
+            } else {
+                System.out.println("⚠️ No se proporcionó imagen");
+            }
+
+            // ✅ CREAR PRODUCTO
+            System.out.println("🔹 Llamando a productoService.crearProducto()");
+            ProductoDTO productoCreado = productoService.crearProducto(productoDTO, null);
+            System.out.println("✅ Producto creado exitosamente con ID: " + productoCreado.getId_producto());
+
+            redirectAttributes.addFlashAttribute("mensaje", "Producto creado exitosamente.");
+            return "redirect:/productos/tienda/" + productoDTO.getId_tienda();
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al crear producto: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al crear producto: " + e.getMessage());
+
+            // REDIRIGIR AL FORMULARIO CON EL PARÁMETRO
+            return "redirect:/productos/nuevo?idTienda=" + productoDTO.getId_tienda();
+        }
+    }
+
+    // ========== EDITAR PRODUCTO (PROVEEDOR/ADMIN) ==========
+
     @GetMapping("/editar/{id}")
     public String mostrarFormularioEdicion(@PathVariable Long id,
                                            Model model,
                                            Authentication authentication,
                                            RedirectAttributes redirectAttributes) {
-        ProductoDTO producto = productoService.obtenerProductoPorId(id);
-        TiendaDTO tienda = tiendaService.obtenerTiendaPorId(producto.getId_tienda());
+        try {
+            ProductoDTO producto = productoService.obtenerProductoPorId(id);
+            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(producto.getId_tienda());
 
-        if (!tienePuedeGestionarProductos(authentication, tienda)) {
-            redirectAttributes.addFlashAttribute("error", "No tienes permisos para editar este producto.");
+            if (!tienePuedeGestionarProductos(authentication, tienda)) {
+                redirectAttributes.addFlashAttribute("error", "No tienes permisos para editar este producto.");
+                return "redirect:/productos";
+            }
+
+            model.addAttribute("producto", producto);
+            model.addAttribute("tienda", tienda);
+
+            List<SubcategoriaProducto> subcategoriasPermitidas =
+                    MapeoCategoria.obtenerSubcategoriasOrdenadas(tienda.getCategoriaPrincipal());
+            model.addAttribute("subcategorias", subcategoriasPermitidas);
+            model.addAttribute("unidadesMedida", UnidadMedida.values());
+
+            return "producto/edit";
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al cargar producto para editar: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al cargar producto: " + e.getMessage());
             return "redirect:/productos";
         }
-
-        // Obtener subcategorías de la categoría actual del producto
-        List<SubcategoriaProducto> subcategorias =
-                SubcategoriaProducto.getSubcategoriasPorCategoria(producto.getCategoria());
-
-        model.addAttribute("producto", producto);
-        model.addAttribute("tienda", tienda);
-        model.addAttribute("categorias", CategoriaProducto.values());
-        model.addAttribute("subcategorias", subcategorias);
-        model.addAttribute("unidadesMedida", Arrays.asList(
-                com.example.campolibre.Enum.UnidadMedida.values()
-        ));
-        return "producto/edit";
     }
 
     @PostMapping("/actualizar")
     public String actualizarProducto(@ModelAttribute("producto") ProductoDTO productoDTO,
-                                     BindingResult result,
                                      @RequestParam(value = "imagen", required = false) MultipartFile imagen,
                                      Authentication authentication,
-                                     RedirectAttributes redirectAttributes,
-                                     Model model) {
+                                     RedirectAttributes redirectAttributes) {
         try {
             ProductoDTO productoExistente = productoService.obtenerProductoPorId(productoDTO.getId_producto());
             TiendaDTO tienda = tiendaService.obtenerTiendaPorId(productoExistente.getId_tienda());
@@ -203,39 +267,27 @@ public class ProductoController {
                 return "redirect:/productos";
             }
 
-            if (result.hasErrors()) {
-                model.addAttribute("tienda", tienda);
-                model.addAttribute("categorias", CategoriaProducto.values());
-                model.addAttribute("unidadesMedida", Arrays.asList(
-                        com.example.campolibre.Enum.UnidadMedida.values()
-                ));
-                return "producto/edit";
+            if (imagen != null && !imagen.isEmpty()) {
+                String rutaImagen = fileStorageService.guardarArchivo(imagen, "productos");
+                productoDTO.setImagen_producto(rutaImagen);
+            } else {
+                productoDTO.setImagen_producto(productoExistente.getImagen_producto());
             }
 
-            // Validar subcategoría
-            if (!productoDTO.esSubcategoriaValida()) {
-                model.addAttribute("error", "La subcategoría seleccionada no corresponde a la categoría");
-                model.addAttribute("tienda", tienda);
-                model.addAttribute("categorias", CategoriaProducto.values());
-                model.addAttribute("unidadesMedida", Arrays.asList(
-                        com.example.campolibre.Enum.UnidadMedida.values()
-                ));
-                return "producto/edit";
-            }
-
-            productoService.actualizarProducto(productoDTO.getId_producto(), productoDTO, imagen);
+            productoService.actualizarProducto(productoDTO.getId_producto(), productoDTO, null);
             redirectAttributes.addFlashAttribute("mensaje", "Producto actualizado exitosamente.");
 
         } catch (Exception e) {
-            System.err.println("✗ Error al actualizar producto: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("error", "Error al actualizar: " + e.getMessage());
-            return "redirect:/productos/editar/" + productoDTO.getId_producto();
+            System.err.println("❌ Error al actualizar producto: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error al actualizar producto: " + e.getMessage());
         }
 
-        return "redirect:/productos/detalle/" + productoDTO.getId_producto();
+        return "redirect:/productos/tienda/" + productoDTO.getId_tienda();
     }
 
-    // Eliminar producto (PROVEEDOR/ADMIN)
+    // ========== ELIMINAR PRODUCTO (PROVEEDOR/ADMIN) ==========
+
     @GetMapping("/eliminar/{id}")
     public String eliminarProducto(@PathVariable Long id,
                                    Authentication authentication,
@@ -255,134 +307,22 @@ public class ProductoController {
             return "redirect:/productos/tienda/" + idTienda;
 
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al eliminar: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al eliminar producto: " + e.getMessage());
             return "redirect:/productos";
         }
     }
 
-    // ==================== GESTIÓN DE STOCK ====================
+    // ========== MÉTODO AUXILIAR ==========
 
-    /**
-     * Aumentar stock manualmente
-     */
-    @PostMapping("/aumentar-stock/{id}")
-    public String aumentarStock(@PathVariable Long id,
-                                @RequestParam Integer cantidad,
-                                Authentication authentication,
-                                RedirectAttributes redirectAttributes) {
-        try {
-            ProductoDTO producto = productoService.obtenerProductoPorId(id);
-            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(producto.getId_tienda());
-
-            if (!tienePuedeGestionarProductos(authentication, tienda)) {
-                redirectAttributes.addFlashAttribute("error", "No tienes permisos para modificar el stock.");
-                return "redirect:/productos/detalle/" + id;
-            }
-
-            if (cantidad == null || cantidad <= 0) {
-                redirectAttributes.addFlashAttribute("error", "La cantidad debe ser mayor a cero.");
-                return "redirect:/productos/detalle/" + id;
-            }
-
-            productoService.aumentarStockManual(id, cantidad);
-            redirectAttributes.addFlashAttribute("mensaje",
-                    String.format("Stock aumentado en %d unidades exitosamente.", cantidad));
-
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al aumentar stock: " + e.getMessage());
-        }
-
-        return "redirect:/productos/detalle/" + id;
-    }
-
-    /**
-     * Disminuir stock manualmente
-     */
-    @PostMapping("/disminuir-stock/{id}")
-    public String disminuirStock(@PathVariable Long id,
-                                 @RequestParam Integer cantidad,
-                                 Authentication authentication,
-                                 RedirectAttributes redirectAttributes) {
-        try {
-            ProductoDTO producto = productoService.obtenerProductoPorId(id);
-            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(producto.getId_tienda());
-
-            if (!tienePuedeGestionarProductos(authentication, tienda)) {
-                redirectAttributes.addFlashAttribute("error", "No tienes permisos para modificar el stock.");
-                return "redirect:/productos/detalle/" + id;
-            }
-
-            if (cantidad == null || cantidad <= 0) {
-                redirectAttributes.addFlashAttribute("error", "La cantidad debe ser mayor a cero.");
-                return "redirect:/productos/detalle/" + id;
-            }
-
-            productoService.disminuirStockManual(id, cantidad);
-            redirectAttributes.addFlashAttribute("mensaje",
-                    String.format("Stock disminuido en %d unidades exitosamente.", cantidad));
-
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error al disminuir stock: " + e.getMessage());
-        }
-
-        return "redirect:/productos/detalle/" + id;
-    }
-
-    /**
-     * Ver productos con stock bajo
-     */
-    @GetMapping("/stock-bajo")
-    public String verProductosConStockBajo(@RequestParam(defaultValue = "10") Integer umbral,
-                                           Authentication authentication,
-                                           Model model,
-                                           RedirectAttributes redirectAttributes) {
-        UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(authentication.getName());
-
-        if (!"PROVEEDOR".equals(usuario.getRolSeleccionado().name()) && !"ADMINISTRADOR".equals(usuario.getRolSeleccionado().name())) {
-            redirectAttributes.addFlashAttribute("error", "No tienes permisos para acceder a esta sección.");
-            return "redirect:/productos";
-        }
-
-        List<ProductoDTO> productos = productoService.obtenerProductosConStockBajo(umbral);
-
-        // Si es PROVEEDOR, filtrar solo sus productos
-        if ("PROVEEDOR".equals(usuario.getRolSeleccionado().name())) {
-            productos = productos.stream()
-                    .filter(p -> {
-                        TiendaDTO tienda = tiendaService.obtenerTiendaPorId(p.getId_tienda());
-                        return tienda.getId_usuario().equals(usuario.getId_usuario());
-                    })
-                    .toList();
-        }
-
-        model.addAttribute("productos", productos);
-        model.addAttribute("umbral", umbral);
-        return "producto/low-stock";
-    }
-
-    /**
-     * API endpoint para obtener subcategorías por categoría (AJAX)
-     */
-    @GetMapping("/subcategorias/{categoria}")
-    @ResponseBody
-    public List<SubcategoriaProducto> obtenerSubcategorias(@PathVariable CategoriaProducto categoria) {
-        return SubcategoriaProducto.getSubcategoriasPorCategoria(categoria);
-    }
-
-    // Método auxiliar para verificar permisos
     private boolean tienePuedeGestionarProductos(Authentication authentication, TiendaDTO tienda) {
-        if (authentication == null) return false;
-
-        UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(authentication.getName());
-
-        // ADMIN puede gestionar todo
-        if ("ADMINISTRADOR".equals(usuario.getRolSeleccionado().name())) {
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
             return true;
         }
 
-        // PROVEEDOR solo puede gestionar sus propias tiendas
-        if ("PROVEEDOR".equals(usuario.getRolSeleccionado().name())) {
-            return usuario.getId_usuario().equals(tienda.getId_usuario());
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+            return tienda.getId_usuario().equals(usuario.getId_usuario());
         }
 
         return false;

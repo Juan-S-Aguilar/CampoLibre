@@ -1,5 +1,6 @@
 package com.example.campolibre.Entity;
 
+import com.example.campolibre.Enum.CategoriaTienda;
 import com.example.campolibre.Enum.EstadoTienda;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -20,6 +21,10 @@ public class Tienda {
 
     @Column(name = "descripcion", nullable = false, length = 500)
     private String descripcion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "categoria_principal", nullable = false)
+    private CategoriaTienda categoriaPrincipal;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)

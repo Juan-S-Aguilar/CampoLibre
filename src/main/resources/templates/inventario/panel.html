@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Panel de Inventario - Campo Libre</title>
+</head>
+<body>
+
+<main th:fragment="content">
+    <div class="list-container">
+
+        <!-- Header del panel -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-box-seam"></i>
+                Panel de Inventario
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Tienda
+                </a>
+                <a th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuevo Producto
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <span th:text="${mensaje}">Operación exitosa</span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error en la operación</span>
+        </div>
+
+        <!-- Información de la tienda -->
+        <div style="padding: 1.5rem; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-shop" style="font-size: 2.5rem;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="color: white; margin: 0 0 0.5rem 0;" th:text="${tienda.nombre}">Mi Tienda</h3>
+                    <p style="margin: 0; opacity: 0.9; font-size: 1rem;">
+                        <i class="bi bi-grid"></i> Categoría:
+                        <strong th:text="${tienda.categoriaPrincipal.displayName}">Categoría</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== RESUMEN DE INVENTARIO ========== -->
+        <div class="dashboard-section" style="margin-bottom: 2rem;">
+            <div class="dashboard-section-header">
+                <h3>
+                    <i class="bi bi-bar-chart"></i>
+                    Resumen de Inventario
+                </h3>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <!-- Total Productos -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <h4>Total Productos</h4>
+                        <div class="stat-card-icon primary">
+                            <i class="bi bi-basket"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <div class="stat-number" th:text="${resumen.totalProductos}">0</div>
+                        <div class="stat-label">Productos registrados</div>
+                    </div>
+                </div>
+
+                <!-- Productos Activos -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <h4>Activos</h4>
+                        <div class="stat-card-icon success">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <div class="stat-number" th:text="${resumen.productosActivos}">0</div>
+                        <div class="stat-label">Con stock disponible</div>
+                    </div>
+                </div>
+
+                <!-- Stock Bajo -->
+                <div class="stat-card"
+                     th:classappend="${resumen.productosConStockBajo > 0 ? 'alert-warning' : ''}">
+                    <div class="stat-card-header">
+                        <h4>Stock Bajo</h4>
+                        <div class="stat-card-icon warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <div class="stat-number" th:text="${resumen.productosConStockBajo}">0</div>
+                        <div class="stat-label">Requieren atención</div>
+                    </div>
+                </div>
+
+                <!-- Sin Stock -->
+                <div class="stat-card"
+                     th:classappend="${resumen.productosSinStock > 0 ? 'alert-danger' : ''}">
+                    <div class="stat-card-header">
+                        <h4>Sin Stock</h4>
+                        <div class="stat-card-icon danger">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <div class="stat-number" th:text="${resumen.productosSinStock}">0</div>
+                        <div class="stat-label">Productos agotados</div>
+                    </div>
+                </div>
+
+                <!-- Valor Total -->
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <h4>Valor Total</h4>
+                        <div class="stat-card-icon info">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <div class="stat-number" style="font-size: 1.5rem;">
+                            $<span th:text="${#numbers.formatDecimal(resumen.valorTotalInventario, 0, 'COMMA', 0, 'POINT')}">0</span>
+                        </div>
+                        <div class="stat-label">Inventario total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== FILTROS RÁPIDOS ========== -->
+        <div class="list-filters" style="margin-bottom: 2rem;">
+            <div class="filter-group" style="flex: 1;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">
+                    <i class="bi bi-funnel"></i> Filtrar por:
+                </label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}"
+                       class="btn"
+                       th:classappend="${filtroActual == null ? 'btn-primary' : 'btn-outline-secondary'}">
+                        <i class="bi bi-list"></i> Todos
+                    </a>
+                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='activos')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'activos' ? 'btn-success' : 'btn-outline-success'}">
+                        <i class="bi bi-check-circle"></i> Activos
+                    </a>
+                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='stock_bajo')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'stock_bajo' ? 'btn-warning' : 'btn-outline-warning'}">
+                        <i class="bi bi-exclamation-triangle"></i> Stock Bajo
+                        <span th:if="${resumen.productosConStockBajo > 0}"
+                              class="badge"
+                              style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
+                              th:text="${resumen.productosConStockBajo}">0</span>
+                    </a>
+                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='sin_stock')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'sin_stock' ? 'btn-danger' : 'btn-outline-danger'}">
+                        <i class="bi bi-x-circle"></i> Sin Stock
+                        <span th:if="${resumen.productosSinStock > 0}"
+                              class="badge"
+                              style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
+                              th:text="${resumen.productosSinStock}">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Título del filtro actual -->
+        <div style="margin-bottom: 1rem;">
+            <h4 style="color: var(--color-text-dark);">
+                <i class="bi bi-filter"></i>
+                <span th:text="${tituloFiltro}">Todos los productos</span>
+            </h4>
+        </div>
+
+        <!-- ========== TABLA DE PRODUCTOS ========== -->
+        <div class="table-responsive">
+            <table class="data-table" id="inventarioTable">
+                <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Subcategoría</th>
+                    <th>Precio</th>
+                    <th style="text-align: center;">Stock Actual</th>
+                    <th style="text-align: center;">Stock Mínimo</th>
+                    <th style="text-align: center;">Estado</th>
+                    <th style="text-align: center;">Acciones Rápidas</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="producto : ${productos}">
+                    <!-- Producto -->
+                    <td data-label="Producto">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <!-- Imagen -->
+                            <div style="flex-shrink: 0;">
+                                <img th:if="${producto.imagen_producto != null}"
+                                     th:src="@{${producto.imagen_producto}}"
+                                     alt="Producto"
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; box-shadow: var(--shadow-sm);">
+                                <div th:if="${producto.imagen_producto == null}"
+                                     style="width: 50px; height: 50px; background: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color);">
+                                    <i class="bi bi-basket" style="color: var(--color-primary);"></i>
+                                </div>
+                            </div>
+                            <!-- Info -->
+                            <div>
+                                <strong th:text="${producto.nombre}">Producto</strong>
+                                <br>
+                                <small style="color: var(--color-text-light);">
+                                    <span th:text="${producto.unidadMedida.displayName}">Unidad</span>
+                                </small>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Subcategoría -->
+                    <td data-label="Subcategoría">
+                        <span class="badge badge-primary"
+                              th:text="${producto.subcategoria.displayName}">
+                            Subcategoría
+                        </span>
+                    </td>
+
+                    <!-- Precio -->
+                    <td data-label="Precio">
+                        <strong style="color: var(--color-primary);">
+                            $<span th:text="${#numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}">0</span>
+                        </strong>
+                    </td>
+
+                    <!-- Stock Actual -->
+                    <td data-label="Stock Actual" style="text-align: center;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--color-bg-light); border-radius: 8px; font-weight: 600; font-size: 1.2rem;">
+                            <span th:text="${producto.stock}">0</span>
+                        </div>
+                    </td>
+
+                    <!-- Stock Mínimo -->
+                    <td data-label="Stock Mínimo" style="text-align: center;">
+                        <span style="color: var(--color-text-light); font-size: 0.95rem;"
+                              th:text="${producto.stockMinimo}">5</span>
+                    </td>
+
+                    <!-- Estado -->
+                    <td data-label="Estado" style="text-align: center;">
+                        <span class="badge badge-success"
+                              th:if="${producto.stock > producto.stockMinimo}">
+                            <i class="bi bi-check-circle"></i> Disponible
+                        </span>
+                        <span class="badge badge-warning"
+                              th:if="${producto.tieneStockBajo != null and producto.tieneStockBajo}">
+                            <i class="bi bi-exclamation-triangle"></i> Stock Bajo
+                        </span>
+                        <span class="badge badge-danger"
+                              th:if="${producto.sinStock != null and producto.sinStock}">
+                            <i class="bi bi-x-circle"></i> Sin Stock
+                        </span>
+                    </td>
+
+                    <!-- Acciones Rápidas -->
+                    <td data-label="Acciones" style="text-align: center;">
+                        <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                            <!-- Botón Incrementar -->
+                            <button type="button"
+                                    class="btn btn-sm btn-success"
+                                    onclick="mostrarModalStock([[${producto.id_producto}]], 'incrementar', '[[${producto.nombre}]]', [[${producto.stock}]])"
+                                    title="Incrementar stock">
+                                <i class="bi bi-plus-circle"></i> +
+                            </button>
+
+                            <!-- Botón Reducir -->
+                            <button type="button"
+                                    class="btn btn-sm btn-warning"
+                                    th:disabled="${producto.stock == 0}"
+                                    onclick="mostrarModalStock([[${producto.id_producto}]], 'reducir', '[[${producto.nombre}]]', [[${producto.stock}]])"
+                                    title="Reducir stock">
+                                <i class="bi bi-dash-circle"></i> -
+                            </button>
+
+                            <!-- Botón Editar -->
+                            <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
+                               class="btn btn-sm btn-primary"
+                               title="Editar producto">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+
+                            <!-- Botón Reactivar (solo si sin stock) -->
+                            <button type="button"
+                                    th:if="${producto.sinStock != null and producto.sinStock}"
+                                    class="btn btn-sm btn-info"
+                                    onclick="mostrarModalReactivar([[${producto.id_producto}]], '[[${producto.nombre}]]')"
+                                    title="Reactivar producto">
+                                <i class="bi bi-arrow-clockwise"></i> Reactivar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío -->
+        <div th:if="${productos.isEmpty()}" class="empty-list">
+            <i class="bi bi-box-seam"></i>
+            <h3>No hay productos en esta categoría</h3>
+            <p th:text="${tituloFiltro}">Filtro activo</p>
+            <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Ver Todos los Productos
+            </a>
+        </div>
+    </div>
+
+    <!-- ========== MODAL PARA GESTIÓN DE STOCK ========== -->
+    <div class="modal fade" id="modalStock" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalStockTitle">Gestionar Stock</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Producto:</strong> <span id="modalProductoNombre"></span></p>
+                    <p><strong>Stock actual:</strong> <span id="modalStockActual"></span></p>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="cantidadStock">Cantidad:</label>
+                        <input type="number"
+                               id="cantidadStock"
+                               class="form-control"
+                               min="1"
+                               value="1"
+                               required>
+                    </div>
+
+                    <input type="hidden" id="modalProductoId">
+                    <input type="hidden" id="modalAccion">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="ejecutarAccionStock()">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL PARA REACTIVAR PRODUCTO ========== -->
+    <div class="modal fade" id="modalReactivar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reactivar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Producto:</strong> <span id="modalReactivarNombre"></span></p>
+                    <p class="text-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Este producto está sin stock. Ingresa la cantidad para reactivarlo.
+                    </p>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="cantidadReactivar">Nuevo Stock:</label>
+                        <input type="number"
+                               id="cantidadReactivar"
+                               class="form-control"
+                               min="1"
+                               value="10"
+                               required>
+                    </div>
+
+                    <input type="hidden" id="modalReactivarId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="ejecutarReactivar()">
+                        <i class="bi bi-arrow-clockwise"></i> Reactivar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script>
+        // Bootstrap modal instances
+        let modalStock, modalReactivar;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            modalStock = new bootstrap.Modal(document.getElementById('modalStock'));
+            modalReactivar = new bootstrap.Modal(document.getElementById('modalReactivar'));
+        });
+
+        // Mostrar modal para incrementar/reducir stock
+        function mostrarModalStock(idProducto, accion, nombreProducto, stockActual) {
+            document.getElementById('modalProductoId').value = idProducto;
+            document.getElementById('modalAccion').value = accion;
+            document.getElementById('modalProductoNombre').textContent = nombreProducto;
+            document.getElementById('modalStockActual').textContent = stockActual;
+
+            const titulo = accion === 'incrementar' ? 'Incrementar Stock' : 'Reducir Stock';
+            document.getElementById('modalStockTitle').textContent = titulo;
+
+            document.getElementById('cantidadStock').value = 1;
+
+            modalStock.show();
+        }
+
+        // Ejecutar acción de stock (incrementar/reducir)
+        function ejecutarAccionStock() {
+            const idProducto = document.getElementById('modalProductoId').value;
+            const accion = document.getElementById('modalAccion').value;
+            const cantidad = document.getElementById('cantidadStock').value;
+
+            if (!cantidad || cantidad < 1) {
+                alert('Por favor ingresa una cantidad válida');
+                return;
+            }
+
+            const url = `/inventario/${accion}/${idProducto}`;
+            const formData = new FormData();
+            formData.append('cantidad', cantidad);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al procesar la solicitud');
+                console.error('Error:', error);
+            });
+
+            modalStock.hide();
+        }
+
+        // Mostrar modal para reactivar producto
+        function mostrarModalReactivar(idProducto, nombreProducto) {
+            document.getElementById('modalReactivarId').value = idProducto;
+            document.getElementById('modalReactivarNombre').textContent = nombreProducto;
+            document.getElementById('cantidadReactivar').value = 10;
+
+            modalReactivar.show();
+        }
+
+        // Ejecutar reactivación
+        function ejecutarReactivar() {
+            const idProducto = document.getElementById('modalReactivarId').value;
+            const cantidad = document.getElementById('cantidadReactivar').value;
+
+            if (!cantidad || cantidad < 1) {
+                alert('Por favor ingresa una cantidad válida');
+                return;
+            }
+
+            const url = `/inventario/reactivar/${idProducto}`;
+            const formData = new FormData();
+            formData.append('nuevoStock', cantidad);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al procesar la solicitud');
+                console.error('Error:', error);
+            });
+
+            modalReactivar.hide();
+        }
+    </script>
+</main>
+
+</body>
+</html>

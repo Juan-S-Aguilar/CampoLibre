@@ -24,49 +24,6 @@
             <span th:text="${error}">Error en el formulario</span>
         </div>
 
-        <!-- ⭐ NUEVO: Advertencia sobre nombres prohibidos -->
-        <div style="margin-bottom: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #fff3cd 0%, #fffaeb 100%); border-left: 5px solid #ffc107; border-radius: 8px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);">
-            <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                <i class="bi bi-info-circle" style="font-size: 2rem; color: #856404; flex-shrink: 0;"></i>
-                <div style="flex: 1;">
-                    <h4 style="color: #856404; margin: 0 0 0.75rem 0; font-size: 1.1rem;">
-                        <strong>⚠️ Importante: Nombres de Tienda Permitidos</strong>
-                    </h4>
-                    <p style="margin: 0 0 1rem 0; color: #856404; line-height: 1.6;">
-                        Campo Libre es un marketplace exclusivo para <strong>productos agrícolas alimenticios</strong>.
-                        Por favor, asegúrate de que el nombre de tu tienda NO contenga referencias a:
-                    </p>
-
-                    <!-- Lista de NO permitidos -->
-                    <div style="margin-bottom: 1rem; padding: 1rem; background-color: rgba(220, 53, 69, 0.08); border-radius: 6px; border: 1px solid rgba(220, 53, 69, 0.2);">
-                        <h5 style="color: #721c24; margin: 0 0 0.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="bi bi-x-circle-fill"></i>
-                            <strong>NO PERMITIDOS:</strong>
-                        </h5>
-                        <ul style="margin: 0; padding-left: 1.5rem; color: #721c24; font-size: 0.9rem; line-height: 1.8;">
-                            <li><strong>Carnes:</strong> carne, chorizo, jamón, embutidos, frigorífico, carnicería</li>
-                            <li><strong>Animales:</strong> ganado, crianza, aves, avícola, pecuario, veterinaria</li>
-                            <li><strong>Maquinaria:</strong> tractor, cosechadora, arado, motor, implementos</li>
-                            <li><strong>Herramientas:</strong> pala, azadón, machete, fumigadora, ferretería</li>
-                        </ul>
-                    </div>
-
-                    <!-- Lista de SÍ permitidos -->
-                    <div style="padding: 1rem; background-color: rgba(40, 167, 69, 0.08); border-radius: 6px; border: 1px solid rgba(40, 167, 69, 0.2);">
-                        <h5 style="color: #155724; margin: 0 0 0.5rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <strong>SÍ PERMITIDOS (Ejemplos):</strong>
-                        </h5>
-                        <ul style="margin: 0; padding-left: 1.5rem; color: #155724; font-size: 0.9rem; line-height: 1.8;">
-                            <li>Frutas del Valle, Lácteos La Campiña, Verduras Frescas</li>
-                            <li>Granos y Cereales Don Juan, Mermeladas Artesanales</li>
-                            <li>Mieles del Bosque, Productos Orgánicos del Campo</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Formulario -->
         <form th:action="@{/tiendas/crear}" th:object="${tienda}" method="post" enctype="multipart/form-data">
 
@@ -88,12 +45,12 @@
                            th:field="*{nombre}"
                            class="form-control"
                            id="nombre"
-                           placeholder="Ej: Lácteos del Valle, Frutas Frescas"
+                           placeholder="Ej: Finca El Paraíso"
                            maxlength="100"
                            required>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        El nombre debe reflejar productos agrícolas alimenticios. Evita palabras relacionadas con carnes, animales, maquinaria o herramientas.
+                        Elige un nombre descriptivo y atractivo (máximo 100 caracteres)
                     </small>
                 </div>
 
@@ -108,12 +65,108 @@
                               class="form-control"
                               id="descripcion"
                               rows="4"
-                              placeholder="Describe los productos que ofreces, tu historia, qué te hace especial..."
+                              placeholder="Describe tu tienda y los productos que ofreces..."
                               maxlength="500"
                               required></textarea>
                     <small class="form-text">
+                        <i class="bi bi-text-paragraph"></i>
+                        Cuéntanos sobre tu tienda, productos y lo que te hace especial
+                        <span id="charCount">0</span>/500
+                    </small>
+                </div>
+
+                <!-- ✨ CATEGORÍA PRINCIPAL (NUEVO) -->
+                <div class="form-group">
+                    <label for="categoriaPrincipal">
+                        <i class="bi bi-grid"></i>
+                        Categoría Principal
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{categoriaPrincipal}"
+                            class="form-select"
+                            id="categoriaPrincipal"
+                            required>
+                        <option value="">Seleccione una categoría...</option>
+                        <option th:each="categoria : ${categoriasTienda}"
+                                th:value="${categoria}"
+                                th:text="${categoria.displayName}">
+                        </option>
+                    </select>
+                    <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Máximo 500 caracteres. Quedan <strong><span id="charCount">0</span></strong> caracteres.
+                        Esta categoría determinará qué tipos de productos podrás vender
+                    </small>
+
+                    <!-- Ayuda contextual por categoría -->
+                    <div class="alert alert-info" style="margin-top: 1rem; font-size: 0.9rem;">
+                        <strong>💡 Ayuda:</strong>
+                        <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                            <li><strong>Frutas y Verduras:</strong> Para productos frescos del campo</li>
+                            <li><strong>Procesados Artesanales:</strong> Para mermeladas, quesos, panes, etc.</li>
+                            <li><strong>Granos y Semillas:</strong> Para cereales, legumbres, harinas</li>
+                            <li><strong>Hierbas y Especias:</strong> Para aromáticas, condimentos, tés</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Información de Contacto -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-telephone"></i>
+                    Información de Contacto
+                </h3>
+
+                <!-- Correo -->
+                <div class="form-group">
+                    <label for="correo_tienda">
+                        <i class="bi bi-envelope"></i>
+                        Correo Electrónico
+                    </label>
+                    <input type="email"
+                           th:field="*{correo_tienda}"
+                           class="form-control"
+                           id="correo_tienda"
+                           placeholder="correo@ejemplo.com">
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Correo donde los clientes pueden contactarte (opcional)
+                    </small>
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group">
+                    <label for="telefono_tienda">
+                        <i class="bi bi-phone"></i>
+                        Teléfono
+                    </label>
+                    <input type="tel"
+                           th:field="*{telefono_tienda}"
+                           class="form-control"
+                           id="telefono_tienda"
+                           placeholder="3001234567"
+                           pattern="[0-9]{10}">
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Teléfono de contacto (10 dígitos sin espacios)
+                    </small>
+                </div>
+
+                <!-- Ubicación -->
+                <div class="form-group">
+                    <label for="ubicacion">
+                        <i class="bi bi-geo-alt"></i>
+                        Ubicación
+                    </label>
+                    <input type="text"
+                           th:field="*{ubicacion}"
+                           class="form-control"
+                           id="ubicacion"
+                           placeholder="Ej: Vereda El Silencio, Medellín"
+                           maxlength="200">
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Dirección o ubicación de tu tienda
                     </small>
                 </div>
             </div>
@@ -125,10 +178,9 @@
                     Imagen de la Tienda
                 </h3>
 
-                <!-- Imagen -->
                 <div class="form-group">
                     <label>
-                        <i class="bi bi-camera"></i>
+                        <i class="bi bi-card-image"></i>
                         Foto de Portada
                     </label>
                     <div class="file-input-wrapper">
@@ -139,107 +191,34 @@
                                onchange="previewImage(event)">
                         <label for="imagen" class="file-input-label">
                             <i class="bi bi-cloud-upload"></i>
-                            <span>Seleccionar imagen</span>
+                            <span id="fileName">Haz clic para seleccionar una imagen</span>
                         </label>
                     </div>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Opcional. Tamaño máximo: 10MB. Usa una foto representativa de tu tienda o productos.
-                    </small>
-                    <div id="imagePreview" class="file-preview" style="display: none;">
-                        <img id="preview" src="" alt="Vista previa">
-                        <span class="file-name" id="fileName"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección: Ubicación -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-geo-alt"></i>
-                    Ubicación
-                </h3>
-
-                <!-- Ubicación -->
-                <div class="form-group">
-                    <label for="ubicacion">
-                        <i class="bi bi-pin-map"></i>
-                        Dirección o Ubicación
-                        <span class="required">*</span>
-                    </label>
-                    <input type="text"
-                           th:field="*{ubicacion}"
-                           class="form-control"
-                           id="ubicacion"
-                           placeholder="Ej: Vereda El Paraíso, Zipaquirá, Cundinamarca"
-                           maxlength="200"
-                           required>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Indica dónde se encuentra tu producción o punto de venta
+                        Formatos: JPG, PNG, GIF. Tamaño máximo: 10MB. Usa una imagen representativa de tu tienda.
                     </small>
                 </div>
-            </div>
 
-            <!-- Sección: Información de Contacto -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-telephone"></i>
-                    Información de Contacto
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Correo de la Tienda -->
-                    <div class="form-group">
-                        <label for="correo_tienda">
-                            <i class="bi bi-envelope"></i>
-                            Correo Electrónico
-                            <span class="required">*</span>
-                        </label>
-                        <input type="email"
-                               th:field="*{correo_tienda}"
-                               class="form-control"
-                               id="correo_tienda"
-                               placeholder="contacto@mitienda.com"
-                               maxlength="100"
-                               required>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Los clientes podrán contactarte a este correo
-                        </small>
-                    </div>
-
-                    <!-- Teléfono de la Tienda -->
-                    <div class="form-group">
-                        <label for="telefono_tienda">
-                            <i class="bi bi-phone"></i>
-                            Teléfono
-                            <span class="required">*</span>
-                        </label>
-                        <input type="tel"
-                               th:field="*{telefono_tienda}"
-                               class="form-control"
-                               id="telefono_tienda"
-                               placeholder="3001234567"
-                               maxlength="20"
-                               required>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Número de contacto para consultas
-                        </small>
-                    </div>
+                <!-- Preview de imagen -->
+                <div id="imagePreview" style="display: none; margin-top: 1rem;">
+                    <p style="font-weight: 500; color: var(--color-text-dark); margin-bottom: 0.5rem;">
+                        <i class="bi bi-eye"></i> Vista previa:
+                    </p>
+                    <img id="preview"
+                         src="#"
+                         alt="Preview"
+                         style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: var(--shadow-md);">
                 </div>
             </div>
 
-            <!-- Botones de Acción -->
+            <!-- Botones de acción -->
             <div class="form-actions">
                 <a th:href="@{/tiendas}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i>
-                    Cancelar
+                    <i class="bi bi-x-circle"></i> Cancelar
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i>
-                    Crear Tienda
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Crear Tienda
                 </button>
             </div>
         </form>
@@ -247,15 +226,18 @@
 
     <!-- Scripts -->
     <script>
-        // Inicializar contador de caracteres
+        // Contador de caracteres para descripción
         window.addEventListener('DOMContentLoaded', function() {
             const descripcion = document.getElementById('descripcion');
             const charCount = document.getElementById('charCount');
-            charCount.textContent = descripcion.value.length;
 
-            descripcion.addEventListener('input', function() {
-                charCount.textContent = this.value.length;
-            });
+            if (descripcion && charCount) {
+                charCount.textContent = descripcion.value.length;
+
+                descripcion.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                });
+            }
         });
 
         // Preview de imagen

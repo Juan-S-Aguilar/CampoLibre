@@ -1,104 +1,101 @@
 package com.example.campolibre.Entity;
 
-import com.example.campolibre.Enum.CategoriaProducto;
 import com.example.campolibre.Enum.SubcategoriaProducto;
 import com.example.campolibre.Enum.UnidadMedida;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "productos")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Producto {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_producto", nullable = false, unique = true)
     private Long id_producto;
 
-    @Column(nullable = false, length = 200)
+    @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "descripcion", nullable = false, length = 500)
     private String descripcion;
 
-    @Column(nullable = false)
+    @Column(name = "precio", nullable = false)
     private Double precio;
 
-    @Column(nullable = false)
+    @Column(name = "stock", nullable = false)
     private Integer stock;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private CategoriaProducto categoria;
+    @Column(name = "stock_minimo", nullable = false)
+    private Integer stockMinimo = 5;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 100)
+    @Column(name = "subcategoria", nullable = false)
     private SubcategoriaProducto subcategoria;
 
-    @Column(nullable = false)
-    private Double cantidad; // Ejemplo: 1.5, 5, 10, etc.
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(name = "unidad_medida", nullable = false)
     private UnidadMedida unidadMedida;
 
-    @Column(length = 500)
-    private String imagen_producto;
-
-    @Column(nullable = false, length = 20)
-    private String estado = "ACTIVO"; // ACTIVO, INACTIVO, ELIMINADO
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_tienda", nullable = false)
     private Tienda tienda;
 
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "imagen_producto", length = 255)
+    private String imagen_producto;
+
+    @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fecha_creacion;
 
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private LocalDateTime fecha_actualizacion;
+    @Column(name = "estado", nullable = false)
+    private String estado = "ACTIVO";
 
-    // Métodos de utilidad para obtener el id de la tienda
-    @Transient
-    public Long getId_tienda() {
-        return tienda != null ? tienda.getId_tienda() : null;
+    @PrePersist
+    protected void onCreate() {
+        fecha_creacion = LocalDateTime.now();
+    }
+
+    // ========== MÉTODOS HELPER PARA INVENTARIO ==========
+
+    /**
+     * Verifica si el producto tiene stock bajo (por debajo del mínimo)
+     */
+    public boolean tieneStockBajo() {
+        return stock > 0 && stock <= stockMinimo;
     }
 
     /**
-     * Devuelve la cantidad con su unidad de medida formateada
-     * Ejemplo: "1.5 kg", "10 unidades"
+     * Verifica si el producto está sin stock
      */
-    @Transient
-    public String getCantidadFormateada() {
-        if (cantidad == null || unidadMedida == null) {
-            return "N/A";
+    public boolean sinStock() {
+        return stock == 0;
+    }
+
+    /**
+     * Desactiva el producto automáticamente por falta de stock
+     */
+    public void desactivarPorSinStock() {
+        if (stock == 0) {
+            this.estado = "SIN_STOCK";
         }
-        return unidadMedida.formatearConCantidad(cantidad);
     }
 
     /**
-     * Verifica si el producto tiene stock disponible
+     * Reactiva el producto con nuevo stock
      */
-    @Transient
-    public boolean tieneStock() {
-        return stock != null && stock > 0;
+    public void reactivarConStock(Integer nuevoStock) {
+        if (nuevoStock > 0) {
+            this.stock = nuevoStock;
+            this.estado = "ACTIVO";
+        }
     }
 
     /**
      * Verifica si el producto está activo
      */
-    @Transient
     public boolean estaActivo() {
-        return "ACTIVO".equals(estado);
+        return "ACTIVO".equals(this.estado);
     }
 }

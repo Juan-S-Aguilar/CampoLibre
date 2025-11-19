@@ -1,5 +1,6 @@
 package com.example.campolibre.DTO;
 
+import com.example.campolibre.Enum.CategoriaTienda;
 import com.example.campolibre.Enum.EstadoTienda;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ public class TiendaDTO {
     private Long id_tienda;
     private String nombre;
     private String descripcion;
+    private CategoriaTienda categoriaPrincipal;
     private EstadoTienda estado = EstadoTienda.ACTIVA;
     private String correo_tienda;
     private String telefono_tienda;

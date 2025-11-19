@@ -19,14 +19,12 @@
                 <span th:if="${tipoLista == 'activas'}">Tiendas Activas</span>
             </h2>
             <div class="list-header-actions">
-                <!-- Solo PROVEEDOR puede crear tiendas -->
                 <a th:href="@{/tiendas/nueva}"
                    class="btn btn-primary"
                    sec:authorize="hasAuthority('PROVEEDOR')">
                     <i class="bi bi-plus-circle"></i> Nueva Tienda
                 </a>
 
-                <!-- Toggle de vistas para PROVEEDOR -->
                 <div class="view-toggle" sec:authorize="hasAuthority('PROVEEDOR')">
                     <button class="view-toggle-btn"
                             th:classappend="${tipoLista == 'todas' ? 'active' : ''}"
@@ -63,6 +61,18 @@
                 <i class="bi bi-search"></i>
             </div>
 
+            <!-- ✅ FILTRO POR CATEGORÍA (ACTUALIZADO) -->
+            <div class="filter-group">
+                <label for="filterCategoria">Categoría</label>
+                <select id="filterCategoria" class="form-select" onchange="filterTable()">
+                    <option value="">Todas</option>
+                    <option value="FRUTAS_VERDURAS">🍎 Frutas y Verduras</option>
+                    <option value="PROCESADOS_ARTESANALES">🧀 Procesados Artesanales</option>
+                    <option value="GRANOS_SEMILLAS">🌾 Granos y Semillas</option>
+                    <option value="HIERBAS_ESPECIAS">🌿 Hierbas y Especias</option>
+                </select>
+            </div>
+
             <div class="filter-group">
                 <label for="filterEstado">Estado</label>
                 <select id="filterEstado" class="form-select" onchange="filterTable()">
@@ -77,7 +87,7 @@
         <!-- Contador de resultados -->
         <div class="results-count">
             <i class="bi bi-info-circle"></i>
-            Mostrando <strong th:text="${tiendas.size()}">0</strong> tienda(s)
+            Mostrando <strong id="countVisible" th:text="${tiendas.size()}">0</strong> de <strong th:text="${tiendas.size()}">0</strong> tienda(s)
         </div>
 
         <!-- Tabla de tiendas -->
@@ -87,6 +97,7 @@
                 <tr>
                     <th>Imagen</th>
                     <th class="sortable-header" onclick="sortTable(1)">Nombre</th>
+                    <th>Categoría</th>
                     <th>Ubicación</th>
                     <th>Contacto</th>
                     <th sec:authorize="hasAuthority('ADMINISTRADOR')">Proveedor</th>
@@ -96,7 +107,6 @@
                 </tr>
                 </thead>
                 <tbody>
-                <!-- Si hay tiendas -->
                 <tr th:each="tienda : ${tiendas}">
                     <!-- Imagen -->
                     <td data-label="Imagen">
@@ -121,6 +131,19 @@
                         </small>
                     </td>
 
+                    <!-- ✅ CATEGORÍA (ACTUALIZADO) -->
+                    <td data-label="Categoría">
+                        <span class="badge"
+                              style="padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;"
+                              th:style="${tienda.categoriaPrincipal.name() == 'FRUTAS_VERDURAS' ? 'background-color: #dcfce7; color: #166534;' :
+                                       tienda.categoriaPrincipal.name() == 'PROCESADOS_ARTESANALES' ? 'background-color: #fef3c7; color: #92400e;' :
+                                       tienda.categoriaPrincipal.name() == 'GRANOS_SEMILLAS' ? 'background-color: #dbeafe; color: #1e40af;' :
+                                       'background-color: #e0e7ff; color: #4338ca;'}"
+                              th:text="${tienda.categoriaPrincipal.displayName}">
+                            Categoría
+                        </span>
+                    </td>
+
                     <!-- Ubicación -->
                     <td data-label="Ubicación">
                         <i class="bi bi-geo-alt" style="color: var(--color-danger);"></i>
@@ -130,14 +153,14 @@
                     <!-- Contacto -->
                     <td data-label="Contacto">
                         <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                <span th:if="${tienda.correo_tienda != null}">
-                                    <i class="bi bi-envelope"></i>
-                                    <span th:text="${tienda.correo_tienda}">correo@tienda.com</span>
-                                </span>
+                            <span th:if="${tienda.correo_tienda != null}">
+                                <i class="bi bi-envelope"></i>
+                                <span th:text="${tienda.correo_tienda}">correo@tienda.com</span>
+                            </span>
                             <span th:if="${tienda.telefono_tienda != null}">
-                                    <i class="bi bi-telephone"></i>
-                                    <span th:text="${tienda.telefono_tienda}">3001234567</span>
-                                </span>
+                                <i class="bi bi-telephone"></i>
+                                <span th:text="${tienda.telefono_tienda}">3001234567</span>
+                            </span>
                         </div>
                     </td>
 
@@ -153,120 +176,51 @@
 
                     <!-- Estado -->
                     <td data-label="Estado">
-                            <span class="status-badge active" th:if="${tienda.estado.name() == 'ACTIVA'}">
-                                <i class="bi bi-check-circle"></i> Activa
-                            </span>
+                        <span class="status-badge active" th:if="${tienda.estado.name() == 'ACTIVA'}">
+                            <i class="bi bi-check-circle"></i> Activa
+                        </span>
                         <span class="status-badge pending" th:if="${tienda.estado.name() == 'INACTIVA'}">
-                                <i class="bi bi-pause-circle"></i> Inactiva
-                            </span>
+                            <i class="bi bi-pause-circle"></i> Inactiva
+                        </span>
                         <span class="status-badge inactive" th:if="${tienda.estado.name() == 'ELIMINADA'}">
-                                <i class="bi bi-x-circle"></i> Eliminada
-                            </span>
+                            <i class="bi bi-x-circle"></i> Eliminada
+                        </span>
                     </td>
 
                     <!-- Acciones -->
                     <td data-label="Acciones">
                         <div class="table-actions">
-                            <!-- Ver (todos) -->
                             <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}"
                                class="btn-action btn-view"
                                title="Ver tienda">
                                 <i class="bi bi-eye"></i>
                             </a>
 
-                            <!-- Editar (solo dueño o ADMIN) -->
                             <a th:href="@{/tiendas/editar/{id}(id=${tienda.id_tienda})}"
                                class="btn-action btn-edit"
                                title="Editar tienda"
                                sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <!-- Ver Productos de tienda (todos) -->
+
                             <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
                                class="btn btn-success btn-sm"
-                               title="Ver productos"
-                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                               title="Ver productos">
                                 <i class="bi bi-box-seam"></i>
-                            </a>
-
-                            <!-- Cambiar Estado (solo dueño o ADMIN) -->
-                            <div class="btn-group" sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
-                                <button type="button"
-                                        class="btn-action btn-warning dropdown-toggle"
-                                        data-bs-toggle="dropdown"
-                                        title="Cambiar estado">
-                                    <i class="bi bi-arrow-repeat"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li th:if="${tienda.estado.name() != 'ACTIVA'}">
-                                        <a class="dropdown-item"
-                                           th:href="@{/tiendas/cambiar-estado/{id}(id=${tienda.id_tienda}, nuevoEstado='ACTIVA')}">
-                                            <i class="bi bi-check-circle"></i> Activar
-                                        </a>
-                                    </li>
-                                    <li th:if="${tienda.estado.name() != 'INACTIVA'}">
-                                        <a class="dropdown-item"
-                                           th:href="@{/tiendas/cambiar-estado/{id}(id=${tienda.id_tienda}, nuevoEstado='INACTIVA')}">
-                                            <i class="bi bi-pause-circle"></i> Desactivar
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <!-- Eliminar (solo dueño o ADMIN) -->
-                            <a th:if="${tienda.estado.name() != 'ELIMINADA'}"
-                               th:href="@{/tiendas/eliminar/{id}(id=${tienda.id_tienda})}"
-                               class="btn-action btn-delete"
-                               title="Eliminar tienda"
-                               onclick="return confirm('¿Estás seguro de eliminar esta tienda?')"
-                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
-                                <i class="bi bi-trash"></i>
                             </a>
                         </div>
                     </td>
                 </tr>
+
+                <!-- Si no hay tiendas -->
+                <tr th:if="${tiendas.isEmpty()}">
+                    <td colspan="9" style="text-align: center; padding: 2rem;">
+                        <i class="bi bi-inbox" style="font-size: 3rem; color: var(--color-text-light);"></i>
+                        <p style="color: var(--color-text-light); margin-top: 1rem;">No se encontraron tiendas</p>
+                    </td>
+                </tr>
                 </tbody>
             </table>
-        </div>
-
-        <!-- Estado vacío -->
-        <div th:if="${tiendas.isEmpty()}" class="empty-list">
-            <i class="bi bi-shop"></i>
-            <h3>No hay tiendas registradas</h3>
-            <p th:if="${tipoLista == 'mis_tiendas'}">
-                Crea tu primera tienda y empieza a vender tus productos
-            </p>
-            <p th:if="${tipoLista != 'mis_tiendas'}">
-                Las tiendas registradas aparecerán aquí
-            </p>
-            <a th:href="@{/tiendas/nueva}"
-               class="btn btn-primary"
-               sec:authorize="hasAuthority('PROVEEDOR')">
-                <i class="bi bi-plus-circle"></i> Crear Mi Primera Tienda
-            </a>
-        </div>
-
-        <!-- Paginación (placeholder) -->
-        <div th:if="${!tiendas.isEmpty()}" class="pagination-container">
-            <div class="pagination-info">
-                Mostrando <strong th:text="${tiendas.size()}">10</strong> de
-                <strong th:text="${tiendas.size()}">10</strong> tiendas
-            </div>
-            <ul class="pagination">
-                <li class="pagination-item">
-                    <a href="#" class="pagination-link disabled">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
-                </li>
-                <li class="pagination-item">
-                    <a href="#" class="pagination-link active">1</a>
-                </li>
-                <li class="pagination-item">
-                    <a href="#" class="pagination-link disabled">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                </li>
-            </ul>
         </div>
     </div>
 
@@ -274,27 +228,36 @@
     <script>
         function filterTable() {
             const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterCategoria = document.getElementById('filterCategoria').value;
             const filterEstado = document.getElementById('filterEstado').value;
             const table = document.getElementById('tiendasTable');
             const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            let visibleCount = 0;
 
             for (let i = 0; i < rows.length; i++) {
+                if (rows[i].getElementsByTagName('td').length === 1) continue; // Skip "no data" row
+
                 const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const ubicacion = rows[i].getElementsByTagName('td')[2].textContent.toLowerCase();
-                const contacto = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
-                const estadoBadge = rows[i].getElementsByTagName('td')[rows[i].getElementsByTagName('td').length - 2].textContent;
+                const categoria = rows[i].getElementsByTagName('td')[2].textContent;
+                const ubicacion = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
+                const contacto = rows[i].getElementsByTagName('td')[4].textContent.toLowerCase();
+                const estadoBadge = rows[i].querySelector('.status-badge').textContent.trim();
 
                 const matchSearch = nombre.includes(searchInput) ||
                                    ubicacion.includes(searchInput) ||
                                    contacto.includes(searchInput);
+                const matchCategoria = filterCategoria === '' || categoria.includes(filterCategoria);
                 const matchEstado = filterEstado === '' || estadoBadge.includes(filterEstado);
 
-                if (matchSearch && matchEstado) {
+                if (matchSearch && matchCategoria && matchEstado) {
                     rows[i].style.display = '';
+                    visibleCount++;
                 } else {
                     rows[i].style.display = 'none';
                 }
             }
+
+            document.getElementById('countVisible').textContent = visibleCount;
         }
 
         function sortTable(columnIndex) {

@@ -2,7 +2,7 @@
 
 /* ========== HEADER ========== */
 .header {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    background: #2E7D32;
     box-shadow: var(--shadow-md);
     position: sticky;
     top: 0;
@@ -165,7 +165,7 @@
 
 /* ========== FOOTER ========== */
 .footer {
-    background: linear-gradient(135deg, var(--color-bg-dark) 0%, var(--color-primary) 100%);
+    background: linear-gradient(#2E7D32 0%, #2E7D32 100%);
     color: var(--color-text-white);
     padding: 2rem 0;
     margin-top: auto;

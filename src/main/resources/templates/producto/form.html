@@ -30,19 +30,23 @@
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <i class="bi bi-shop" style="font-size: 2rem;"></i>
                 <div>
-                    <h4 style="color: white; margin: 0;">Tienda: <span th:text="${tienda.nombre}">Mi Tienda</span></h4>
-                    <p style="margin: 0; opacity: 0.9;">Este producto se agregará a esta tienda</p>
+                    <h4 style="color: white; margin: 0;">
+                        Tienda: <span th:text="${tienda.nombre}">Mi Tienda</span>
+                    </h4>
+                    <p style="margin: 0; opacity: 0.9;">
+                        Categoría: <strong th:text="${tienda.categoriaPrincipal.displayName}">Categoría</strong>
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Formulario -->
-        <form th:action="@{/productos/guardar}" th:object="${producto}" method="post" enctype="multipart/form-data">
+        <form th:action="@{/productos/crear}" th:object="${producto}" method="post" enctype="multipart/form-data" id="productoForm">
 
             <!-- ID Tienda oculto -->
             <input type="hidden" th:field="*{id_tienda}">
 
-            <!-- Sección: Información Básica -->
+            <!-- Sección: Información del Producto -->
             <div class="form-section">
                 <h3 class="form-section-title">
                     <i class="bi bi-info-circle"></i>
@@ -61,7 +65,7 @@
                            class="form-control"
                            id="nombre"
                            placeholder="Ej: Tomate Chonto Orgánico"
-                           maxlength="200"
+                           maxlength="100"
                            required>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
@@ -80,140 +84,147 @@
                               class="form-control"
                               id="descripcion"
                               rows="4"
-                              placeholder="Describe las características, origen, beneficios..."
-                              maxlength="1000"
+                              placeholder="Describe tu producto: características, origen, calidad..."
+                              maxlength="500"
                               required></textarea>
                     <small class="form-text">
+                        <i class="bi bi-text-paragraph"></i>
+                        Cuéntale a los clientes sobre tu producto
+                        <span id="charCount">0</span>/500
+                    </small>
+                </div>
+
+                <!-- ✅ SUBCATEGORÍA (CORREGIDO CON .name()) -->
+                <div class="form-group">
+                    <label for="subcategoria">
+                        <i class="bi bi-grid"></i>
+                        Subcategoría
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{subcategoria}"
+                            class="form-select"
+                            id="subcategoria"
+                            required>
+                        <option value="">Seleccione una subcategoría...</option>
+                        <option th:each="sub : ${subcategorias}"
+                                th:value="${sub.name()}"
+                                th:text="${sub.displayName}">
+                        </option>
+                    </select>
+                    <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Máximo 1000 caracteres. Quedan <strong><span id="charCount">0</span></strong> caracteres.
+                        Las subcategorías disponibles dependen de la categoría de tu tienda
+                    </small>
+                </div>
+
+                <!-- ✅ UNIDAD DE MEDIDA (CORREGIDO CON .name()) -->
+                <div class="form-group">
+                    <label for="unidadMedida">
+                        <i class="bi bi-rulers"></i>
+                        Unidad de Medida
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{unidadMedida}"
+                            class="form-select"
+                            id="unidadMedida"
+                            required>
+                        <option value="">Seleccione una unidad...</option>
+                        <option th:each="unidad : ${unidadesMedida}"
+                                th:value="${unidad.name()}"
+                                th:text="${unidad.displayName}">
+                        </option>
+                    </select>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        ¿Cómo se vende tu producto? (Ej: por kilo, unidad, paquete, etc.)
                     </small>
                 </div>
             </div>
 
-            <!-- ⭐ SECCIÓN NUEVA: Clasificación del Producto -->
+            <!-- Sección: Precio e Inventario -->
             <div class="form-section">
                 <h3 class="form-section-title">
-                    <i class="bi bi-grid-3x3-gap"></i>
-                    Clasificación del Producto
+                    <i class="bi bi-currency-dollar"></i>
+                    Precio e Inventario
                 </h3>
 
-                <div class="form-row form-row-2">
-                    <!-- Categoría Principal -->
+                <div class="form-row">
+                    <!-- ✅ PRECIO (COMPLETAMENTE CORREGIDO) -->
                     <div class="form-group">
-                        <label for="categoria">
-                            <i class="bi bi-folder"></i>
-                            Categoría Principal
+                        <label for="precio">
+                            <i class="bi bi-cash"></i>
+                            Precio
                             <span class="required">*</span>
                         </label>
-                        <select th:field="*{categoria}"
-                                class="form-select"
-                                id="categoria"
-                                onchange="cargarSubcategorias()"
-                                required>
-                            <option value="">-- Selecciona una categoría --</option>
-                            <option th:each="cat : ${categorias}"
-                                    th:value="${cat}"
-                                    th:text="${cat.nombre}">
-                                Categoría
-                            </option>
-                        </select>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                   th:field="*{precio}"
+                                   class="form-control"
+                                   id="precio"
+                                   placeholder="1000"
+                                   min="100"
+                                   step="any"
+                                   required>
+                        </div>
                         <small class="form-text">
                             <i class="bi bi-info-circle"></i>
-                            Selecciona la categoría principal de tu producto
+                            Precio en pesos colombianos (COP). Mínimo: $100
                         </small>
                     </div>
 
-                    <!-- Subcategoría (se carga dinámicamente) -->
+                    <!-- ✅ STOCK (COMPLETAMENTE CORREGIDO) -->
                     <div class="form-group">
-                        <label for="subcategoria">
-                            <i class="bi bi-tags"></i>
-                            Subcategoría
-                            <span class="required">*</span>
-                        </label>
-                        <select th:field="*{subcategoria}"
-                                class="form-select"
-                                id="subcategoria"
-                                required
-                                disabled>
-                            <option value="">-- Primero selecciona una categoría --</option>
-                        </select>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            La subcategoría se actualiza según la categoría seleccionada
-                        </small>
-                    </div>
-                </div>
-
-                <!-- Mensaje informativo sobre categorías -->
-                <div style="margin-top: 1rem; padding: 1rem; background-color: rgba(45, 80, 22, 0.05); border-left: 4px solid var(--color-primary); border-radius: 6px;">
-                    <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
-                        <i class="bi bi-lightbulb" style="color: var(--color-primary);"></i>
-                        <strong>Tip:</strong> Selecciona primero la categoría principal (ej: Lácteos) y automáticamente se cargarán las subcategorías disponibles (ej: Queso Fresco, Leche Entera, etc.)
-                    </p>
-                </div>
-            </div>
-
-            <!-- ⭐ SECCIÓN NUEVA: Presentación del Producto -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-box-seam"></i>
-                    Presentación del Producto
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Cantidad -->
-                    <div class="form-group">
-                        <label for="cantidad">
-                            <i class="bi bi-123"></i>
-                            Cantidad por Unidad
+                        <label for="stock">
+                            <i class="bi bi-box-seam"></i>
+                            Cantidad Disponible (Stock)
                             <span class="required">*</span>
                         </label>
                         <input type="number"
-                               th:field="*{cantidad}"
+                               th:field="*{stock}"
                                class="form-control"
-                               id="cantidad"
-                               placeholder="Ej: 1, 0.5, 500"
-                               min="0.01"
-                               step="0.01"
+                               id="stock"
+                               placeholder="10"
+                               min="0"
+                               step="1"
                                required>
                         <small class="form-text">
                             <i class="bi bi-info-circle"></i>
-                            Cantidad que contiene cada unidad del producto
+                            ¿Cuántas unidades tienes disponibles?
                         </small>
                     </div>
 
-                    <!-- Unidad de Medida -->
+                    <!-- ✅ STOCK MÍNIMO (COMPLETAMENTE CORREGIDO) -->
                     <div class="form-group">
-                        <label for="unidadMedida">
-                            <i class="bi bi-rulers"></i>
-                            Unidad de Medida
+                        <label for="stockMinimo">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Stock Mínimo (Alerta)
                             <span class="required">*</span>
                         </label>
-                        <select th:field="*{unidadMedida}"
-                                class="form-select"
-                                id="unidadMedida"
-                                required>
-                            <option value="">-- Selecciona unidad --</option>
-                            <option th:each="unidad : ${unidadesMedida}"
-                                    th:value="${unidad}"
-                                    th:text="${unidad.nombre + ' (' + unidad.abreviatura + ')'}">
-                                Unidad
-                            </option>
-                        </select>
+                        <input type="number"
+                               th:field="*{stockMinimo}"
+                               class="form-control"
+                               id="stockMinimo"
+                               placeholder="5"
+                               min="1"
+                               step="1"
+                               required>
                         <small class="form-text">
                             <i class="bi bi-info-circle"></i>
-                            ¿Cómo se mide tu producto?
+                            Te alertaremos cuando el stock llegue a este nivel (recomendado: 5)
                         </small>
                     </div>
                 </div>
 
-                <!-- Vista previa de presentación -->
-                <div id="presentacionPreview" style="display: none; margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-radius: 8px; border: 2px solid #4caf50; text-align: center;">
-                    <p style="margin: 0; font-size: 0.9rem; color: #2e7d32;">
-                        <i class="bi bi-eye" style="font-size: 1.2rem;"></i>
-                        <strong>Vista previa:</strong> Los clientes verán este producto como:
-                        <span id="previewText" style="font-weight: 700; color: #1b5e20; font-size: 1.1rem;"></span>
-                    </p>
+                <!-- Ayuda visual para stock -->
+                <div class="alert alert-info" style="margin-top: 1rem;">
+                    <i class="bi bi-lightbulb"></i>
+                    <strong>💡 Consejo de inventario:</strong>
+                    <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+                        <li>El <strong>Stock</strong> es la cantidad actual disponible</li>
+                        <li>El <strong>Stock Mínimo</strong> es tu límite de alerta (recomendado: 5-10 unidades)</li>
+                        <li>Si el stock llega a 0, el producto se desactivará automáticamente</li>
+                    </ul>
                 </div>
             </div>
 
@@ -224,200 +235,146 @@
                     Imagen del Producto
                 </h3>
 
-                <!-- Imagen -->
                 <div class="form-group">
-                    <label>
+                    <label for="imagen">
                         <i class="bi bi-camera"></i>
                         Foto del Producto
+                        <span class="required">*</span>
                     </label>
                     <div class="file-input-wrapper">
                         <input type="file"
                                name="imagen"
                                id="imagen"
                                accept="image/*"
-                               onchange="previewImage(event)">
+                               onchange="previewImage(event)"
+                               required>
                         <label for="imagen" class="file-input-label">
                             <i class="bi bi-cloud-upload"></i>
-                            <span>Seleccionar imagen</span>
+                            <span id="fileName">Haz clic para seleccionar una imagen</span>
                         </label>
                     </div>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Opcional. Tamaño máximo: 10MB. Usa una foto clara del producto.
+                        Formatos: JPG, PNG, GIF. Tamaño máximo: 10MB. Usa una foto clara del producto.
                     </small>
-                    <div id="imagePreview" class="file-preview" style="display: none;">
-                        <img id="preview" src="" alt="Vista previa">
-                        <span class="file-name" id="fileName"></span>
-                    </div>
+                </div>
+
+                <!-- Preview de imagen -->
+                <div id="imagePreview" style="display: none; margin-top: 1rem;">
+                    <p style="font-weight: 500; color: var(--color-text-dark); margin-bottom: 0.5rem;">
+                        <i class="bi bi-eye"></i> Vista previa:
+                    </p>
+                    <img id="preview"
+                         src="#"
+                         alt="Preview"
+                         style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: var(--shadow-md);">
                 </div>
             </div>
 
-            <!-- Sección: Precio y Stock -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-currency-dollar"></i>
-                    Precio y Disponibilidad
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Precio -->
-                    <div class="form-group">
-                        <label for="precio">
-                            <i class="bi bi-cash-coin"></i>
-                            Precio (COP)
-                            <span class="required">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number"
-                                   th:field="*{precio}"
-                                   class="form-control"
-                                   id="precio"
-                                   placeholder="5000"
-                                   min="0"
-                                   step="100"
-                                   required>
-                        </div>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Precio en pesos colombianos
-                        </small>
-                    </div>
-
-                    <!-- Stock -->
-                    <div class="form-group">
-                        <label for="stock">
-                            <i class="bi bi-box-seam"></i>
-                            Stock Disponible
-                            <span class="required">*</span>
-                        </label>
-                        <input type="number"
-                               th:field="*{stock}"
-                               class="form-control"
-                               id="stock"
-                               placeholder="100"
-                               min="0"
-                               required>
-                        <small class="form-text" id="stockWarning" style="display: none; color: var(--color-warning);">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Stock bajo. Se mostrará alerta a los usuarios.
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botones de Acción -->
+            <!-- Botones de acción -->
             <div class="form-actions">
                 <a th:href="@{/productos/tienda/{id}(id=${producto.id_tienda})}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i>
-                    Cancelar
+                    <i class="bi bi-x-circle"></i> Cancelar
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i>
-                    Crear Producto
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Publicar Producto
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- ⭐ SCRIPTS JAVASCRIPT -->
+    <!-- Scripts -->
     <script>
-        // ==================== CARGAR SUBCATEGORÍAS DINÁMICAMENTE ====================
-        async function cargarSubcategorias() {
-            const categoriaSelect = document.getElementById('categoria');
-            const subcategoriaSelect = document.getElementById('subcategoria');
-            const categoriaValue = categoriaSelect.value;
-
-            // Limpiar subcategorías
-            subcategoriaSelect.innerHTML = '<option value="">-- Selecciona una subcategoría --</option>';
-            subcategoriaSelect.disabled = true;
-
-            if (!categoriaValue) {
-                return;
-            }
-
-            try {
-                // Llamar al endpoint del controlador que retorna las subcategorías
-                const response = await fetch(`/productos/subcategorias/${categoriaValue}`);
-
-                if (!response.ok) {
-                    throw new Error('Error al cargar subcategorías');
-                }
-
-                const subcategorias = await response.json();
-
-                // Agregar opciones al select
-                subcategorias.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub;
-                    option.textContent = sub.nombre || sub;
-                    subcategoriaSelect.appendChild(option);
-                });
-
-                // Habilitar el select
-                subcategoriaSelect.disabled = false;
-
-            } catch (error) {
-                console.error('Error:', error);
-                subcategoriaSelect.innerHTML = '<option value="">Error al cargar subcategorías</option>';
-            }
-        }
-
-        // ==================== VISTA PREVIA DE PRESENTACIÓN ====================
-        function actualizarVistaPreviaPresentacion() {
-            const cantidad = document.getElementById('cantidad').value;
-            const unidadMedida = document.getElementById('unidadMedida');
-            const selectedOption = unidadMedida.options[unidadMedida.selectedIndex];
-            const previewDiv = document.getElementById('presentacionPreview');
-            const previewText = document.getElementById('previewText');
-
-            if (cantidad && unidadMedida.value) {
-                const unidadTexto = selectedOption.textContent;
-                const abreviatura = unidadTexto.match(/\(([^)]+)\)/)[1]; // Extraer abreviatura
-                previewText.textContent = `${cantidad} ${abreviatura}`;
-                previewDiv.style.display = 'block';
-            } else {
-                previewDiv.style.display = 'none';
-            }
-        }
-
-        // ==================== INICIALIZACIÓN ====================
         window.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Formulario de producto cargado');
+
             // Contador de caracteres
             const descripcion = document.getElementById('descripcion');
             const charCount = document.getElementById('charCount');
-            charCount.textContent = descripcion.value.length;
 
-            descripcion.addEventListener('input', function() {
-                charCount.textContent = this.value.length;
-            });
+            if (descripcion && charCount) {
+                charCount.textContent = descripcion.value.length;
 
-            // Alerta de stock bajo
-            const stock = document.getElementById('stock');
-            const stockWarning = document.getElementById('stockWarning');
+                descripcion.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                });
+            }
 
-            stock.addEventListener('input', function() {
-                if (parseInt(this.value) < 10 && parseInt(this.value) > 0) {
-                    stockWarning.style.display = 'block';
-                } else {
-                    stockWarning.style.display = 'none';
-                }
-            });
-
-            // Vista previa de presentación
-            document.getElementById('cantidad').addEventListener('input', actualizarVistaPreviaPresentacion);
-            document.getElementById('unidadMedida').addEventListener('change', actualizarVistaPreviaPresentacion);
-
-            // Formato de precio (redondear a múltiplos de 100)
+            // ✅ VALIDACIÓN MEJORADA DE PRECIO
             const precio = document.getElementById('precio');
-            precio.addEventListener('blur', function() {
-                if (this.value) {
-                    this.value = Math.round(this.value / 100) * 100;
+            if (precio) {
+                // Permitir solo números positivos
+                precio.addEventListener('input', function() {
+                    if (this.value < 0) {
+                        this.value = 0;
+                    }
+                });
+
+                // Redondear a múltiplos de 100 al salir del campo
+                precio.addEventListener('blur', function() {
+                    if (this.value && parseFloat(this.value) >= 100) {
+                        const rounded = Math.round(this.value / 100) * 100;
+                        this.value = rounded;
+                    } else if (this.value && parseFloat(this.value) < 100) {
+                        alert('⚠️ El precio mínimo es $100 COP');
+                        this.value = 100;
+                    }
+                });
+            }
+
+            // ✅ VALIDACIÓN MEJORADA DE STOCK
+            const stock = document.getElementById('stock');
+            const stockMinimo = document.getElementById('stockMinimo');
+
+            if (stock) {
+                stock.addEventListener('input', function() {
+                    // Forzar enteros positivos
+                    this.value = Math.max(0, Math.floor(this.value));
+                });
+
+                stock.addEventListener('change', function() {
+                    const stockValue = parseInt(this.value) || 0;
+                    const minimoValue = parseInt(stockMinimo.value) || 5;
+
+                    if (stockValue > 0 && stockValue <= minimoValue) {
+                        alert('⚠️ Advertencia: El stock actual (' + stockValue + ') está en el nivel de alerta (≤ ' + minimoValue + ')');
+                    }
+                });
+            }
+
+            if (stockMinimo) {
+                stockMinimo.addEventListener('input', function() {
+                    // Forzar enteros positivos (mínimo 1)
+                    this.value = Math.max(1, Math.floor(this.value));
+                });
+            }
+
+            // ✅ DEBUG: Verificar valores antes de enviar
+            const form = document.getElementById('productoForm');
+            form.addEventListener('submit', function(e) {
+                console.log('📤 Enviando formulario...');
+                console.log('id_tienda:', document.querySelector('input[name="id_tienda"]').value);
+                console.log('nombre:', document.getElementById('nombre').value);
+                console.log('descripcion:', document.getElementById('descripcion').value);
+                console.log('subcategoria:', document.getElementById('subcategoria').value);
+                console.log('unidadMedida:', document.getElementById('unidadMedida').value);
+                console.log('precio:', document.getElementById('precio').value);
+                console.log('stock:', document.getElementById('stock').value);
+                console.log('stockMinimo:', document.getElementById('stockMinimo').value);
+                console.log('imagen:', document.getElementById('imagen').files.length > 0 ? 'SÍ' : 'NO');
+
+                // Validación final antes de enviar
+                const precioVal = parseFloat(document.getElementById('precio').value);
+                if (precioVal < 100) {
+                    e.preventDefault();
+                    alert('❌ El precio debe ser mínimo $100 COP');
+                    document.getElementById('precio').focus();
+                    return false;
                 }
             });
         });
 
-        // ==================== PREVIEW DE IMAGEN ====================
+        // Preview de imagen
         function previewImage(event) {
             const file = event.target.files[0];
             const preview = document.getElementById('preview');

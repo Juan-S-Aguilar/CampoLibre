@@ -1,92 +1,53 @@
 package com.example.campolibre.Enum;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public enum SubcategoriaProducto {
-    // LÁCTEOS
-    LECHE_ENTERA("Leche Entera", CategoriaProducto.LACTEOS),
-    LECHE_DESCREMADA("Leche Descremada", CategoriaProducto.LACTEOS),
-    LECHE_DESLACTOSADA("Leche Deslactosada", CategoriaProducto.LACTEOS),
-    QUESO_FRESCO("Queso Fresco", CategoriaProducto.LACTEOS),
-    QUESO_MADURADO("Queso Madurado", CategoriaProducto.LACTEOS),
-    YOGURT("Yogurt", CategoriaProducto.LACTEOS),
-    MANTEQUILLA("Mantequilla", CategoriaProducto.LACTEOS),
-    CREMA("Crema de Leche", CategoriaProducto.LACTEOS),
-    KUMIS("Kumis", CategoriaProducto.LACTEOS),
+    // Subcategorías de FRUTAS_VERDURAS
+    FRUTAS_TROPICALES("Frutas Tropicales", CategoriaTienda.FRUTAS_VERDURAS),
+    FRUTAS_CITRICAS("Frutas Cítricas", CategoriaTienda.FRUTAS_VERDURAS),
+    VERDURAS_HOJA("Verduras de Hoja", CategoriaTienda.FRUTAS_VERDURAS),
+    TUBERCULOS("Tubérculos", CategoriaTienda.FRUTAS_VERDURAS),
+    HORTALIZAS("Hortalizas", CategoriaTienda.FRUTAS_VERDURAS),
 
-    // FRUTAS
-    CITRICOS("Cítricos", CategoriaProducto.FRUTAS),
-    TROPICALES("Tropicales", CategoriaProducto.FRUTAS),
-    ANDINAS("Andinas", CategoriaProducto.FRUTAS),
-    BERRIES("Berries y Frutos del Bosque", CategoriaProducto.FRUTAS),
-    FRUTAS_DESHIDRATADAS("Frutas Deshidratadas", CategoriaProducto.FRUTAS),
+    // Subcategorías de PROCESADOS_ARTESANALES
+    MERMELADAS("Mermeladas", CategoriaTienda.PROCESADOS_ARTESANALES),
+    QUESOS("Quesos", CategoriaTienda.PROCESADOS_ARTESANALES),
+    PAN_ARTESANAL("Pan Artesanal", CategoriaTienda.PROCESADOS_ARTESANALES),
+    SALSAS("Salsas", CategoriaTienda.PROCESADOS_ARTESANALES),
+    CONSERVAS("Conservas", CategoriaTienda.PROCESADOS_ARTESANALES),
 
-    // VERDURAS
-    HORTALIZAS_HOJA("Hortalizas de Hoja", CategoriaProducto.VERDURAS),
-    TUBERCULOS("Tubérculos", CategoriaProducto.VERDURAS),
-    RAICES("Raíces", CategoriaProducto.VERDURAS),
-    HORTALIZAS_FRUTO("Hortalizas de Fruto", CategoriaProducto.VERDURAS),
-    VERDURAS_DESHIDRATADAS("Verduras Deshidratadas", CategoriaProducto.VERDURAS),
+    // Subcategorías de GRANOS_SEMILLAS
+    GRANOS_SECOS("Granos Secos", CategoriaTienda.GRANOS_SEMILLAS),
+    CEREALES("Cereales", CategoriaTienda.GRANOS_SEMILLAS),
+    SEMILLAS("Semillas", CategoriaTienda.GRANOS_SEMILLAS),
+    HARINAS_ARTESANALES("Harinas Artesanales", CategoriaTienda.GRANOS_SEMILLAS),
+    LEGUMINOSAS("Leguminosas", CategoriaTienda.GRANOS_SEMILLAS),
 
-    // GRANOS
-    FRIJOLES("Frijoles", CategoriaProducto.GRANOS),
-    LENTEJAS("Lentejas", CategoriaProducto.GRANOS),
-    GARBANZOS("Garbanzos", CategoriaProducto.GRANOS),
-    ARVEJAS("Arvejas", CategoriaProducto.GRANOS),
-    HABAS("Habas", CategoriaProducto.GRANOS),
+    // Subcategorías de HIERBAS_ESPECIAS
+    HIERBAS_AROMATICAS("Hierbas Aromáticas", CategoriaTienda.HIERBAS_ESPECIAS),
+    ESPECIAS_SECAS("Especias Secas", CategoriaTienda.HIERBAS_ESPECIAS),
+    MEZCLAS_CONDIMENTOS("Mezclas y Condimentos", CategoriaTienda.HIERBAS_ESPECIAS),
+    INFUSIONES_TES("Infusiones y Tés", CategoriaTienda.HIERBAS_ESPECIAS);
 
-    // CEREALES
-    ARROZ("Arroz", CategoriaProducto.CEREALES),
-    MAIZ("Maíz", CategoriaProducto.CEREALES),
-    TRIGO("Trigo", CategoriaProducto.CEREALES),
-    AVENA("Avena", CategoriaProducto.CEREALES),
-    QUINUA("Quinua", CategoriaProducto.CEREALES),
-    HARINAS("Harinas", CategoriaProducto.CEREALES),
+    private final String displayName;
+    private final CategoriaTienda categoriaPadre;
 
-    // MERMELADAS
-    MERMELADA_FRUTAS("Mermeladas de Frutas", CategoriaProducto.MERMELADAS),
-    JALEAS("Jaleas", CategoriaProducto.MERMELADAS),
-    COMPOTAS("Compotas", CategoriaProducto.MERMELADAS),
-    DULCES("Dulces Artesanales", CategoriaProducto.MERMELADAS),
-
-    // MIELES
-    MIEL_ABEJA("Miel de Abeja", CategoriaProducto.MIELES),
-    MIEL_PANELA("Miel de Panela", CategoriaProducto.MIELES),
-    POLEN("Polen", CategoriaProducto.MIELES),
-    PROPOLEO("Propóleo", CategoriaProducto.MIELES),
-
-    // SEMILLAS
-    SEMILLAS_CHIA("Semillas de Chía", CategoriaProducto.SEMILLAS),
-    SEMILLAS_GIRASOL("Semillas de Girasol", CategoriaProducto.SEMILLAS),
-    ALMENDRAS("Almendras", CategoriaProducto.SEMILLAS),
-    NUECES("Nueces", CategoriaProducto.SEMILLAS),
-    MARAÑON("Marañón", CategoriaProducto.SEMILLAS),
-    AJONJOLI("Ajonjolí", CategoriaProducto.SEMILLAS);
-
-    private final String nombre;
-    private final CategoriaProducto categoriaProducto;
-
-    SubcategoriaProducto(String nombre, CategoriaProducto categoriaProducto) {
-        this.nombre = nombre;
-        this.categoriaProducto = categoriaProducto;
+    SubcategoriaProducto(String displayName, CategoriaTienda categoriaPadre) {
+        this.displayName = displayName;
+        this.categoriaPadre = categoriaPadre;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public CategoriaProducto getCategoriaProducto() {
-        return categoriaProducto;
+    public CategoriaTienda getCategoriaPadre() {
+        return categoriaPadre;
     }
 
     /**
-     * Obtiene todas las subcategorías de una categoría específica
+     * Verifica si esta subcategoría pertenece a la categoría de tienda especificada
      */
-    public static List<SubcategoriaProducto> getSubcategoriasPorCategoria(CategoriaProducto categoria) {
-        return Arrays.stream(SubcategoriaProducto.values())
-                .filter(sub -> sub.getCategoriaProducto() == categoria)
-                .collect(Collectors.toList());
+    public boolean perteneceA(CategoriaTienda categoria) {
+        return this.categoriaPadre == categoria;
     }
 }

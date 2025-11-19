@@ -30,10 +30,26 @@
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <i class="bi bi-shop" style="font-size: 2rem;"></i>
                 <div>
-                    <h4 style="color: white; margin: 0;">Tienda: <span th:text="${tienda.nombre}">Mi Tienda</span></h4>
-                    <p style="margin: 0; opacity: 0.9;">Este producto pertenece a esta tienda</p>
+                    <h4 style="color: white; margin: 0;">
+                        Tienda: <span th:text="${tienda.nombre}">Mi Tienda</span>
+                    </h4>
+                    <p style="margin: 0; opacity: 0.9;">
+                        Categoría: <strong th:text="${tienda.categoriaPrincipal.displayName}">Categoría</strong>
+                    </p>
                 </div>
             </div>
+        </div>
+
+        <!-- Alerta de estado del producto -->
+        <div th:if="${producto.sinStock}" class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>⚠️ Producto sin stock:</strong> Este producto está desactivado por falta de inventario.
+            Actualiza el stock para reactivarlo.
+        </div>
+
+        <div th:if="${producto.tieneStockBajo and !producto.sinStock}" class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <strong>📦 Stock bajo:</strong> El inventario de este producto está por debajo del mínimo establecido.
         </div>
 
         <!-- Formulario -->
@@ -43,7 +59,7 @@
             <input type="hidden" th:field="*{id_producto}">
             <input type="hidden" th:field="*{id_tienda}">
 
-            <!-- Sección: Información Básica -->
+            <!-- Sección: Información del Producto -->
             <div class="form-section">
                 <h3 class="form-section-title">
                     <i class="bi bi-info-circle"></i>
@@ -61,13 +77,8 @@
                            th:field="*{nombre}"
                            class="form-control"
                            id="nombre"
-                           placeholder="Ej: Tomate Chonto Orgánico"
-                           maxlength="200"
+                           maxlength="100"
                            required>
-                    <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Nombre claro y descriptivo del producto
-                    </small>
                 </div>
 
                 <!-- Descripción -->
@@ -81,147 +92,143 @@
                               class="form-control"
                               id="descripcion"
                               rows="4"
-                              placeholder="Describe las características, origen, beneficios..."
-                              maxlength="1000"
+                              maxlength="500"
                               required></textarea>
                     <small class="form-text">
-                        <i class="bi bi-info-circle"></i>
-                        Máximo 1000 caracteres. Quedan <strong><span id="charCount">0</span></strong> caracteres.
+                        <span id="charCount">0</span>/500
                     </small>
                 </div>
-            </div>
 
-            <!-- ⭐ SECCIÓN: Clasificación del Producto -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-grid-3x3-gap"></i>
-                    Clasificación del Producto
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Categoría Principal -->
-                    <div class="form-group">
-                        <label for="categoria">
-                            <i class="bi bi-folder"></i>
-                            Categoría Principal
-                            <span class="required">*</span>
-                        </label>
-                        <select th:field="*{categoria}"
-                                class="form-select"
-                                id="categoria"
-                                onchange="cargarSubcategorias()"
-                                required>
-                            <option value="">-- Selecciona una categoría --</option>
-                            <option th:each="cat : ${categorias}"
-                                    th:value="${cat}"
-                                    th:text="${cat.nombre}"
-                                    th:selected="${cat == producto.categoria}">
-                                Categoría
-                            </option>
-                        </select>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Categoría actual: <strong th:text="${producto.categoria?.nombre}">-</strong>
-                        </small>
-                    </div>
-
-                    <!-- Subcategoría (se carga dinámicamente) -->
-                    <div class="form-group">
-                        <label for="subcategoria">
-                            <i class="bi bi-tags"></i>
-                            Subcategoría
-                            <span class="required">*</span>
-                        </label>
-                        <select th:field="*{subcategoria}"
-                                class="form-select"
-                                id="subcategoria"
-                                required>
-                            <option value="">-- Selecciona una subcategoría --</option>
-                            <!-- Las opciones se cargarán dinámicamente o vía Thymeleaf -->
-                            <option th:each="sub : ${subcategorias}"
-                                    th:value="${sub}"
-                                    th:text="${sub.nombre}"
-                                    th:selected="${sub == producto.subcategoria}">
-                                Subcategoría
-                            </option>
-                        </select>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Subcategoría actual: <strong th:text="${producto.subcategoria?.nombre}">-</strong>
-                        </small>
-                    </div>
+                <!-- ✨ SUBCATEGORÍA (DINÁMICO SEGÚN TIENDA) -->
+                <div class="form-group">
+                    <label for="subcategoria">
+                        <i class="bi bi-grid"></i>
+                        Subcategoría
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{subcategoria}"
+                            class="form-select"
+                            id="subcategoria"
+                            required>
+                        <option value="">Seleccione una subcategoría...</option>
+                        <option th:each="sub : ${subcategorias}"
+                                th:value="${sub}"
+                                th:text="${sub.displayName}"
+                                th:selected="${sub == producto.subcategoria}">
+                        </option>
+                    </select>
+                    <small class="form-text">
+                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                        Cambiar la subcategoría puede afectar cómo se encuentra el producto
+                    </small>
                 </div>
 
-                <!-- Advertencia sobre cambio de categoría -->
-                <div style="margin-top: 1rem; padding: 1rem; background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; border-radius: 6px;">
-                    <p style="margin: 0; font-size: 0.9rem; color: #856404;">
-                        <i class="bi bi-exclamation-triangle" style="color: #ffc107;"></i>
-                        <strong>Importante:</strong> Si cambias la categoría, asegúrate de seleccionar también la subcategoría correcta. La subcategoría debe pertenecer a la categoría seleccionada.
-                    </p>
+                <!-- ✨ UNIDAD DE MEDIDA -->
+                <div class="form-group">
+                    <label for="unidadMedida">
+                        <i class="bi bi-rulers"></i>
+                        Unidad de Medida
+                        <span class="required">*</span>
+                    </label>
+                    <select th:field="*{unidadMedida}"
+                            class="form-select"
+                            id="unidadMedida"
+                            required>
+                        <option value="">Seleccione una unidad...</option>
+                        <option th:each="unidad : ${unidadesMedida}"
+                                th:value="${unidad}"
+                                th:text="${unidad.displayName}"
+                                th:selected="${unidad == producto.unidadMedida}">
+                        </option>
+                    </select>
                 </div>
             </div>
 
-            <!-- ⭐ SECCIÓN: Presentación del Producto -->
+            <!-- Sección: Precio e Inventario -->
             <div class="form-section">
                 <h3 class="form-section-title">
-                    <i class="bi bi-box-seam"></i>
-                    Presentación del Producto
+                    <i class="bi bi-currency-dollar"></i>
+                    Precio e Inventario
                 </h3>
 
-                <div class="form-row form-row-2">
-                    <!-- Cantidad -->
+                <div class="form-row">
+                    <!-- Precio -->
                     <div class="form-group">
-                        <label for="cantidad">
-                            <i class="bi bi-123"></i>
-                            Cantidad por Unidad
+                        <label for="precio">
+                            <i class="bi bi-cash"></i>
+                            Precio
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number"
+                                   th:field="*{precio}"
+                                   class="form-control"
+                                   id="precio"
+                                   min="1"
+                                   step="100"
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Stock Actual -->
+                    <div class="form-group">
+                        <label for="stock">
+                            <i class="bi bi-box-seam"></i>
+                            Stock Actual
                             <span class="required">*</span>
                         </label>
                         <input type="number"
-                               th:field="*{cantidad}"
+                               th:field="*{stock}"
                                class="form-control"
-                               id="cantidad"
-                               placeholder="Ej: 1, 0.5, 500"
-                               min="0.01"
-                               step="0.01"
+                               id="stock"
+                               min="0"
                                required>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Cantidad actual: <strong><span th:text="${producto.cantidadFormateada}">-</span></strong>
+                        <small class="form-text" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span th:if="${producto.stock == 0}" style="color: var(--color-danger);">
+                                <i class="bi bi-x-circle"></i> Sin stock - Producto desactivado
+                            </span>
+                            <span th:if="${producto.stock > 0 and producto.stock <= producto.stockMinimo}"
+                                  style="color: var(--color-warning);">
+                                <i class="bi bi-exclamation-triangle"></i> Stock bajo
+                            </span>
+                            <span th:if="${producto.stock > producto.stockMinimo}"
+                                  style="color: var(--color-success);">
+                                <i class="bi bi-check-circle"></i> Stock suficiente
+                            </span>
                         </small>
                     </div>
 
-                    <!-- Unidad de Medida -->
+                    <!-- ✨ STOCK MÍNIMO -->
                     <div class="form-group">
-                        <label for="unidadMedida">
-                            <i class="bi bi-rulers"></i>
-                            Unidad de Medida
+                        <label for="stockMinimo">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Stock Mínimo (Alerta)
                             <span class="required">*</span>
                         </label>
-                        <select th:field="*{unidadMedida}"
-                                class="form-select"
-                                id="unidadMedida"
-                                required>
-                            <option value="">-- Selecciona unidad --</option>
-                            <option th:each="unidad : ${unidadesMedida}"
-                                    th:value="${unidad}"
-                                    th:text="${unidad.nombre + ' (' + unidad.abreviatura + ')'}"
-                                    th:selected="${unidad == producto.unidadMedida}">
-                                Unidad
-                            </option>
-                        </select>
+                        <input type="number"
+                               th:field="*{stockMinimo}"
+                               class="form-control"
+                               id="stockMinimo"
+                               min="1"
+                               required>
                         <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Unidad actual: <strong th:text="${producto.unidadMedida?.nombre}">-</strong>
+                            Nivel de alerta de inventario
                         </small>
                     </div>
                 </div>
 
-                <!-- Vista previa de presentación -->
-                <div id="presentacionPreview" style="display: none; margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-radius: 8px; border: 2px solid #4caf50; text-align: center;">
-                    <p style="margin: 0; font-size: 0.9rem; color: #2e7d32;">
-                        <i class="bi bi-eye" style="font-size: 1.2rem;"></i>
-                        <strong>Nueva presentación:</strong>
-                        <span id="previewText" style="font-weight: 700; color: #1b5e20; font-size: 1.1rem;"></span>
+                <!-- Link a gestión de inventario -->
+                <div class="alert alert-info" style="margin-top: 1rem;">
+                    <i class="bi bi-lightbulb"></i>
+                    <strong>💡 Gestión de inventario:</strong>
+                    <p style="margin: 0.5rem 0 0;">
+                        Para gestionar el inventario de forma más avanzada (incrementar/reducir stock),
+                        visita el
+                        <a th:href="@{/inventario/tienda/{id}(id=${producto.id_tienda})}"
+                           style="color: var(--color-primary); text-decoration: underline;">
+                            Panel de Inventario
+                        </a>
                     </p>
                 </div>
             </div>
@@ -233,21 +240,20 @@
                     Imagen del Producto
                 </h3>
 
-                <!-- Imagen Actual -->
+                <!-- Imagen actual -->
                 <div class="form-group" th:if="${producto.imagen_producto != null}">
                     <label>
                         <i class="bi bi-image-fill"></i>
                         Imagen Actual
                     </label>
-                    <div style="text-align: center; padding: 1rem; background-color: var(--color-bg-light); border-radius: 8px; border: 2px solid var(--border-color);">
-                        <img th:src="@{'/uploads/' + ${producto.imagen_producto}}"
-                             alt="Imagen actual"
-                             style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: var(--shadow-sm);"
-                             onerror="this.src='/images/placeholder.jpg'">
+                    <div style="margin-top: 0.5rem;">
+                        <img th:src="@{${producto.imagen_producto}}"
+                             alt="Imagen producto"
+                             style="max-width: 300px; border-radius: 8px; box-shadow: var(--shadow-md);">
                     </div>
                 </div>
 
-                <!-- Nueva Imagen -->
+                <!-- Nueva imagen -->
                 <div class="form-group">
                     <label>
                         <i class="bi bi-camera"></i>
@@ -261,211 +267,94 @@
                                onchange="previewImage(event)">
                         <label for="imagen" class="file-input-label">
                             <i class="bi bi-cloud-upload"></i>
-                            <span>Seleccionar nueva imagen</span>
+                            <span id="fileName">Seleccionar nueva imagen</span>
                         </label>
                     </div>
                     <small class="form-text">
                         <i class="bi bi-info-circle"></i>
-                        Solo selecciona una imagen si deseas cambiar la actual
+                        Deja vacío si no deseas cambiar la imagen actual
                     </small>
-                    <div id="imagePreview" class="file-preview" style="display: none;">
-                        <img id="preview" src="" alt="Vista previa">
-                        <span class="file-name" id="fileName"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección: Precio y Stock -->
-            <div class="form-section">
-                <h3 class="form-section-title">
-                    <i class="bi bi-currency-dollar"></i>
-                    Precio y Disponibilidad
-                </h3>
-
-                <div class="form-row form-row-2">
-                    <!-- Precio -->
-                    <div class="form-group">
-                        <label for="precio">
-                            <i class="bi bi-cash-coin"></i>
-                            Precio (COP)
-                            <span class="required">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number"
-                                   th:field="*{precio}"
-                                   class="form-control"
-                                   id="precio"
-                                   placeholder="5000"
-                                   min="0"
-                                   step="100"
-                                   required>
-                        </div>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Precio en pesos colombianos
-                        </small>
-                    </div>
-
-                    <!-- Stock -->
-                    <div class="form-group">
-                        <label for="stock">
-                            <i class="bi bi-box-seam"></i>
-                            Stock Disponible
-                            <span class="required">*</span>
-                        </label>
-                        <input type="number"
-                               th:field="*{stock}"
-                               class="form-control"
-                               id="stock"
-                               placeholder="100"
-                               min="0"
-                               required>
-                        <small class="form-text" id="stockWarning" style="display: none; color: var(--color-warning);">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Stock bajo. Se mostrará alerta a los usuarios.
-                        </small>
-                        <small class="form-text">
-                            <i class="bi bi-info-circle"></i>
-                            Stock actual: <strong th:text="${producto.stock}">0</strong> unidades
-                        </small>
-                    </div>
                 </div>
 
-                <!-- Nota sobre gestión de stock -->
-                <div style="margin-top: 1rem; padding: 1rem; background-color: rgba(23, 162, 184, 0.1); border-left: 4px solid #17a2b8; border-radius: 6px;">
-                    <p style="margin: 0; font-size: 0.9rem; color: #0c5460;">
-                        <i class="bi bi-lightbulb" style="color: #17a2b8;"></i>
-                        <strong>Tip:</strong> Para ajustes rápidos de stock, puedes usar los botones de aumentar/disminuir en la vista de detalle del producto.
+                <!-- Preview de nueva imagen -->
+                <div id="imagePreview" style="display: none; margin-top: 1rem;">
+                    <p style="font-weight: 500; color: var(--color-text-dark); margin-bottom: 0.5rem;">
+                        <i class="bi bi-eye"></i> Nueva imagen:
                     </p>
+                    <img id="preview"
+                         src="#"
+                         alt="Preview"
+                         style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: var(--shadow-md);">
                 </div>
             </div>
 
-            <!-- Botones de Acción -->
+            <!-- Botones de acción -->
             <div class="form-actions">
-                <a th:href="@{/productos/detalle/{id}(id=${producto.id_producto})}" class="btn btn-secondary">
-                    <i class="bi bi-x-circle"></i>
-                    Cancelar
+                <a th:href="@{/productos/tienda/{id}(id=${producto.id_tienda})}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i>
-                    Guardar Cambios
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Guardar Cambios
                 </button>
             </div>
         </form>
+
+        <!-- Información adicional -->
+        <div class="alert alert-warning" style="margin-top: 2rem;">
+            <i class="bi bi-info-circle"></i>
+            <strong>Nota importante:</strong>
+            <ul style="margin: 0.5rem 0 0 1.5rem;">
+                <li>Si el stock llega a 0, el producto se desactivará automáticamente</li>
+                <li>Los cambios se aplicarán inmediatamente</li>
+                <li>Los pedidos existentes no se verán afectados</li>
+            </ul>
+        </div>
     </div>
 
-    <!-- ⭐ SCRIPTS JAVASCRIPT -->
+    <!-- Scripts -->
     <script>
-        // ==================== CARGAR SUBCATEGORÍAS DINÁMICAMENTE ====================
-        async function cargarSubcategorias() {
-            const categoriaSelect = document.getElementById('categoria');
-            const subcategoriaSelect = document.getElementById('subcategoria');
-            const categoriaValue = categoriaSelect.value;
-
-            // Guardar el valor actual de subcategoría
-            const subcategoriaActual = subcategoriaSelect.value;
-
-            if (!categoriaValue) {
-                subcategoriaSelect.innerHTML = '<option value="">-- Primero selecciona una categoría --</option>';
-                subcategoriaSelect.disabled = true;
-                return;
-            }
-
-            try {
-                // Llamar al endpoint del controlador
-                const response = await fetch(`/productos/subcategorias/${categoriaValue}`);
-
-                if (!response.ok) {
-                    throw new Error('Error al cargar subcategorías');
-                }
-
-                const subcategorias = await response.json();
-
-                // Limpiar y repoblar
-                subcategoriaSelect.innerHTML = '<option value="">-- Selecciona una subcategoría --</option>';
-
-                subcategorias.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub;
-                    option.textContent = sub.nombre || sub;
-
-                    // Mantener seleccionada la subcategoría actual si pertenece a esta categoría
-                    if (sub === subcategoriaActual) {
-                        option.selected = true;
-                    }
-
-                    subcategoriaSelect.appendChild(option);
-                });
-
-                subcategoriaSelect.disabled = false;
-
-            } catch (error) {
-                console.error('Error:', error);
-                subcategoriaSelect.innerHTML = '<option value="">Error al cargar subcategorías</option>';
-            }
-        }
-
-        // ==================== VISTA PREVIA DE PRESENTACIÓN ====================
-        function actualizarVistaPreviaPresentacion() {
-            const cantidad = document.getElementById('cantidad').value;
-            const unidadMedida = document.getElementById('unidadMedida');
-            const selectedOption = unidadMedida.options[unidadMedida.selectedIndex];
-            const previewDiv = document.getElementById('presentacionPreview');
-            const previewText = document.getElementById('previewText');
-
-            if (cantidad && unidadMedida.value) {
-                const unidadTexto = selectedOption.textContent;
-                const abreviatura = unidadTexto.match(/\(([^)]+)\)/)[1];
-                previewText.textContent = `${cantidad} ${abreviatura}`;
-                previewDiv.style.display = 'block';
-            } else {
-                previewDiv.style.display = 'none';
-            }
-        }
-
-        // ==================== INICIALIZACIÓN ====================
         window.addEventListener('DOMContentLoaded', function() {
             // Contador de caracteres
             const descripcion = document.getElementById('descripcion');
             const charCount = document.getElementById('charCount');
-            charCount.textContent = descripcion.value.length;
 
-            descripcion.addEventListener('input', function() {
-                charCount.textContent = this.value.length;
-            });
+            if (descripcion && charCount) {
+                charCount.textContent = descripcion.value.length;
 
-            // Alerta de stock bajo
-            const stock = document.getElementById('stock');
-            const stockWarning = document.getElementById('stockWarning');
-
-            // Verificar stock inicial
-            if (parseInt(stock.value) < 10 && parseInt(stock.value) > 0) {
-                stockWarning.style.display = 'block';
+                descripcion.addEventListener('input', function() {
+                    charCount.textContent = this.value.length;
+                });
             }
-
-            stock.addEventListener('input', function() {
-                if (parseInt(this.value) < 10 && parseInt(this.value) > 0) {
-                    stockWarning.style.display = 'block';
-                } else {
-                    stockWarning.style.display = 'none';
-                }
-            });
-
-            // Vista previa de presentación
-            document.getElementById('cantidad').addEventListener('input', actualizarVistaPreviaPresentacion);
-            document.getElementById('unidadMedida').addEventListener('change', actualizarVistaPreviaPresentacion);
 
             // Formato de precio
             const precio = document.getElementById('precio');
-            precio.addEventListener('blur', function() {
-                if (this.value) {
-                    this.value = Math.round(this.value / 100) * 100;
-                }
-            });
+            if (precio) {
+                precio.addEventListener('blur', function() {
+                    if (this.value) {
+                        this.value = Math.round(this.value / 100) * 100;
+                    }
+                });
+            }
+
+            // Validación de stock
+            const stock = document.getElementById('stock');
+            const stockMinimo = document.getElementById('stockMinimo');
+
+            if (stock && stockMinimo) {
+                stock.addEventListener('change', function() {
+                    const stockValue = parseInt(this.value) || 0;
+                    const minimoValue = parseInt(stockMinimo.value) || 5;
+
+                    if (stockValue === 0) {
+                        alert('⚠️ Advertencia: El producto se desactivará automáticamente sin stock.');
+                    } else if (stockValue <= minimoValue) {
+                        alert('⚠️ Advertencia: El stock actual (' + stockValue + ') está en el nivel de alerta (≤ ' + minimoValue + ')');
+                    }
+                });
+            }
         });
 
-        // ==================== PREVIEW DE IMAGEN ====================
+        // Preview de imagen
         function previewImage(event) {
             const file = event.target.files[0];
             const preview = document.getElementById('preview');

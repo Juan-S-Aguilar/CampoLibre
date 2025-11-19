@@ -1,9 +1,9 @@
 package com.example.campolibre.Implement;
 
-import com.example.campolibre.Config.TiendaValidator; // ⭐ NUEVO - Importar el validador
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.Entity.Tienda;
 import com.example.campolibre.Entity.Usuario;
+import com.example.campolibre.Enum.CategoriaTienda;
 import com.example.campolibre.Enum.EstadoTienda;
 import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Repository.TiendaRepository;
@@ -24,29 +24,22 @@ public class TiendaImplement implements TiendaService {
     private final UsuarioRepository usuarioRepository;
     private final FileStorageService fileStorageService;
     private final ModelMapper modelMapper;
-    private final TiendaValidator tiendaValidator; // ⭐ NUEVO - Declarar el validador
 
     @Autowired
-    public TiendaImplement(TiendaRepository tiendaRepository,
-                           UsuarioRepository usuarioRepository,
-                           FileStorageService fileStorageService,
-                           ModelMapper modelMapper,
-                           TiendaValidator tiendaValidator) { // ⭐ NUEVO - Inyectar el validador
+    public TiendaImplement(TiendaRepository tiendaRepository, UsuarioRepository usuarioRepository,
+                           FileStorageService fileStorageService, ModelMapper modelMapper) {
         this.tiendaRepository = tiendaRepository;
         this.usuarioRepository = usuarioRepository;
         this.fileStorageService = fileStorageService;
         this.modelMapper = modelMapper;
-        this.tiendaValidator = tiendaValidator; // ⭐ NUEVO - Asignar el validador
     }
 
     @Override
     public TiendaDTO crearTienda(TiendaDTO tiendaDTO, MultipartFile imagen) {
-        // ⭐ NUEVO - VALIDAR NOMBRE DE TIENDA
-        if (!tiendaValidator.esNombreValido(tiendaDTO.getNombre())) {
-            String mensajeError = tiendaValidator.getMensajeError(tiendaDTO.getNombre());
-            throw new CustomException(mensajeError);
+        // ✅ VALIDACIÓN: Categoría principal debe estar definida
+        if (tiendaDTO.getCategoriaPrincipal() == null) {
+            throw new CustomException("Debe seleccionar una categoría principal para la tienda.");
         }
-        // ⭐ FIN VALIDACIÓN
 
         Usuario usuario = usuarioRepository.findById(tiendaDTO.getId_usuario())
                 .orElseThrow(() -> new CustomException("Usuario no encontrado"));
@@ -115,7 +108,7 @@ public class TiendaImplement implements TiendaService {
 
     @Override
     public List<TiendaDTO> obtenerTiendasPorEstado(EstadoTienda estado) {
-        List<Tienda> tiendas = tiendaRepository.findByEstado(estado);
+        List<Tienda> tiendas = tiendaRepository.findByUsuarioIdAndEstado(null, estado);
         return tiendas.stream()
                 .map(tienda -> {
                     TiendaDTO dto = modelMapper.map(tienda, TiendaDTO.class);
@@ -130,14 +123,10 @@ public class TiendaImplement implements TiendaService {
         Tienda tiendaExistente = tiendaRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Tienda no encontrada"));
 
-        // ⭐ NUEVO - VALIDAR NOMBRE SI SE ESTÁ CAMBIANDO
-        if (!tiendaExistente.getNombre().equals(tiendaDTO.getNombre())) {
-            if (!tiendaValidator.esNombreValido(tiendaDTO.getNombre())) {
-                String mensajeError = tiendaValidator.getMensajeError(tiendaDTO.getNombre());
-                throw new CustomException(mensajeError);
-            }
+        // ✅ VALIDACIÓN: Si se cambia la categoría, validar que exista
+        if (tiendaDTO.getCategoriaPrincipal() != null) {
+            tiendaExistente.setCategoriaPrincipal(tiendaDTO.getCategoriaPrincipal());
         }
-        // ⭐ FIN VALIDACIÓN
 
         tiendaExistente.setNombre(tiendaDTO.getNombre());
         tiendaExistente.setDescripcion(tiendaDTO.getDescripcion());
@@ -174,5 +163,24 @@ public class TiendaImplement implements TiendaService {
                 .orElseThrow(() -> new CustomException("Tienda no encontrada"));
         tienda.setEstado(EstadoTienda.ELIMINADA);
         tiendaRepository.save(tienda);
+    }
+
+    // ========== NUEVOS MÉTODOS - BÚSQUEDA POR CATEGORÍA ==========
+
+    @Override
+    public List<TiendaDTO> obtenerTiendasPorCategoria(CategoriaTienda categoria) {
+        List<Tienda> tiendas = tiendaRepository.findByCategoriaPrincipalAndEstadoActivo(categoria);
+        return tiendas.stream()
+                .map(tienda -> {
+                    TiendaDTO dto = modelMapper.map(tienda, TiendaDTO.class);
+                    dto.setId_usuario(tienda.getUsuario().getId_usuario());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CategoriaTienda> obtenerCategoriasDisponibles() {
+        return tiendaRepository.findAllCategoriasActivas();
     }
 }

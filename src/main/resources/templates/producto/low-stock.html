@@ -125,7 +125,7 @@
                         <!-- Producto -->
                         <td data-label="Producto">
                             <div style="display: flex; align-items: center; gap: 1rem;">
-                                <img th:src="@{'/uploads/' + ${producto.imagen_producto}}"
+                                <img th:src="@{${producto.imagen_producto}}"
                                      alt="Imagen"
                                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);"
                                      onerror="this.src='/images/placeholder.jpg'">
@@ -154,7 +154,7 @@
                                                      (producto.categoria.name() == 'FRUTAS' ? 'badge-warning' :
                                                      (producto.categoria.name() == 'VERDURAS' ? 'badge-success' :
                                                      (producto.categoria.name() == 'GRANOS' ? 'badge-secondary' : 'badge-primary')))}"
-                                      th:text="${producto.categoria.nombre}">
+                                      th:text="${producto.categoriaNombre}">
                                     CATEGORIA
                                 </span>
                         </td>
