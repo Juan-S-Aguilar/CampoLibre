@@ -34,6 +34,10 @@ public interface EventoService {
     // Agregar método para buscar eventos por patrocinador
     List<EventoDTO> obtenerEventosPorPatrocinador(Long idPatrocinador);
 
+    // 🌟 NUEVO MÉTODO 🌟
+    // Objetivo: Obtener la lista completa de eventos creados por el administrador.
+    List<EventoDTO> obtenerTodosLosEventosCreadosPorAdministrador(Long idAdmin);
+
 
 
 }

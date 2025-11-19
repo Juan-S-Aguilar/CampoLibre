@@ -242,8 +242,8 @@ public class EventoController {
         // 2. INICIALIZAR VARIABLES (Esto evita el error de NULL en la vista)
         boolean yaGuardoEvento = false;
         boolean yaSeInscribio = false;
-        boolean isPagoPendiente = false;       // <--- Nueva variable crítica
-        Long idInscripcionPendiente = null;    // <--- Nueva variable para el link de pago
+        boolean isPagoPendiente = false;       
+        Long idInscripcionPendiente = null;    
 
         // 3. Lógica si el usuario está logueado
         if (authentication != null && !authentication.getName().equals("anonymousUser")) {
@@ -444,5 +444,38 @@ public class EventoController {
         } catch (Exception e) {
             return "redirect:/eventos/mis-inscripciones";
         }
+    }
+
+
+
+    //  NUEVO ENDPOINT PARA EL ADMINISTRADOR (Lista TODOS los eventos)
+    @GetMapping("/admin/todos") // Puedes usar "/mis-eventos-admin" o similar
+    public String listarTodosLosEventosAdmin(Model model, Authentication authentication) {
+
+        // 1. Verificar Rol de Administrador
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
+            return "redirect:/eventos"; // Redirigir si no es admin
+        }
+
+        // 2. Obtener ID del Admin
+        String email = authentication.getName();
+        UsuarioDTO admin = usuarioService.obtenerUsuarioPorEmail(email); // Asegúrate de que esto devuelve el ID
+
+        if (admin == null) {
+            // Manejar error
+            return "redirect:/login";
+        }
+
+        Long idAdmin = admin.getId_usuario();
+
+        // 3. Usar el NUEVO SERVICIO (Trae TODOS los estados: Borrador, Publicado, Finalizado, etc.)
+        List<EventoDTO> eventos = eventoService.obtenerTodosLosEventosCreadosPorAdministrador(idAdmin);
+
+        // 4. Enviar la lista completa a la vista
+        model.addAttribute("eventos", eventos);
+        model.addAttribute("tipoLista", "admin_todos"); // Útil para filtros en la vista
+
+        // IMPORTANTE: Necesitas una vista llamada "evento/admin-list" o similar.
+        return "evento/admin-list";
     }
 }

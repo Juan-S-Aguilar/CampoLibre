@@ -50,5 +50,9 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     @Query("SELECT e FROM Evento e WHERE e.id_evento = :id")
     Optional<Evento> findByIdWithLock(@Param("id") Long id);
 
+    // Objetivo: Listar TODOS los eventos creados por un usuario, independientemente del estado.
+    @Query("SELECT e FROM Evento e WHERE e.creado_por.id_usuario = :idCreador ORDER BY e.fecha_evento DESC")
+    List<Evento> findByCreadoPorIdUsuario(@Param("idCreador") Long idCreador);
+
 
 }

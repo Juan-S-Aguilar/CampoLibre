@@ -366,5 +366,17 @@ public class EventoImplement implements EventoService {
                 .collect(Collectors.toList());
     }
 
+    // 🌟 IMPLEMENTACIÓN DEL NUEVO MÉTODO 🌟
+    @Override
+    public List<EventoDTO> obtenerTodosLosEventosCreadosPorAdministrador(Long idAdmin) {
+        // 1. Llama al repositorio para obtener todas las Entidades Evento asociadas al idAdmin.
+        List<Evento> eventos = eventoRepository.findByCreadoPorIdUsuario(idAdmin);
+
+        // 2. Mapea la lista de Entidades a una lista de DTOs.
+        return eventos.stream()
+                .map(evento -> modelMapper.map(evento, EventoDTO.class))
+                .collect(Collectors.toList());
+    }
+
 
 }
