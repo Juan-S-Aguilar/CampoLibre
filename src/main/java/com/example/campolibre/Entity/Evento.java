@@ -39,7 +39,7 @@ public class Evento {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
-    private EstadoEvento estado = EstadoEvento.PENDIENTE;
+    private EstadoEvento estado = EstadoEvento.BORRADOR;
 
     @ManyToOne
     @JoinColumn(name = "creado_por", nullable = false)
@@ -54,5 +54,36 @@ public class Evento {
     @PrePersist
     protected void onCreate() {
         fecha_creacion = LocalDateTime.now();
+    }
+
+    // --- NUEVOS CAMPOS PARA EL CONTROL DEL EVENTO ---
+    @ManyToOne
+    @JoinColumn(name = "id_patrocinador", nullable = false)
+    private Patrocinador patrocinador;
+
+    @Column(name = "cupos_proveedor_max", nullable = false)
+    private Integer cuposMaximosProveedor;
+
+    @Column(name = "costo_espacio", nullable = false)
+    private Double costoEspacio;
+
+    @Column(name = "terminos_condiciones", length = 2000)
+    private String terminosCondiciones;
+
+    @Column(name = "cupos_ocupados", nullable = false)
+    private Integer cuposOcupados = 0;
+
+    @Column(name = "direccion_completa", length = 300)
+    private String direccionCompleta;
+
+    @Column(name = "ciudad", length = 100)
+    private String ciudad;
+
+    @Column(name = "fecha_publicacion")
+    private LocalDateTime fechaPublicacion;
+
+    // MÉTODO HELPER (no se guarda en BD)
+    public Integer getCuposDisponibles() {
+        return cuposMaximosProveedor - cuposOcupados;
     }
 }

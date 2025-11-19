@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title>Pago Exitoso - Campo Libre</title>
+    <style>
+        /* Animación de entrada */
+        @keyframes bounceIn {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .animate__animated.animate__bounceIn {
+            animation: bounceIn 1s;
+        }
+
+        /* Efecto de brillo en el código */
+        #codigoConfirmacion {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        /* Hover en botones */
+        .btn {
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+<main th:fragment="content">
+    <div class="container mt-5 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-success text-white text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-check-circle-fill display-1 animate__animated animate__bounceIn"></i>
+                        </div>
+                        <h1 class="display-5 fw-bold mb-2">¡Pago Exitoso!</h1>
+                        <p class="lead mb-0">Tu cupo ha sido confirmado</p>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+
+                        <div class="alert alert-success text-center mb-4">
+                            <small class="text-muted d-block mb-1">Número de Transacción</small>
+                            <h4 class="mb-0 font-monospace" th:text="${pago.numeroTransaccion}">
+                                PEVT-202501-XXXX
+                            </h4>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-cash-coin text-success fs-1"></i>
+                                        <h6 class="mt-2 text-muted mb-1">Monto Pagado</h6>
+                                        <h3 class="mb-0 text-success">
+                                            $<span th:text="${#numbers.formatDecimal(pago.monto, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-credit-card text-primary fs-1"></i>
+                                        <h6 class="mt-2 text-muted mb-1">Método de Pago</h6>
+                                        <h5 class="mb-0" th:text="${pago.metodoPago.toString()}">TARJETA_CREDITO</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-calendar-event text-success"></i>
+                                Detalles del Evento
+                            </h5>
+
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h4 class="card-title text-success mb-3" th:text="${inscripcion.nombreEvento}">
+                                        Nombre del Evento
+                                    </h4>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-calendar3 text-success fs-4 me-3"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Fecha</small>
+                                                    <strong th:text="${#temporals.format(inscripcion.fechaEvento, 'EEEE, dd MMMM yyyy', new java.util.Locale('es', 'ES'))}">
+                                                        Fecha del evento
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-geo-alt text-danger fs-4 me-3"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Ubicación</small>
+                                                    <strong th:text="${inscripcion.ubicacionEvento}">
+                                                        Ubicación del evento
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="bi bi-shield-check text-success"></i>
+                                Tu Código de Confirmación
+                            </h5>
+
+                            <div class="alert alert-success py-4">
+                                <div class="text-center">
+                                    <h2 class="display-5 fw-bold font-monospace mb-3"
+                                        th:text="${inscripcion.codigoConfirmacion}"
+                                        id="codigoConfirmacion">
+                                        EVT-202501-XXXX
+                                    </h2>
+                                    <button class="btn btn-outline-success" onclick="copiarCodigo()">
+                                        <i class="bi bi-clipboard"></i>
+                                        <span id="textoCopiar">Copiar Código</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Importante:</strong> Guarda este código. Lo necesitarás para ingresar al evento.
+                                También lo enviamos a tu correo electrónico.
+                            </div>
+                        </div>
+
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-list-check text-primary"></i>
+                                    Próximos Pasos
+                                </h6>
+                                <ol class="mb-0">
+                                    <li class="mb-2">
+                                        <strong>Revisa tu email:</strong> Te enviamos la confirmación con todos los detalles
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Guarda tu código:</strong> Tómale captura o guárdalo en un lugar seguro
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Prepara tu stand:</strong> Revisa los requisitos del evento
+                                    </li>
+                                    <li class="mb-0">
+                                        <strong>El día del evento:</strong> Presenta tu código de confirmación en la entrada
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a th:href="@{/eventos/mi-codigo/{id}(id=${inscripcion.id_inscripcion})}"
+                               class="btn btn-success btn-lg">
+                                <i class="bi bi-qr-code"></i> Ver Código QR
+                            </a>
+                            <a th:href="@{/eventos/mis-inscripciones}"
+                               class="btn btn-outline-success btn-lg">
+                                <i class="bi bi-calendar-check"></i> Mis Inscripciones
+                            </a>
+                            <a th:href="@{/eventos}"
+                               class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-arrow-left"></i> Ver Más Eventos
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-white text-center py-3">
+                        <small class="text-muted">
+                            ¿Necesitas ayuda? Contáctanos a
+                            <a href="mailto:soporte@campolibre.com">soporte@campolibre.com</a>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card border-info mt-4">
+                    <div class="card-body">
+                        <h6 class="text-info">
+                            <i class="bi bi-star-fill"></i>
+                            ¿Qué incluye tu inscripción?
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        Espacio físico confirmado
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        Electricidad y servicios básicos
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        Soporte durante el evento
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        Visibilidad ante miles de visitantes
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        Material promocional del evento
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        Certificado de participación
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const codigoConfirmacion = /*[[${inscripcion.codigoConfirmacion}]]*/ 'EVT-202501-XXXX';
+        /*]]>*/
+
+        // Lanzar confetti al cargar la página
+        window.addEventListener('DOMContentLoaded', function() {
+            // Confetti principal
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+
+            // Confetti secundario después de 300ms
+            setTimeout(() => {
+                confetti({
+                    particleCount: 50,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 }
+                });
+                confetti({
+                    particleCount: 50,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 }
+                });
+            }, 300);
+        });
+
+        // Copiar código al portapapeles
+        function copiarCodigo() {
+            const codigo = codigoConfirmacion;
+            const textoBoton = document.getElementById('textoCopiar');
+
+            navigator.clipboard.writeText(codigo).then(() => {
+                // Cambiar texto del botón
+                textoBoton.innerHTML = '<i class="bi bi-check"></i> ¡Copiado!';
+                textoBoton.parentElement.classList.remove('btn-outline-success');
+                textoBoton.parentElement.classList.add('btn-success');
+
+                // Confetti pequeño al copiar
+                confetti({
+                    particleCount: 30,
+                    spread: 40,
+                    origin: { y: 0.7 }
+                });
+
+                setTimeout(() => {
+                    textoBoton.innerHTML = 'Copiar Código';
+                    textoBoton.parentElement.classList.remove('btn-success');
+                    textoBoton.parentElement.classList.add('btn-outline-success');
+                }, 2000);
+            }).catch(err => {
+                alert('No se pudo copiar el código: ' + err);
+            });
+        }
+
+        // Scroll suave al inicio
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    </script>
+
+
+</main>
+</body>
+</html>

@@ -1,13 +1,19 @@
 package com.example.campolibre.Implement;
 
 import com.example.campolibre.DTO.EventoDTO;
+import com.example.campolibre.DTO.MisEventosDTO;
 import com.example.campolibre.Entity.Evento;
+import com.example.campolibre.Entity.MisEventos;
 import com.example.campolibre.Entity.Usuario;
+import com.example.campolibre.Enum.EstadoCupo;
 import com.example.campolibre.Enum.EstadoEvento;
+import com.example.campolibre.Enum.NombreRol;
 import com.example.campolibre.Enum.TipoEvento;
 import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Repository.EventoRepository;
+import com.example.campolibre.Repository.InscripcionProveedorRepository;
 import com.example.campolibre.Repository.UsuarioRepository;
+import com.example.campolibre.Service.EmailService;
 import com.example.campolibre.Service.EventoService;
 import com.example.campolibre.Service.FileStorageService;
 import org.modelmapper.ModelMapper;
@@ -15,8 +21,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+
+
+import com.example.campolibre.DTO.EventoCreacionDTO; // Importar el nuevo DTO
+import com.example.campolibre.Entity.Patrocinador; // Importar la nueva entidad Patrocinador
+import com.example.campolibre.Repository.PatrocinadorRepository; // Inyectar el nuevo Repository
 
 @Service
 public class EventoImplement implements EventoService {
@@ -25,25 +38,83 @@ public class EventoImplement implements EventoService {
     private final UsuarioRepository usuarioRepository;
     private final FileStorageService fileStorageService;
     private final ModelMapper modelMapper;
+    private final PatrocinadorRepository patrocinadorRepository; // Inyección de dependencia
+    private final InscripcionProveedorRepository inscripcionProveedorRepository;
+    private final EmailService emailService;
 
     @Autowired
-    public EventoImplement(EventoRepository eventoRepository, UsuarioRepository usuarioRepository,
-                           FileStorageService fileStorageService, ModelMapper modelMapper) {
+    public EventoImplement(EventoRepository eventoRepository,
+                           UsuarioRepository usuarioRepository,
+                           FileStorageService fileStorageService,
+                           ModelMapper modelMapper,
+                           PatrocinadorRepository patrocinadorRepository,
+                           InscripcionProveedorRepository inscripcionProveedorRepository,
+                           EmailService emailService
+                           ) {
         this.eventoRepository = eventoRepository;
         this.usuarioRepository = usuarioRepository;
         this.fileStorageService = fileStorageService;
         this.modelMapper = modelMapper;
+        this.patrocinadorRepository = patrocinadorRepository;
+        this.inscripcionProveedorRepository = inscripcionProveedorRepository;
+        this.emailService = emailService;
+
     }
-
+//_________________________________________________________________
     @Override
-    public EventoDTO crearEvento(EventoDTO eventoDTO, MultipartFile imagen) {
-        Usuario creador = usuarioRepository.findById(eventoDTO.getCreado_por())
-                .orElseThrow(() -> new CustomException("Usuario no encontrado"));
+    public EventoDTO crearEvento(EventoCreacionDTO eventoCreacionDTO, Long idAdmin, MultipartFile imagen) {
 
-        Evento evento = modelMapper.map(eventoDTO, Evento.class);
-        evento.setCreado_por(creador);
-        evento.setEstado(EstadoEvento.PENDIENTE);
+        if (eventoCreacionDTO.getId_evento() != null) {
+            throw new CustomException("No se puede especificar ID al crear un evento nuevo");
+        }
 
+        // 1. Verificar Usuario (Debe ser un Administrador)
+        Usuario creador = usuarioRepository.findById(idAdmin)
+                .orElseThrow(() -> new CustomException("Administrador no encontrado"));
+
+        // Validar que sea administrador
+        boolean esAdmin = creador.getRoles().stream()
+                .anyMatch(rol -> rol.getNombre_rol().equals(NombreRol.ADMINISTRADOR));
+
+        if (!esAdmin) {
+            throw new CustomException("Solo los administradores pueden crear eventos");
+        }
+
+        // Después de validar que es admin, agregar:
+        if (eventoCreacionDTO.getCuposMaximosProveedor() <= 0) {
+            throw new CustomException("Los cupos máximos deben ser mayores a cero");
+        }
+
+        if (eventoCreacionDTO.getCostoEspacio() < 0) {
+            throw new CustomException("El costo del espacio no puede ser negativo");
+        }
+
+        if (eventoCreacionDTO.getFecha_evento().isBefore(LocalDate.now())) {
+            throw new CustomException("La fecha del evento no puede ser en el pasado");
+        }
+
+        // 2. Verificar Patrocinador
+        Patrocinador patrocinador = patrocinadorRepository.findById(eventoCreacionDTO.getId_patrocinador())
+                .orElseThrow(() -> new CustomException("Patrocinador no encontrado"));
+
+        // 3. Mapeo y Asignación de Entidades
+        Evento evento = modelMapper.map(eventoCreacionDTO, Evento.class);
+
+        // Asignación de relaciones
+        evento.setCreado_por(creador); // El Admin que crea
+        evento.setPatrocinador(patrocinador); // El patrocinador que financia
+
+        // Asignación de campos nuevos
+        evento.setCuposMaximosProveedor(eventoCreacionDTO.getCuposMaximosProveedor());
+        evento.setCostoEspacio(eventoCreacionDTO.getCostoEspacio());
+        evento.setTerminosCondiciones(eventoCreacionDTO.getTerminosCondiciones());
+        evento.setEstado(EstadoEvento.BORRADOR);
+        evento.setCuposOcupados(0);
+
+        evento.setDireccionCompleta(eventoCreacionDTO.getDireccionCompleta());
+
+
+        // 4. Manejo de imagen
         if (imagen != null && !imagen.isEmpty()) {
             String rutaImagen = fileStorageService.guardarArchivo(imagen, "eventos");
             evento.setImagen_evento(rutaImagen);
@@ -51,9 +122,8 @@ public class EventoImplement implements EventoService {
 
         Evento nuevoEvento = eventoRepository.save(evento);
 
-        EventoDTO resultado = modelMapper.map(nuevoEvento, EventoDTO.class);
-        resultado.setCreado_por(nuevoEvento.getCreado_por().getId_usuario());
-        return resultado;
+        // 5. Mapeo a DTO de salida
+        return convertirADTO(nuevoEvento);
     }
 
     @Override
@@ -61,132 +131,265 @@ public class EventoImplement implements EventoService {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
 
-        EventoDTO resultado = modelMapper.map(evento, EventoDTO.class);
-        resultado.setCreado_por(evento.getCreado_por().getId_usuario());
-        return resultado;
+        return convertirADTO(evento);
     }
+
 
     @Override
     public List<EventoDTO> obtenerTodosLosEventos() {
         List<Evento> eventos = eventoRepository.findAll();
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<EventoDTO> obtenerEventosPublicados() {
+        return eventoRepository.findByEstado(EstadoEvento.PUBLICADO)
+                .stream()
+                .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<EventoDTO> obtenerEventosAprobados() {
-        List<Evento> eventos = eventoRepository.findAllApproved();
+    public List<EventoDTO> obtenerEventosBorrador() {
+        List<Evento> eventos = eventoRepository.findByEstado(EstadoEvento.BORRADOR);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<EventoDTO> obtenerEventosPendientes() {
-        List<Evento> eventos = eventoRepository.findByEstado(EstadoEvento.PENDIENTE);
-        return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
 
     @Override
     public List<EventoDTO> obtenerEventosPorCreador(Long idCreador) {
         List<Evento> eventos = eventoRepository.findByCreadorId(idCreador);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<EventoDTO> obtenerEventosPorTipo(TipoEvento tipoEvento) {
-        List<Evento> eventos = eventoRepository.findByTipoEventoAndAprobado(tipoEvento);
+        List<Evento> eventos = eventoRepository.findByTipoEventoAndEstado(tipoEvento, EstadoEvento.PUBLICADO);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public List<EventoDTO> obtenerEventosProximos(LocalDate fecha) {
-        List<Evento> eventos = eventoRepository.findEventosProximos(fecha);
+        List<Evento> eventos = eventoRepository.findEventosProximosAndEstado(fecha, EstadoEvento.PUBLICADO);
         return eventos.stream()
-                .map(evento -> {
-                    EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
-                    dto.setCreado_por(evento.getCreado_por().getId_usuario());
-                    return dto;
-                })
+                .map(this::convertirADTO) // ← Usamos el método reutilizable
                 .collect(Collectors.toList());
     }
 
+
+    // --- LÓGICA DE ACTUALIZACIÓN DE EVENTOS REDISEÑADA ---
     @Override
-    public EventoDTO actualizarEvento(Long id, EventoDTO eventoDTO, MultipartFile imagen) {
+    public EventoDTO actualizarEvento(Long id, EventoCreacionDTO eventoCreacionDTO, MultipartFile imagen) {
         Evento eventoExistente = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
 
-        // Actualizar campos básicos
-        eventoExistente.setNombre(eventoDTO.getNombre());
-        eventoExistente.setDescripcion(eventoDTO.getDescripcion());
-        eventoExistente.setUbicacion(eventoDTO.getUbicacion());
-        eventoExistente.setFecha_evento(eventoDTO.getFecha_evento());
-        eventoExistente.setHora_evento(eventoDTO.getHora_evento());
-        eventoExistente.setTipo_evento(eventoDTO.getTipo_evento());
+        // 1. Validar que los nuevos cupos no sean menores a los ya ocupados
+        Long cuposOcupados = inscripcionProveedorRepository.countCuposConfirmadosPorEvento(id);
+        if (eventoCreacionDTO.getCuposMaximosProveedor() < cuposOcupados.intValue()) {
+            throw new CustomException("No puedes reducir los cupos por debajo de los ya confirmados (" + cuposOcupados + ")");
+        }
 
-        // ✅ CORRECCIÓN: Manejar imagen desde MultipartFile O desde DTO
+        // 2. Actualización de Patrocinador
+        if (!eventoExistente.getPatrocinador().getId_patrocinador().equals(eventoCreacionDTO.getId_patrocinador())) {
+            Patrocinador nuevoPatrocinador = patrocinadorRepository.findById(eventoCreacionDTO.getId_patrocinador())
+                    .orElseThrow(() -> new CustomException("Nuevo Patrocinador no encontrado"));
+            eventoExistente.setPatrocinador(nuevoPatrocinador);
+        }
+
+        // 3. Actualizar campos básicos
+        eventoExistente.setNombre(eventoCreacionDTO.getNombre());
+        eventoExistente.setDescripcion(eventoCreacionDTO.getDescripcion());
+        eventoExistente.setUbicacion(eventoCreacionDTO.getUbicacion());
+        eventoExistente.setFecha_evento(eventoCreacionDTO.getFecha_evento());
+        eventoExistente.setHora_evento(eventoCreacionDTO.getHora_evento());
+        eventoExistente.setTipo_evento(eventoCreacionDTO.getTipo_evento());
+
+        // 4. Actualizar campos de control
+        eventoExistente.setCuposMaximosProveedor(eventoCreacionDTO.getCuposMaximosProveedor());
+        eventoExistente.setCostoEspacio(eventoCreacionDTO.getCostoEspacio());
+        eventoExistente.setTerminosCondiciones(eventoCreacionDTO.getTerminosCondiciones());
+
+        // 5. Manejo de imagen
         if (imagen != null && !imagen.isEmpty()) {
-            // Caso 1: Viene imagen nueva desde el form (usado en versiones antiguas)
-            System.out.println("📸 [Service] Guardando imagen desde MultipartFile");
             if (eventoExistente.getImagen_evento() != null) {
                 fileStorageService.eliminarArchivo(eventoExistente.getImagen_evento());
             }
             String rutaImagen = fileStorageService.guardarArchivo(imagen, "eventos");
             eventoExistente.setImagen_evento(rutaImagen);
-        } else if (eventoDTO.getImagen_evento() != null) {
-            // ✅ Caso 2: La imagen ya fue guardada en el Controller
-            System.out.println("📸 [Service] Usando imagen desde DTO: " + eventoDTO.getImagen_evento());
-            eventoExistente.setImagen_evento(eventoDTO.getImagen_evento());
         }
-        // Si ambos son null, mantiene la imagen existente (no hace nada)
 
+        // 6. Guardar evento actualizado
         Evento eventoActualizado = eventoRepository.save(eventoExistente);
 
-        EventoDTO resultado = modelMapper.map(eventoActualizado, EventoDTO.class);
-        resultado.setCreado_por(eventoActualizado.getCreado_por().getId_usuario());
-        return resultado;
+        // 7. Retornar DTO usando método reutilizable
+        return convertirADTO(eventoActualizado);
     }
+
 
     @Override
     public void cambiarEstadoEvento(Long id, EstadoEvento estado) {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
+
+        // VALIDACIONES ANTES DE PUBLICAR
+        if (estado == EstadoEvento.PUBLICADO) {
+            if (evento.getNombre() == null || evento.getNombre().trim().isEmpty()) {
+                throw new CustomException("El evento debe tener un nombre para publicarse");
+            }
+            if (evento.getDescripcion() == null || evento.getDescripcion().trim().isEmpty()) {
+                throw new CustomException("El evento debe tener una descripción para publicarse");
+            }
+            if (evento.getFecha_evento() == null) {
+                throw new CustomException("El evento debe tener una fecha para publicarse");
+            }
+            if (evento.getFecha_evento().isBefore(LocalDate.now())) {
+                throw new CustomException("No se puede publicar un evento con fecha pasada");
+            }
+            if (evento.getPatrocinador() == null) {
+                throw new CustomException("El evento debe tener un patrocinador para publicarse");
+            }
+            if (evento.getCuposMaximosProveedor() == null || evento.getCuposMaximosProveedor() <= 0) {
+                throw new CustomException("El evento debe tener cupos disponibles para publicarse");
+            }
+            if (evento.getCostoEspacio() == null || evento.getCostoEspacio() < 0) {
+                throw new CustomException("El evento debe tener un costo de espacio válido");
+            }
+
+            // Registrar fecha de publicación solo la primera vez
+            if (evento.getFechaPublicacion() == null) {
+                evento.setFechaPublicacion(LocalDateTime.now());
+            }
+        }
+
         evento.setEstado(estado);
         eventoRepository.save(evento);
+
+        // Notificar DESPUÉS de guardar exitosamente
+        if (estado == EstadoEvento.PUBLICADO) {
+            notificarProveedoresEventoPublicado(evento);
+        }
     }
 
     @Override
     public void eliminarEvento(Long id) {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
-        evento.setEstado(EstadoEvento.ELIMINADO);
+        evento.setEstado(EstadoEvento.CANCELADO);
         eventoRepository.save(evento);
     }
+
+    private void notificarProveedoresEventoPublicado(Evento evento) {
+        // Obtener todos los usuarios con rol PROVEEDOR que estén ACTIVOS
+        List<Usuario> proveedores = usuarioRepository.findByRolNombre(NombreRol.PROVEEDOR);
+
+        System.out.println("[EventoImplement] Notificando a " + proveedores.size() + " proveedores sobre el evento: " + evento.getNombre());
+
+        // Enviar correo a cada proveedor
+        for (Usuario proveedor : proveedores) {
+            try {
+                emailService.enviarNotificacionEventoPublicado(
+                        proveedor.getEmail(),
+                        proveedor.getNombre(),
+                        evento.getNombre(),
+                        evento.getUbicacion(),
+                        evento.getFecha_evento().toString(),
+                        evento.getHora_evento().toString(),
+                        evento.getCuposMaximosProveedor(),
+                        evento.getCostoEspacio()
+                );
+            } catch (Exception e) {
+                System.err.println("[EventoImplement] Error al enviar correo a " + proveedor.getEmail() + ": " + e.getMessage());
+            }
+        }
+
+        System.out.println("[EventoImplement] Notificación completada para el evento: " + evento.getNombre());
+    }
+
+    // Agregar este método privado al final de la clase
+    private EventoDTO convertirADTO(Evento evento) {
+        EventoDTO dto = modelMapper.map(evento, EventoDTO.class);
+
+        // ID del creador
+        if (evento.getCreado_por() != null) {
+            dto.setId_creador(evento.getCreado_por().getId_usuario());
+            dto.setNombreCreador(evento.getCreado_por().getNombre());
+        }
+
+        // Datos del patrocinador
+        if (evento.getPatrocinador() != null) {
+            dto.setId_patrocinador(evento.getPatrocinador().getId_patrocinador());
+            dto.setNombrePatrocinador(evento.getPatrocinador().getNombre());
+            dto.setLogoPatrocinador(evento.getPatrocinador().getLogoUrl());
+        }
+
+        // Calcular cupos disponibles SIEMPRE desde la BD (fuente de verdad)
+        Long cuposConfirmados = inscripcionProveedorRepository
+                .countByEventoIdAndEstadoCupo(evento.getId_evento(), EstadoCupo.CONFIRMADO);
+
+        dto.setCuposOcupados(cuposConfirmados.intValue());
+        dto.setCuposDisponibles(evento.getCuposMaximosProveedor() - cuposConfirmados.intValue());
+
+        return dto;
+    }
+
+    @Override
+    public void publicarEvento(Long idEvento) {
+        cambiarEstadoEvento(idEvento, EstadoEvento.PUBLICADO);
+    }
+
+    @Override
+    public List<EventoDTO> obtenerEventosConCuposDisponibles() {
+        return eventoRepository.findEventosConCuposDisponibles(EstadoEvento.PUBLICADO)
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventoDTO> obtenerEventosPorPatrocinador(Long idPatrocinador) {
+        return eventoRepository.findByPatrocinadorId(idPatrocinador)
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // 🌟 IMPLEMENTACIÓN DEL NUEVO MÉTODO 🌟
+    @Override
+    public List<EventoDTO> obtenerTodosLosEventosCreadosPorAdministrador(Long idAdmin) {
+        // 1. Llama al repositorio para obtener todas las Entidades Evento asociadas al idAdmin.
+        List<Evento> eventos = eventoRepository.findByCreadoPorIdUsuario(idAdmin);
+
+        // 2. Mapea la lista de Entidades a una lista de DTOs.
+        return eventos.stream()
+                .map(evento -> modelMapper.map(evento, EventoDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventoDTO> obtenerEventosVisiblesParaPublico() {
+        // 1. Obtenemos todos los eventos
+        return eventoRepository.findAll().stream()
+
+                // 2. Filtro: Excluir BORRADOR
+                .filter(evento -> evento.getEstado() != EstadoEvento.BORRADOR)
+
+                // 3. Mapeamos a DTO (CORREGIDO: Usar convertirADTO)
+                .map(this::convertirADTO) // <--- CAMBIO AQUÍ: De 'mapearADTO' a 'convertirADTO'
+                .collect(Collectors.toList());
+    }
+
+
+
+
 }

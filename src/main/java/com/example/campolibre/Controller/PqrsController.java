@@ -229,7 +229,7 @@ public class PqrsController {
         if (!permitido) {
             if (pqrsEvento != null && pqrsEvento.getId_evento() != null) {
                 EventoDTO evento = eventoService.obtenerEventoPorId(pqrsEvento.getId_evento());
-                if (evento != null && evento.getCreado_por() != null && evento.getCreado_por().equals(idUsuarioActual)) {
+                if (evento != null && evento.getId_creador() != null && evento.getId_creador().equals(idUsuarioActual)) {
                     permitido = true; // creador del evento
                 }
             }
@@ -294,7 +294,7 @@ public class PqrsController {
         model.addAttribute("pqrs", new PqrsDTO());
         model.addAttribute("tiposPqrs", TipoPqrs.values());
         model.addAttribute("tiendas", tiendaService.obtenerTiendasActivas());
-        model.addAttribute("eventos", eventoService.obtenerEventosAprobados());
+        model.addAttribute("eventos", eventoService.obtenerEventosPublicados());
         model.addAttribute("idTiendaSeleccionada", idTienda);
         model.addAttribute("idEventoSeleccionado", idEvento);
         return "pqrs/form";

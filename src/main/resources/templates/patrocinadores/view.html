@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title th:text="'Detalle de Patrocinador: ' + ${patrocinador.nombre}">Detalle de Patrocinador - Campo Libre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container mt-4 mb-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/admin/patrocinadores}">Patrocinadores</a></li>
+                <li class="breadcrumb-item active" th:text="'Detalle: ' + ${patrocinador.nombre}">Detalle</li>
+            </ol>
+        </nav>
+
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-9">
+                <h1 class="display-6">
+                    <i class="bi bi-handshake-fill text-success"></i>
+                    <span th:text="${patrocinador.nombre}">Nombre del Patrocinador</span>
+                </h1>
+                <p class="text-muted">Información completa y estado de la entidad.</p>
+            </div>
+            <div class="col-md-3 text-end">
+                <a th:href="@{/admin/patrocinadores/editar/{id}(id=${patrocinador.id_patrocinador})}"
+                   class="btn btn-warning btn-lg">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Detalles Corporativos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-3">
+                                <img th:src="${patrocinador.logoUrl != null and !patrocinador.logoUrl.isEmpty()} ? ${patrocinador.logoUrl} : '/images/placeholder-logo.png'"
+                                     alt="Logo del Patrocinador"
+                                     class="img-thumbnail rounded-circle"
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                                <div class="mt-2">
+                                    <span class="badge fs-6 py-2"
+                                          th:classappend="${patrocinador.activo} ? 'bg-success' : 'bg-danger'"
+                                          th:text="${patrocinador.activo} ? 'ACTIVO' : 'ARCHIVADO'">Estado</span>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <dl class="row mt-3">
+                                    <dt class="col-sm-4 text-muted">ID Interno:</dt>
+                                    <dd class="col-sm-8"><code th:text="${patrocinador.id_patrocinador}">123</code></dd>
+
+                                    <dt class="col-sm-4 text-muted">Sitio Web:</dt>
+                                    <dd class="col-sm-8">
+                                        <a th:if="${patrocinador.sitioWeb != null and !patrocinador.sitioWeb.isEmpty()}"
+                                           th:href="${patrocinador.sitioWeb}" target="_blank"
+                                           th:text="${patrocinador.sitioWeb}">Sitio Web</a>
+                                        <span th:unless="${patrocinador.sitioWeb != null and !patrocinador.sitioWeb.isEmpty()}" class="text-muted">No registrado</span>
+                                    </dd>
+
+                                    <dt class="col-sm-4 text-muted">Fecha Creación:</dt>
+                                    <dd class="col-sm-8" th:text="${#temporals.format(patrocinador.fechaCreacion, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h6 class="text-primary mb-3">Descripción</h6>
+                        <p class="card-text" th:text="${patrocinador.descripcion} ?: 'Sin descripción detallada proporcionada.'">
+                            Descripción del patrocinador...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Contacto</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row small">
+                            <dt class="col-sm-5 text-muted">Persona Contacto:</dt>
+                            <dd class="col-sm-7" th:text="${patrocinador.personaContacto} ?: 'N/A'">Juan Pérez</dd>
+
+                            <dt class="col-sm-5 text-muted">Email:</dt>
+                            <dd class="col-sm-7">
+                                <a th:href="'mailto:' + ${patrocinador.contactoEmail}" th:text="${patrocinador.contactoEmail}">email@contacto.com</a>
+                            </dd>
+
+                            <dt class="col-sm-5 text-muted">Teléfono:</dt>
+                            <dd class="col-sm-7" th:text="${patrocinador.telefonoContacto} ?: 'N/A'">+57 300 1234567</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a th:href="@{/admin/patrocinadores/editar/{id}(id=${patrocinador.id_patrocinador})}"
+                       class="btn btn-warning btn-lg">
+                        <i class="bi bi-pencil-square"></i> Modificar Datos
+                    </a>
+
+                    <form th:action="@{/admin/patrocinadores/cambiar-estado/{id}(id=${patrocinador.id_patrocinador})}"
+                          method="post" class="d-grid gap-2">
+                        <input type="hidden" name="activo" th:value="${!patrocinador.activo}">
+                        <button type="submit" class="btn btn-lg"
+                                th:classappend="${patrocinador.activo} ? 'btn-outline-danger' : 'btn-outline-success'"
+                                onclick="return confirm('¿Estás seguro de cambiar el estado de este patrocinador?');">
+                            <i th:classappend="${patrocinador.activo} ? 'bi bi-archive' : 'bi bi-check-circle-fill'"></i>
+                            <span th:text="${patrocinador.activo} ? 'Archivar Patrocinador' : 'Activar Patrocinador'"></span>
+                        </button>
+                    </form>
+
+                    <a th:href="@{/admin/patrocinadores}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Listado
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</main>
+</body>
+</html>
