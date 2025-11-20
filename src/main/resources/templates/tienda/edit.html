@@ -30,6 +30,7 @@
             <!-- ID oculto -->
             <input type="hidden" th:field="*{id_tienda}">
             <input type="hidden" th:field="*{id_usuario}">
+            <input type="hidden" th:field="*{categoriaPrincipal}">
 
             <!-- Sección: Información Básica -->
             <div class="form-section">
@@ -69,30 +70,6 @@
                               required></textarea>
                     <small class="form-text">
                         <span id="charCount">0</span>/500
-                    </small>
-                </div>
-
-                <!-- ✨ CATEGORÍA PRINCIPAL (NUEVO) -->
-                <div class="form-group">
-                    <label for="categoriaPrincipal">
-                        <i class="bi bi-grid"></i>
-                        Categoría Principal
-                        <span class="required">*</span>
-                    </label>
-                    <select th:field="*{categoriaPrincipal}"
-                            class="form-select"
-                            id="categoriaPrincipal"
-                            required>
-                        <option value="">Seleccione una categoría...</option>
-                        <option th:each="categoria : ${categoriasTienda}"
-                                th:value="${categoria}"
-                                th:text="${categoria.displayName}"
-                                th:selected="${categoria == tienda.categoriaPrincipal}">
-                        </option>
-                    </select>
-                    <small class="form-text">
-                        <i class="bi bi-exclamation-triangle text-warning"></i>
-                        <strong>Advertencia:</strong> Cambiar la categoría puede afectar los productos existentes
                     </small>
                 </div>
             </div>

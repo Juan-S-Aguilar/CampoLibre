@@ -5,31 +5,6 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 <head>
     <title>Inscripciones del Evento - Campo Libre</title>
-    <style>
-        .status-badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .table-hover tbody tr:hover {
-            background-color: rgba(40, 167, 69, 0.05);
-            cursor: pointer;
-        }
-        .search-box {
-            position: relative;
-        }
-        .search-box input {
-            padding-left: 2.5rem;
-        }
-        .search-box i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-        }
-    </style>
 </head>
 <body>
 
@@ -319,102 +294,6 @@
         </div>
     </div>
 </main>
-
-<script>
-    // Búsqueda en tiempo real
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        filtrarTabla();
-    });
-
-    document.getElementById('filterEstado').addEventListener('change', function() {
-        filtrarTabla();
-    });
-
-    function filtrarTabla() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const estadoFilter = document.getElementById('filterEstado').value;
-        const rows = document.querySelectorAll('.inscripcion-row');
-        let visibleCount = 0;
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const estadoBadge = row.querySelector('.status-badge');
-            const estado = estadoBadge ? estadoBadge.textContent.trim() : '';
-
-            const matchSearch = text.includes(searchTerm);
-            const matchEstado = !estadoFilter || estado === estadoFilter;
-
-            if (matchSearch && matchEstado) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        document.getElementById('visibleCount').textContent = visibleCount;
-    }
-
-    // Copiar código al portapapeles
-    function copiarCodigo(button) {
-        const codigo = button.getAttribute('data-codigo');
-        navigator.clipboard.writeText(codigo).then(() => {
-            const icon = button.querySelector('i');
-            icon.className = 'bi bi-check';
-            button.classList.add('text-success');
-
-            setTimeout(() => {
-                icon.className = 'bi bi-clipboard';
-                button.classList.remove('text-success');
-            }, 2000);
-        }).catch(err => {
-            alert('Error al copiar: ' + err);
-        });
-    }
-
-    // Ver detalle de inscripción (puedes implementar modal o redirección)
-    function verDetalle(button) {
-        const inscripcionId = button.getAttribute('data-inscripcion');
-        window.location.href = `/inscripciones/detalle/${inscripcionId}`;
-    }
-
-    // Enviar recordatorio por email
-    function enviarRecordatorio(button) {
-        const inscripcionId = button.getAttribute('data-inscripcion');
-
-        if (confirm('¿Enviar recordatorio por correo al proveedor?')) {
-            // TODO: Implementar endpoint de email
-            alert('Funcionalidad de email en desarrollo');
-        }
-    }
-
-    // Exportar a Excel (simulado)
-    function exportarExcel() {
-        alert('Funcionalidad de exportación en desarrollo.\nPuedes implementar con Apache POI en el backend.');
-    }
-
-    // Ordenar tabla
-    document.getElementById('sortBy').addEventListener('change', function() {
-        const sortValue = this.value;
-        const tbody = document.querySelector('#inscripcionesTable tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-
-        rows.sort((a, b) => {
-            if (sortValue === 'nombre') {
-                const nameA = a.cells[1].textContent.trim().toLowerCase();
-                const nameB = b.cells[1].textContent.trim().toLowerCase();
-                return nameA.localeCompare(nameB);
-            } else if (sortValue === 'monto') {
-                const montoA = parseFloat(a.cells[4].textContent.replace(/[^0-9]/g, ''));
-                const montoB = parseFloat(b.cells[4].textContent.replace(/[^0-9]/g, ''));
-                return montoB - montoA;
-            }
-            return 0;
-        });
-
-        rows.forEach(row => tbody.appendChild(row));
-    });
-</script>
 
 </body>
 </html>
