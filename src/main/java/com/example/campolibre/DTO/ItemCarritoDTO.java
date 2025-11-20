@@ -1,5 +1,6 @@
 package com.example.campolibre.DTO;
 
+import com.example.campolibre.Enum.UnidadMedida;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,10 @@ public class ItemCarritoDTO {
     private Long id_producto;
     private String nombre_producto;
     private String imagen_producto;
+
+    // ✅ NUEVO: Unidad de medida del producto
+    private UnidadMedida unidadMedida;
+
     private Long id_tienda;
     private String nombre_tienda;
     private Integer cantidad;

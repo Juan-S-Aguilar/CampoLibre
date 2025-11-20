@@ -123,6 +123,10 @@
                                 <br>
                                 <small class="text-muted">
                                     <i class="fas fa-store"></i> <span th:text="${item.nombre_tienda}">Tienda</span>
+                                    <br>
+                                    Cantidad: <span th:text="${item.cantidad}">1</span>
+                                    <span th:if="${item.unidadMedida != null}" th:text="${item.unidadMedida.displayName}">unidad</span>
+                                    <span th:unless="${item.unidadMedida != null}">unidad</span>
                                 </small>
                             </div>
 

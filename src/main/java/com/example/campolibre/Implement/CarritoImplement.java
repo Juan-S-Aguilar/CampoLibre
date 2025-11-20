@@ -218,6 +218,10 @@ public class CarritoImplement implements CarritoService {
         dto.setId_producto(item.getProducto().getId_producto());
         dto.setNombre_producto(item.getProducto().getNombre());
         dto.setImagen_producto(item.getProducto().getImagen_producto());
+
+        // ✅ NUEVO: Incluir unidad de medida
+        dto.setUnidadMedida(item.getProducto().getUnidadMedida());
+
         dto.setId_tienda(item.getProducto().getTienda().getId_tienda());
         dto.setNombre_tienda(item.getProducto().getTienda().getNombre());
         dto.setCantidad(item.getCantidad());
@@ -226,9 +230,9 @@ public class CarritoImplement implements CarritoService {
         dto.setStock_disponible(item.getProducto().getStock());
         dto.setStock_suficiente(item.stockDisponible());
         dto.setFecha_agregado(item.getFecha_agregado());
-
         return dto;
     }
+
 
     // ========== NUEVOS MÉTODOS REQUERIDOS ==========
 

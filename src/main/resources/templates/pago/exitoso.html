@@ -138,7 +138,9 @@
                                     <br>
                                     <small class="text-muted">
                                         <span th:text="'$' + ${#numbers.formatDecimal(item.precio_unitario, 0, 'COMMA', 0, 'POINT')}">$0</span>
-                                        x <span th:text="${item.cantidad}">1</span> unidad(es)
+                                        x <span th:text="${item.cantidad}">1</span>
+                                        <span th:if="${item.unidadMedida != null}" th:text="${item.unidadMedida.displayName}">unidad(es)</span>
+                                        <span th:unless="${item.unidadMedida != null}">unidad(es)</span>
                                     </small>
                                 </div>
 
