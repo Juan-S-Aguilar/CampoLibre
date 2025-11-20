@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Editar Patrocinador - Campo Libre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container mt-4 mb-5">
+
+        <div th:replace="~{patrocinadores/fragments :: form_content(${patrocinador})}">
+        </div>
+
+    </div>
+</main>
+</body>
+</html>

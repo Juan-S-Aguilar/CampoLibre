@@ -1,3 +1,4 @@
+// ==================== DataSeeder.java - ACTUALIZADO ====================
 package com.example.campolibre.Config;
 
 import com.example.campolibre.Entity.*;
@@ -7,6 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @Order(2) // Se ejecuta después de DataLoader
@@ -21,382 +28,1154 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired
     private ProductoRepository productoRepository;
 
+    @Autowired
+    private EventoRepository eventoRepository;
+
+    @Autowired
+    private MisEventosRepository misEventosRepository;
+
+    @Autowired
+    private PqrsRepository pqrsRepository;
+
+    @Autowired
+    private PqrsTiendaRepository pqrsTiendaRepository;
+
+    @Autowired
+    private PqrsEventoRepository pqrsEventoRepository;
+
+    @Autowired
+    private PqrsRespuestaRepository pqrsRespuestaRepository;
+
+    @Autowired
+    private PatrocinadorRepository patrocinadorRepository;
+
+    @Autowired
+    private InscripcionProveedorRepository inscripcionProveedorRepository;
+
+    @Autowired
+    private PagoEventoRepository pagoEventoRepository;
+
     @Override
     public void run(String... args) throws Exception {
-        // Solo crear datos si no existen tiendas
+        // Solo crear datos si no existen
         if (tiendaRepository.count() == 0) {
             System.out.println("📦 Iniciando carga de datos de prueba...");
 
+            cargarPatrocinadores();
             cargarTiendas();
             cargarProductos();
+            cargarEventos();
+            cargarInscripcionesProveedores();
+            cargarMisEventos();
+            cargarPqrs();
 
             System.out.println("✅ Datos de prueba cargados exitosamente!");
         } else {
-            System.out.println("ℹ️ Ya existen datos en la base de datos. No se cargan datos de prueba.");
+            System.out.println("ℹ️ Ya existen datos en la base de datos. Omitiendo seeder.");
         }
     }
 
-    private void cargarTiendas() {
-        System.out.println("🏪 Cargando tiendas de prueba...");
+    // ==================== NUEVO: CARGAR PATROCINADORES ====================
+    private void cargarPatrocinadores() {
+        System.out.println("\n🏢 Creando patrocinadores...");
 
-        // Obtener usuarios
+        List<Patrocinador> patrocinadores = new ArrayList<>();
+
+        // Patrocinador 1 - Alcaldía de Bogotá
+        Patrocinador p1 = new Patrocinador();
+        p1.setNombre("Alcaldía de Bogotá");
+        p1.setDescripcion("Gobierno distrital comprometido con el desarrollo rural y el fortalecimiento del sector agrícola en Bogotá y la región.");
+        p1.setLogoUrl("https://ejemplo.com/logos/alcaldia-bogota.png");
+        p1.setContactoEmail("eventos@bogota.gov.co");
+        p1.setTelefonoContacto("6013649090");
+        p1.setSitioWeb("https://bogota.gov.co");
+        p1.setActivo(true);
+        patrocinadores.add(p1);
+
+        // Patrocinador 2 - Ministerio de Agricultura
+        Patrocinador p2 = new Patrocinador();
+        p2.setNombre("Ministerio de Agricultura y Desarrollo Rural");
+        p2.setDescripcion("Entidad rectora de las políticas agropecuarias en Colombia, promoviendo el desarrollo sostenible del campo.");
+        p2.setLogoUrl("https://ejemplo.com/logos/minagricultura.png");
+        p2.setContactoEmail("atencion@minagricultura.gov.co");
+        p2.setTelefonoContacto("6013349800");
+        p2.setSitioWeb("https://www.minagricultura.gov.co");
+        p2.setActivo(true);
+        patrocinadores.add(p2);
+
+        // Patrocinador 3 - Bancóldex
+        Patrocinador p3 = new Patrocinador();
+        p3.setNombre("Bancóldex");
+        p3.setDescripcion("Banco de desarrollo empresarial de Colombia, apoyando el crecimiento y la modernización del sector agrícola.");
+        p3.setLogoUrl("https://ejemplo.com/logos/bancoldex.png");
+        p3.setContactoEmail("contacto@bancoldex.com");
+        p3.setTelefonoContacto("6013532700");
+        p3.setSitioWeb("https://www.bancoldex.com");
+        p3.setActivo(true);
+        patrocinadores.add(p3);
+
+        // Patrocinador 4 - Fedepanela
+        Patrocinador p4 = new Patrocinador();
+        p4.setNombre("Fedepanela");
+        p4.setDescripcion("Federación Colombiana de Productores de Panela, fortaleciendo la cadena productiva panelera del país.");
+        p4.setLogoUrl("https://ejemplo.com/logos/fedepanela.png");
+        p4.setContactoEmail("info@fedepanela.org.co");
+        p4.setTelefonoContacto("6012328484");
+        p4.setSitioWeb("https://www.fedepanela.org.co");
+        p4.setActivo(true);
+        patrocinadores.add(p4);
+
+        // Patrocinador 5 - Fenalce
+        Patrocinador p5 = new Patrocinador();
+        p5.setNombre("Fenalce");
+        p5.setDescripcion("Federación Nacional de Cultivadores de Cereales y Leguminosas, impulsando la seguridad alimentaria en Colombia.");
+        p5.setLogoUrl("https://ejemplo.com/logos/fenalce.png");
+        p5.setContactoEmail("contacto@fenalce.org");
+        p5.setTelefonoContacto("6013405090");
+        p5.setSitioWeb("https://www.fenalce.org");
+        p5.setActivo(true);
+        patrocinadores.add(p5);
+
+        // Patrocinador 6 - Procolombia
+        Patrocinador p6 = new Patrocinador();
+        p6.setNombre("ProColombia");
+        p6.setDescripcion("Entidad encargada de promover las exportaciones, el turismo internacional y la inversión extranjera en el sector agrícola colombiano.");
+        p6.setLogoUrl("https://ejemplo.com/logos/procolombia.png");
+        p6.setContactoEmail("info@procolombia.co");
+        p6.setTelefonoContacto("6015876000");
+        p6.setSitioWeb("https://www.procolombia.co");
+        p6.setActivo(true);
+        patrocinadores.add(p6);
+
+        patrocinadorRepository.saveAll(patrocinadores);
+        System.out.println("✓ " + patrocinadores.size() + " patrocinadores creados exitosamente");
+    }
+
+    // ==================== ACTUALIZADO: CARGAR EVENTOS ====================
+    private void cargarEventos() {
+        System.out.println("\n📅 Creando eventos...");
+
+        Usuario admin = usuarioRepository.findByEmail("admin@campolibre.com");
+        if (admin == null) {
+            System.err.println("⚠️ No se encontró el administrador. Omitiendo carga de eventos.");
+            return;
+        }
+
+        // Obtener patrocinadores
+        Patrocinador patAlcaldia = patrocinadorRepository.findById(1L).orElse(null);
+        Patrocinador patMinAgricultura = patrocinadorRepository.findById(2L).orElse(null);
+        Patrocinador patBancoldex = patrocinadorRepository.findById(3L).orElse(null);
+        Patrocinador patFedepanela = patrocinadorRepository.findById(4L).orElse(null);
+        Patrocinador patFenalce = patrocinadorRepository.findById(5L).orElse(null);
+        Patrocinador patProcolombia = patrocinadorRepository.findById(6L).orElse(null);
+
+        if (patAlcaldia == null) {
+            System.err.println("⚠️ No se encontraron patrocinadores. Omitiendo carga de eventos.");
+            return;
+        }
+
+        List<Evento> eventos = new ArrayList<>();
+
+        // ========== EVENTO 1 - PUBLICADO (Feria) ==========
+        Evento evento1 = new Evento();
+        evento1.setNombre("Feria Agrícola Regional 2025");
+        evento1.setDescripcion("Gran feria donde productores del campo mostrarán sus mejores productos: frutas, verduras, lácteos, panela y más. " +
+                "Habrá degustaciones gratuitas, música folclórica en vivo, concursos de productos tradicionales y actividades educativas para toda la familia. " +
+                "Ven y conoce directamente a los campesinos de nuestra región.");
+        evento1.setUbicacion("Parque Principal de Fusagasugá");
+        evento1.setDireccionCompleta("Carrera 7 # 5-40, Parque Principal, Fusagasugá, Cundinamarca");
+        evento1.setCiudad("Fusagasugá");
+        evento1.setFecha_evento(LocalDate.now().plusDays(15));
+        evento1.setHora_evento(LocalTime.of(9, 0));
+        evento1.setTipo_evento(TipoEvento.FERIA);
+        evento1.setEstado(EstadoEvento.PUBLICADO);
+        evento1.setFechaPublicacion(LocalDateTime.now().minusDays(5));
+        evento1.setCreado_por(admin);
+        evento1.setPatrocinador(patAlcaldia);
+        evento1.setImagen_evento("https://ejemplo.com/eventos/feria-agricola-2025.jpg");
+        evento1.setCuposMaximosProveedor(50);
+        evento1.setCostoEspacio(80000.0);
+        evento1.setCuposOcupados(0); // Se incrementará con inscripciones
+        evento1.setTerminosCondiciones("1. El espacio asignado es de 3x3 metros con mesa y silla.\n" +
+                "2. Los proveedores deben llegar 2 horas antes del inicio para la instalación.\n" +
+                "3. Campo Libre no se hace responsable por pérdidas o daños de mercancía durante el evento.\n" +
+                "4. Se debe mantener el espacio limpio y en orden durante y después del evento.\n" +
+                "5. No se permiten ventas de productos no autorizados previamente.\n" +
+                "6. El proveedor es responsable de sus propios permisos sanitarios según corresponda.");
+        eventos.add(evento1);
+
+        // ========== EVENTO 2 - PUBLICADO (Taller) ==========
+        Evento evento2 = new Evento();
+        evento2.setNombre("Taller de Agricultura Orgánica y Sostenible");
+        evento2.setDescripcion("Aprende técnicas modernas de cultivo orgánico, manejo de compostaje, control biológico de plagas y certificación orgánica. " +
+                "Taller práctico dirigido por expertos del SENA y la Universidad Nacional. Incluye certificado de participación, kit de semillas orgánicas " +
+                "y manual de buenas prácticas agrícolas.");
+        evento2.setUbicacion("Auditorio SENA, Centro Agroindustrial");
+        evento2.setDireccionCompleta("Km 7 Vía Fusagasugá - Arbeláez, Centro Agroindustrial SENA");
+        evento2.setCiudad("Fusagasugá");
+        evento2.setFecha_evento(LocalDate.now().plusDays(7));
+        evento2.setHora_evento(LocalTime.of(14, 0));
+        evento2.setTipo_evento(TipoEvento.TALLER);
+        evento2.setEstado(EstadoEvento.PUBLICADO);
+        evento2.setFechaPublicacion(LocalDateTime.now().minusDays(10));
+        evento2.setCreado_por(admin);
+        evento2.setPatrocinador(patMinAgricultura);
+        evento2.setImagen_evento("https://ejemplo.com/eventos/taller-agricultura-organica.jpg");
+        evento2.setCuposMaximosProveedor(30);
+        evento2.setCostoEspacio(35000.0);
+        evento2.setCuposOcupados(0);
+        evento2.setTerminosCondiciones("1. Taller de 4 horas de duración (2:00 PM - 6:00 PM).\n" +
+                "2. Se requiere asistencia puntual para recibir certificado.\n" +
+                "3. Los materiales y el kit de semillas están incluidos en el costo.\n" +
+                "4. Campo Libre actúa como plataforma de difusión; el SENA es responsable del contenido académico.\n" +
+                "5. No hay devoluciones una vez confirmada la inscripción.");
+        eventos.add(evento2);
+
+        // ========== EVENTO 3 - PUBLICADO (Festival) ==========
+        Evento evento3 = new Evento();
+        evento3.setNombre("Festival del Café y el Cacao Colombiano");
+        evento3.setDescripcion("Celebración de dos de los productos más emblemáticos de Colombia. Cata de cafés especiales, chocolates artesanales, " +
+                "demostraciones de barismo, concursos de preparación, charlas sobre denominación de origen y rutas turísticas del café. " +
+                "Premios para los mejores productores y entrada libre al público.");
+        evento3.setUbicacion("Centro de Convenciones Compensar");
+        evento3.setDireccionCompleta("Avenida Carrera 68 # 49A - 47, Puente Aranda, Bogotá D.C.");
+        evento3.setCiudad("Bogotá");
+        evento3.setFecha_evento(LocalDate.now().plusDays(22));
+        evento3.setHora_evento(LocalTime.of(10, 0));
+        evento3.setTipo_evento(TipoEvento.FESTIVAL);
+        evento3.setEstado(EstadoEvento.PUBLICADO);
+        evento3.setFechaPublicacion(LocalDateTime.now().minusDays(3));
+        evento3.setCreado_por(admin);
+        evento3.setPatrocinador(patProcolombia);
+        evento3.setImagen_evento("https://ejemplo.com/eventos/festival-cafe-cacao.jpg");
+        evento3.setCuposMaximosProveedor(40);
+        evento3.setCostoEspacio(120000.0);
+        evento3.setCuposOcupados(0);
+        evento3.setTerminosCondiciones("1. El espacio incluye stand equipado con iluminación y mobiliario básico.\n" +
+                "2. Los productos deben contar con registro sanitario vigente (INVIMA).\n" +
+                "3. Se permite la venta directa al público durante el evento.\n" +
+                "4. Campo Libre no se responsabiliza por accidentes o pérdidas materiales.\n" +
+                "5. Prohibido el uso de estufas o equipos que generen llama abierta sin autorización previa.\n" +
+                "6. El proveedor debe contar con su propio seguro de responsabilidad civil.");
+        eventos.add(evento3);
+
+        // ========== EVENTO 4 - EN_CURSO (Mercado) ==========
+        Evento evento4 = new Evento();
+        evento4.setNombre("Mercado Campesino de Fin de Semana");
+        evento4.setDescripcion("Mercado campesino semanal donde productores locales ofrecen frutas, verduras, huevos, lácteos y productos artesanales " +
+                "directamente al consumidor. Precios justos, productos frescos y apoyo directo a las familias campesinas de la región.");
+        evento4.setUbicacion("Plaza de Mercado Municipal - Soacha");
+        evento4.setDireccionCompleta("Calle 13 # 6-20, Centro, Soacha, Cundinamarca");
+        evento4.setCiudad("Soacha");
+        evento4.setFecha_evento(LocalDate.now()); // HOY
+        evento4.setHora_evento(LocalTime.of(7, 0));
+        evento4.setTipo_evento(TipoEvento.MERCADO);
+        evento4.setEstado(EstadoEvento.EN_CURSO);
+        evento4.setFechaPublicacion(LocalDateTime.now().minusDays(7));
+        evento4.setCreado_por(admin);
+        evento4.setPatrocinador(patAlcaldia);
+        evento4.setImagen_evento("https://ejemplo.com/eventos/mercado-campesino.jpg");
+        evento4.setCuposMaximosProveedor(25);
+        evento4.setCostoEspacio(25000.0);
+        evento4.setCuposOcupados(0);
+        evento4.setTerminosCondiciones("1. Mercado de 7:00 AM a 2:00 PM.\n" +
+                "2. El espacio es un puesto de 2x2 metros sin mobiliario.\n" +
+                "3. El proveedor debe traer sus propias mesas, carpas y elementos de exhibición.\n" +
+                "4. Campo Libre no se hace responsable por robos o daños.\n" +
+                "5. Se recomienda contar con cambio en efectivo y datáfono para ventas.");
+        eventos.add(evento4);
+
+        // ========== EVENTO 5 - PUBLICADO (Capacitación) ==========
+        Evento evento5 = new Evento();
+        evento5.setNombre("Capacitación en Transformación de Lácteos");
+        evento5.setDescripcion("Curso intensivo sobre elaboración artesanal de quesos, yogurt, kumis y arequipe. " +
+                "Aprende técnicas de procesamiento, empaque, etiquetado, conservación y comercialización de productos lácteos. " +
+                "Incluye práctica en planta piloto y manual técnico.");
+        evento5.setUbicacion("Instituto Técnico Agrícola - La Mesa");
+        evento5.setDireccionCompleta("Vereda San Javier, Vía Principal Km 2, La Mesa, Cundinamarca");
+        evento5.setCiudad("La Mesa");
+        evento5.setFecha_evento(LocalDate.now().plusDays(12));
+        evento5.setHora_evento(LocalTime.of(8, 0));
+        evento5.setTipo_evento(TipoEvento.CAPACITACION);
+        evento5.setEstado(EstadoEvento.PUBLICADO);
+        evento5.setFechaPublicacion(LocalDateTime.now().minusDays(8));
+        evento5.setCreado_por(admin);
+        evento5.setPatrocinador(patFedepanela);
+        evento5.setImagen_evento("https://ejemplo.com/eventos/capacitacion-lacteos.jpg");
+        evento5.setCuposMaximosProveedor(20);
+        evento5.setCostoEspacio(50000.0);
+        evento5.setCuposOcupados(0);
+        evento5.setTerminosCondiciones("1. Capacitación de día completo: 8:00 AM - 5:00 PM.\n" +
+                "2. Incluye refrigerio y almuerzo.\n" +
+                "3. Los participantes deben usar ropa cómoda y calzado cerrado.\n" +
+                "4. Se entrega certificado de asistencia avalado por el Instituto.\n" +
+                "5. Campo Libre no asume responsabilidad por accidentes durante prácticas.");
+        eventos.add(evento5);
+
+        // ========== EVENTO 6 - FINALIZADO (Exposición) ==========
+        Evento evento6 = new Evento();
+        evento6.setNombre("Exposición Nacional de Maquinaria Agrícola");
+        evento6.setDescripcion("Exposición de las últimas tecnologías en maquinaria, equipos y herramientas para el agro. " +
+                "Tractores, cosechadoras, sistemas de riego, drones agrícolas, invernaderos inteligentes y más. " +
+                "Evento que reunió a más de 80 expositores nacionales e internacionales.");
+        evento6.setUbicacion("Corferias - Pabellón 3");
+        evento6.setDireccionCompleta("Carrera 37 # 24-67, Zona Industrial, Bogotá D.C.");
+        evento6.setCiudad("Bogotá");
+        evento6.setFecha_evento(LocalDate.now().minusDays(10)); // PASADO
+        evento6.setHora_evento(LocalTime.of(9, 0));
+        evento6.setTipo_evento(TipoEvento.EXPOSICION);
+        evento6.setEstado(EstadoEvento.FINALIZADO);
+        evento6.setFechaPublicacion(LocalDateTime.now().minusDays(30));
+        evento6.setCreado_por(admin);
+        evento6.setPatrocinador(patBancoldex);
+        evento6.setImagen_evento("https://ejemplo.com/eventos/expo-maquinaria.jpg");
+        evento6.setCuposMaximosProveedor(80);
+        evento6.setCostoEspacio(350000.0);
+        evento6.setCuposOcupados(0); // Se llenará con inscripciones históricas
+        evento6.setTerminosCondiciones("1. Stand de 9 m² con paredes divisorias y alfombra.\n" +
+                "2. Incluye conexión eléctrica básica (110V).\n" +
+                "3. El montaje debe realizarse el día anterior (8:00 AM - 6:00 PM).\n" +
+                "4. Campo Libre no se responsabiliza por daños a equipos expuestos.\n" +
+                "5. Se requiere seguro de exhibición para maquinaria de alto valor.");
+        eventos.add(evento6);
+
+        // ========== EVENTO 7 - BORRADOR (Feria) ==========
+        Evento evento7 = new Evento();
+        evento7.setNombre("Feria de la Panela y Derivados");
+        evento7.setDescripcion("Feria dedicada exclusivamente a los productores de panela, mieles, melcochas y otros derivados de la caña. " +
+                "Se realizarán concursos de calidad, charlas sobre innovación en el sector panelero y rueda de negocios con compradores mayoristas.");
+        evento7.setUbicacion("Coliseo Municipal de Villeta");
+        evento7.setDireccionCompleta("Calle 5 # 6-40, Centro, Villeta, Cundinamarca");
+        evento7.setCiudad("Villeta");
+        evento7.setFecha_evento(LocalDate.now().plusDays(35));
+        evento7.setHora_evento(LocalTime.of(9, 0));
+        evento7.setTipo_evento(TipoEvento.FERIA);
+        evento7.setEstado(EstadoEvento.BORRADOR); // Aún no publicado
+        evento7.setFechaPublicacion(null);
+        evento7.setCreado_por(admin);
+        evento7.setPatrocinador(patFedepanela);
+        evento7.setImagen_evento(null);
+        evento7.setCuposMaximosProveedor(35);
+        evento7.setCostoEspacio(60000.0);
+        evento7.setCuposOcupados(0);
+        evento7.setTerminosCondiciones("Términos y condiciones en revisión. Pendiente de publicación oficial.");
+        eventos.add(evento7);
+
+        // ========== EVENTO 8 - CANCELADO (Taller) ==========
+        Evento evento8 = new Evento();
+        evento8.setNombre("Taller de Apicultura para Principiantes");
+        evento8.setDescripcion("Curso básico sobre manejo de colmenas, producción de miel, cera y propóleo. " +
+                "Desafortunadamente este evento fue cancelado por problemas logísticos del instructor principal.");
+        evento8.setUbicacion("Finca Demostrativa El Colmenar");
+        evento8.setDireccionCompleta("Vereda El Triunfo, Km 8 Vía Silvania, Cundinamarca");
+        evento8.setCiudad("Silvania");
+        evento8.setFecha_evento(LocalDate.now().plusDays(5));
+        evento8.setHora_evento(LocalTime.of(9, 0));
+        evento8.setTipo_evento(TipoEvento.TALLER);
+        evento8.setEstado(EstadoEvento.CANCELADO);
+        evento8.setFechaPublicacion(LocalDateTime.now().minusDays(15));
+        evento8.setCreado_por(admin);
+        evento8.setPatrocinador(patMinAgricultura);
+        evento8.setImagen_evento("https://ejemplo.com/eventos/taller-apicultura.jpg");
+        evento8.setCuposMaximosProveedor(15);
+        evento8.setCostoEspacio(40000.0);
+        evento8.setCuposOcupados(0);
+        evento8.setTerminosCondiciones("EVENTO CANCELADO. Se realizará reembolso automático a los inscritos.");
+        eventos.add(evento8);
+
+        // ========== EVENTO 9 - PUBLICADO (Mercado) ==========
+        Evento evento9 = new Evento();
+        evento9.setNombre("Mercado Agroecológico de Bogotá");
+        evento9.setDescripcion("Mercado especializado en productos 100% orgánicos y agroecológicos certificados. " +
+                "Frutas, verduras, huevos, café orgánico, panela, miel y productos de aseo ecológicos. " +
+                "Espacio para promover el consumo responsable y la agricultura libre de agroquímicos.");
+        evento9.setUbicacion("Parque El Virrey");
+        evento9.setDireccionCompleta("Calle 88 entre Carreras 11 y 15, Bogotá D.C.");
+        evento9.setCiudad("Bogotá");
+        evento9.setFecha_evento(LocalDate.now().plusDays(3));
+        evento9.setHora_evento(LocalTime.of(8, 0));
+        evento9.setTipo_evento(TipoEvento.MERCADO);
+        evento9.setEstado(EstadoEvento.PUBLICADO);
+        evento9.setFechaPublicacion(LocalDateTime.now().minusDays(12));
+        evento9.setCreado_por(admin);
+        evento9.setPatrocinador(patAlcaldia);
+        evento9.setImagen_evento("https://ejemplo.com/eventos/mercado-agroecologico.jpg");
+        evento9.setCuposMaximosProveedor(30);
+        evento9.setCostoEspacio(45000.0);
+        evento9.setCuposOcupados(0);
+        evento9.setTerminosCondiciones("1. Mercado de 8:00 AM a 1:00 PM.\n" +
+                "2. Solo se aceptan productos certificados orgánicos o en transición.\n" +
+                "3. El proveedor debe presentar certificación o declaración de producción agroecológica.\n" +
+                "4. Espacio al aire libre de 2x2 metros sin mobiliario.\n" +
+                "5. Campo Libre no se responsabiliza por condiciones climáticas adversas.");
+        eventos.add(evento9);
+
+        // ========== EVENTO 10 - FINALIZADO (Festival) ==========
+        Evento evento10 = new Evento();
+        evento10.setNombre("Festival Gastronómico del Campo Colombiano");
+        evento10.setDescripcion("Festival que celebró la riqueza culinaria del campo colombiano con platos típicos de todas las regiones. " +
+                "Participaron más de 50 cocineros tradicionales mostrando ajiaco, bandeja paisa, sancocho, mote de queso y más. " +
+                "Un evento exitoso que reunió a más de 5000 visitantes.");
+        evento10.setUbicacion("Parque Simón Bolívar");
+        evento10.setDireccionCompleta("Calle 63 # 50-00, Bogotá D.C.");
+        evento10.setCiudad("Bogotá");
+        evento10.setFecha_evento(LocalDate.now().minusDays(25)); // PASADO
+        evento10.setHora_evento(LocalTime.of(11, 0));
+        evento10.setTipo_evento(TipoEvento.FESTIVAL);
+        evento10.setEstado(EstadoEvento.FINALIZADO);
+        evento10.setFechaPublicacion(LocalDateTime.now().minusDays(45));
+        evento10.setCreado_por(admin);
+        evento10.setPatrocinador(patProcolombia);
+        evento10.setImagen_evento("https://ejemplo.com/eventos/festival-gastronomico.jpg");
+        evento10.setCuposMaximosProveedor(55);
+        evento10.setCostoEspacio(95000.0);
+        evento10.setCuposOcupados(0); // Se llenará con inscripciones
+        evento10.setTerminosCondiciones("1. Stand de 4x4 metros con techo y conexión eléctrica.\n" +
+                "2. Los cocineros deben contar con curso de manipulación de alimentos.\n" +
+                "3. Campo Libre no se hace responsable por intoxicaciones alimentarias.\n" +
+                "4. Cada participante debe traer sus propios utensilios y equipos de cocina.\n" +
+                "5. Se permite venta de platos durante el evento.");
+        eventos.add(evento10);
+
+        eventoRepository.saveAll(eventos);
+        System.out.println("✓ " + eventos.size() + " eventos creados exitosamente");
+    }
+
+    // ==================== NUEVO: CARGAR INSCRIPCIONES DE PROVEEDORES ====================
+    private void cargarInscripcionesProveedores() {
+        System.out.println("\n👥 Creando inscripciones de proveedores y pagos...");
+
+        Usuario proveedor = usuarioRepository.findByEmail("proveedor@campolibre.com");
+        if (proveedor == null) {
+            System.err.println("⚠️ No se encontró el proveedor principal. Omitiendo inscripciones.");
+            return;
+        }
+
+        // Buscar proveedores adicionales que puedan existir (si DataLoader los creó)
+        List<Usuario> proveedores = new ArrayList<>();
+        proveedores.add(proveedor);
+
+        // Intentar obtener más proveedores si existen
+        Usuario prov2 = usuarioRepository.findByEmail("proveedor2@campolibre.com");
+        Usuario prov3 = usuarioRepository.findByEmail("proveedor3@campolibre.com");
+        Usuario prov4 = usuarioRepository.findByEmail("proveedor4@campolibre.com");
+        if (prov2 != null) proveedores.add(prov2);
+        if (prov3 != null) proveedores.add(prov3);
+        if (prov4 != null) proveedores.add(prov4);
+
+        // Si solo existe un proveedor, trabajar solo con ese
+        if (proveedores.size() == 1) {
+            System.out.println("ℹ️ Solo existe un proveedor en el sistema. Creando inscripciones limitadas...");
+        }
+
+        // Obtener eventos
+        Evento evento1 = eventoRepository.findById(1L).orElse(null); // Feria Agrícola - PUBLICADO
+        Evento evento2 = eventoRepository.findById(2L).orElse(null); // Taller Agricultura - PUBLICADO
+        Evento evento3 = eventoRepository.findById(3L).orElse(null); // Festival Café - PUBLICADO
+        Evento evento4 = eventoRepository.findById(4L).orElse(null); // Mercado Campesino - EN_CURSO
+        Evento evento5 = eventoRepository.findById(5L).orElse(null); // Capacitación Lácteos - PUBLICADO
+        Evento evento6 = eventoRepository.findById(6L).orElse(null); // Exposición Maquinaria - FINALIZADO
+        Evento evento9 = eventoRepository.findById(9L).orElse(null); // Mercado Agroecológico - PUBLICADO
+        Evento evento10 = eventoRepository.findById(10L).orElse(null); // Festival Gastronómico - FINALIZADO
+
+        if (evento1 == null) {
+            System.err.println("⚠️ No se encontraron eventos. Omitiendo inscripciones.");
+            return;
+        }
+
+        int inscripcionesCreadas = 0;
+
+        // ========== INSCRIPCIONES PARA EVENTO 1 - Feria Agrícola ==========
+        // Inscripción 1 - CONFIRMADA (Proveedor 1)
+        inscripcionesCreadas += crearInscripcionConPago(
+                proveedores.get(0),
+                evento1,
+                EstadoCupo.CONFIRMADO,
+                EstadoPago.EXITOSO,
+                MetodoPago.PSE,
+                null
+        );
+
+        // Inscripción 2 - CONFIRMADA (Proveedor 2, si existe)
+        if (proveedores.size() > 1) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(1),
+                    evento1,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.TARJETA_CREDITO,
+                    null
+            );
+        }
+
+        // Inscripción 3 - CONFIRMADA (Proveedor 3, si existe)
+        if (proveedores.size() > 2) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(2),
+                    evento1,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.TARJETA_DEBITO,
+                    null
+            );
+        }
+
+        // Inscripción 4 - PENDIENTE_PAGO (Proveedor 4, si existe)
+        if (proveedores.size() > 3) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(3),
+                    evento1,
+                    EstadoCupo.PENDIENTE,
+                    EstadoPago.PENDIENTE,
+                    MetodoPago.PSE,
+                    null
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 2 - Taller Agricultura ==========
+        // Inscripción 5 - CONFIRMADA
+        if (evento2 != null) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(0),
+                    evento2,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.EFECTIVO,
+                    null
+            );
+        }
+
+        // Inscripción 6 - CONFIRMADA (Proveedor 2, si existe)
+        if (evento2 != null && proveedores.size() > 1) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(1),
+                    evento2,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.TARJETA_CREDITO,
+                    null
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 3 - Festival Café ==========
+        // Inscripción 7 - CONFIRMADA
+        if (evento3 != null) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(0),
+                    evento3,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.PSE,
+                    null
+            );
+        }
+
+        // Inscripción 8 - CANCELADA (pago fallido)
+        if (evento3 != null && proveedores.size() > 2) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(2),
+                    evento3,
+                    EstadoCupo.CANCELADO,
+                    EstadoPago.FALLIDO,
+                    MetodoPago.TARJETA_CREDITO,
+                    "Tarjeta declinada - Fondos insuficientes"
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 4 - Mercado Campesino (EN_CURSO) ==========
+        // Inscripción 9 - CONFIRMADA
+        if (evento4 != null) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(0),
+                    evento4,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.EFECTIVO,
+                    null
+            );
+        }
+
+        // Inscripción 10 - CONFIRMADA (Proveedor 3, si existe)
+        if (evento4 != null && proveedores.size() > 2) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(2),
+                    evento4,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.PSE,
+                    null
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 5 - Capacitación Lácteos ==========
+        // Inscripción 11 - CANCELADA (pago fallido)
+        if (evento5 != null && proveedores.size() > 1) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(1),
+                    evento5,
+                    EstadoCupo.CANCELADO,
+                    EstadoPago.FALLIDO,
+                    MetodoPago.TARJETA_DEBITO,
+                    "Error de comunicación con banco emisor"
+            );
+        }
+
+        // Inscripción 12 - PENDIENTE_PAGO
+        if (evento5 != null && proveedores.size() > 3) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(3),
+                    evento5,
+                    EstadoCupo.PENDIENTE,
+                    EstadoPago.PENDIENTE,
+                    MetodoPago.PSE,
+                    null
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 6 - Exposición (FINALIZADO) ==========
+        // Inscripción 13 - CONFIRMADA (evento pasado)
+        if (evento6 != null) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(0),
+                    evento6,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.TARJETA_CREDITO,
+                    null
+            );
+        }
+
+        // Inscripción 14 - CONFIRMADA (Proveedor 2, si existe)
+        if (evento6 != null && proveedores.size() > 1) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(1),
+                    evento6,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.PSE,
+                    null
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 9 - Mercado Agroecológico ==========
+        // Inscripción 15 - CONFIRMADA
+        if (evento9 != null && proveedores.size() > 2) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(2),
+                    evento9,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.TARJETA_DEBITO,
+                    null
+            );
+        }
+
+        // Inscripción 16 - CONFIRMADA (Proveedor 3, si existe)
+        if (evento9 != null && proveedores.size() > 3) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(3),
+                    evento9,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.EFECTIVO,
+                    null
+            );
+        }
+
+        // ========== INSCRIPCIONES PARA EVENTO 10 - Festival Gastronómico (FINALIZADO) ==========
+        // Inscripción 17 - CONFIRMADA (evento pasado)
+        if (evento10 != null) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(0),
+                    evento10,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.PSE,
+                    null
+            );
+        }
+
+        // Inscripción 18 - CONFIRMADA (Proveedor 2, si existe)
+        if (evento10 != null && proveedores.size() > 1) {
+            inscripcionesCreadas += crearInscripcionConPago(
+                    proveedores.get(1),
+                    evento10,
+                    EstadoCupo.CONFIRMADO,
+                    EstadoPago.EXITOSO,
+                    MetodoPago.TARJETA_CREDITO,
+                    null
+            );
+        }
+
+        System.out.println("✓ " + inscripcionesCreadas + " inscripciones y pagos creados exitosamente");
+
+        // Verificar consistencia de cupos
+        verificarConsistenciaCupos();
+    }
+
+    /**
+     * Método helper para crear inscripción con su pago asociado
+     * Retorna 1 si se creó exitosamente, 0 si hubo error
+     */
+    private int crearInscripcionConPago(Usuario proveedor, Evento evento, EstadoCupo estadoCupo,
+                                        EstadoPago estadoPago, MetodoPago metodoPago, String mensajeError) {
+        try {
+            // 1. Crear inscripción
+            InscripcionProveedor inscripcion = new InscripcionProveedor();
+            inscripcion.setProveedor(proveedor);
+            inscripcion.setEvento(evento);
+            inscripcion.setEstadoCupo(estadoCupo);
+            inscripcion.setCostoPagado(evento.getCostoEspacio());
+
+            // Solo setear fechaConfirmacion si está CONFIRMADO
+            if (estadoCupo == EstadoCupo.CONFIRMADO) {
+                inscripcion.setFechaConfirmacion(LocalDateTime.now().minusDays(Math.abs(evento.getFecha_evento().toEpochDay() - LocalDate.now().toEpochDay()) / 2));
+            }
+
+            // Guardar inscripción (esto genera codigoConfirmacion automáticamente)
+            InscripcionProveedor inscripcionGuardada = inscripcionProveedorRepository.save(inscripcion);
+
+            // 2. Crear pago asociado
+            PagoEvento pago = new PagoEvento();
+            pago.setInscripcionProveedor(inscripcionGuardada);
+            pago.setMonto(evento.getCostoEspacio());
+            pago.setMetodoPago(metodoPago);
+            pago.setEstado(estadoPago);
+
+            // Solo setear mensajeError si el pago es FALLIDO
+            if (estadoPago == EstadoPago.FALLIDO && mensajeError != null) {
+                pago.setMensajeError(mensajeError);
+            }
+
+            // Guardar pago (esto genera numeroTransaccion automáticamente)
+            PagoEvento pagoGuardado = pagoEventoRepository.save(pago);
+
+            // 3. Actualizar inscripción con referencia al pago
+            inscripcionGuardada.setPagoEvento(pagoGuardado);
+            inscripcionProveedorRepository.save(inscripcionGuardada);
+
+            // 4. Si el pago es EXITOSO, incrementar cupos del evento
+            if (estadoPago == EstadoPago.EXITOSO) {
+                evento.setCuposOcupados(evento.getCuposOcupados() + 1);
+                eventoRepository.save(evento);
+            }
+
+            return 1; // Éxito
+        } catch (Exception e) {
+            System.err.println("⚠️ Error al crear inscripción: " + e.getMessage());
+            return 0; // Error
+        }
+    }
+
+    /**
+     * Verificar que los cuposOcupados coincidan con las inscripciones CONFIRMADAS
+     */
+    private void verificarConsistenciaCupos() {
+        System.out.println("\n🔍 Verificando consistencia de cupos...");
+
+        List<Evento> eventos = eventoRepository.findAll();
+        boolean hayInconsistencias = false;
+
+        for (Evento evento : eventos) {
+            Long cuposConfirmados = inscripcionProveedorRepository
+                    .countByEventoIdAndEstadoCupo(evento.getId_evento(), EstadoCupo.CONFIRMADO);
+
+            if (!cuposConfirmados.equals((long) evento.getCuposOcupados())) {
+                System.err.println("⚠️ INCONSISTENCIA en evento: " + evento.getNombre());
+                System.err.println("   - Cupos ocupados en evento: " + evento.getCuposOcupados());
+                System.err.println("   - Inscripciones confirmadas: " + cuposConfirmados);
+                hayInconsistencias = true;
+            }
+        }
+
+        if (!hayInconsistencias) {
+            System.out.println("✓ Todos los cupos están consistentes");
+        }
+    }
+
+    // ==================== ACTUALIZADO: CARGAR MIS EVENTOS ====================
+    private void cargarMisEventos() {
+        System.out.println("\n⭐ Creando registros de Mis Eventos (consumidores)...");
+
+        Usuario consumidor = usuarioRepository.findByEmail("consumidor@campolibre.com");
+        if (consumidor == null) {
+            System.err.println("⚠️ No se encontró el consumidor. Omitiendo Mis Eventos.");
+            return;
+        }
+
+        // Buscar consumidores adicionales si existen
+        List<Usuario> consumidores = new ArrayList<>();
+        consumidores.add(consumidor);
+
+        Usuario cons2 = usuarioRepository.findByEmail("consumidor2@campolibre.com");
+        Usuario cons3 = usuarioRepository.findByEmail("consumidor3@campolibre.com");
+        if (cons2 != null) consumidores.add(cons2);
+        if (cons3 != null) consumidores.add(cons3);
+
+        // Obtener eventos PUBLICADOS y EN_CURSO (los únicos que consumidores pueden guardar)
+        Evento evento1 = eventoRepository.findById(1L).orElse(null); // PUBLICADO
+        Evento evento2 = eventoRepository.findById(2L).orElse(null); // PUBLICADO
+        Evento evento3 = eventoRepository.findById(3L).orElse(null); // PUBLICADO
+        Evento evento4 = eventoRepository.findById(4L).orElse(null); // EN_CURSO
+        Evento evento9 = eventoRepository.findById(9L).orElse(null); // PUBLICADO
+
+        if (evento1 == null) {
+            System.err.println("⚠️ No se encontraron eventos. Omitiendo Mis Eventos.");
+            return;
+        }
+
+        int misEventosCreados = 0;
+
+        // Consumidor 1 guarda varios eventos
+        if (evento1 != null) {
+            misEventosCreados += crearMisEventos(consumidores.get(0), evento1, true);
+        }
+        if (evento3 != null) {
+            misEventosCreados += crearMisEventos(consumidores.get(0), evento3, true);
+        }
+        if (evento9 != null) {
+            misEventosCreados += crearMisEventos(consumidores.get(0), evento9, false);
+        }
+
+        // Consumidor 2 guarda eventos (si existe)
+        if (consumidores.size() > 1) {
+            if (evento2 != null) {
+                misEventosCreados += crearMisEventos(consumidores.get(1), evento2, true);
+            }
+            if (evento4 != null) {
+                misEventosCreados += crearMisEventos(consumidores.get(1), evento4, false);
+            }
+        }
+
+        // Consumidor 3 guarda eventos (si existe)
+        if (consumidores.size() > 2) {
+            if (evento1 != null) {
+                misEventosCreados += crearMisEventos(consumidores.get(2), evento1, true);
+            }
+            if (evento2 != null) {
+                misEventosCreados += crearMisEventos(consumidores.get(2), evento2, false);
+            }
+        }
+
+        System.out.println("✓ " + misEventosCreados + " registros de Mis Eventos creados");
+    }
+
+    /**
+     * Método helper para crear registro de MisEventos
+     * Retorna 1 si se creó exitosamente, 0 si hubo error
+     */
+    private int crearMisEventos(Usuario consumidor, Evento evento, boolean notificado) {
+        try {
+            MisEventos misEventos = new MisEventos();
+            misEventos.setUsuario(consumidor);
+            misEventos.setEvento(evento);
+            misEventos.setNotificado(notificado);
+            // fecha_guardado se genera automáticamente
+            misEventosRepository.save(misEventos);
+            return 1;
+        } catch (Exception e) {
+            System.err.println("⚠️ Error al crear MisEventos: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    // ==================== TIENDAS (SIN CAMBIOS) ====================
+    private void cargarTiendas() {
         Usuario proveedor = usuarioRepository.findByEmail("proveedor@campolibre.com");
         Usuario admin = usuarioRepository.findByEmail("admin@campolibre.com");
 
-        // ========== TIENDA 1: FRUTAS Y VERDURAS ==========
-        Tienda tienda1 = new Tienda();
-        tienda1.setNombre("Finca El Paraíso");
-        tienda1.setDescripcion("Frutas y verduras frescas directamente del campo. Productos orgánicos de la mejor calidad.");
-        tienda1.setCategoriaPrincipal(CategoriaTienda.FRUTAS_VERDURAS);
-        tienda1.setEstado(EstadoTienda.ACTIVA);
-        tienda1.setCorreo_tienda("paraiso@campolibre.com");
-        tienda1.setTelefono_tienda("3001234567");
-        tienda1.setUbicacion("Vereda El Silencio, Medellín");
-        tienda1.setUsuario(proveedor);
-        tienda1.setImagen_tienda("uploads/tiendas/finca-paraiso.jpg");
-        tiendaRepository.save(tienda1);
-        System.out.println("✓ Tienda creada: " + tienda1.getNombre());
+        if (proveedor != null) {
+            // Tienda 1: Frutas y Verduras
+            Tienda tienda1 = new Tienda();
+            tienda1.setNombre("El Huerto Fresco");
+            tienda1.setDescripcion("Frutas y verduras frescas directamente del campo");
+            tienda1.setCategoriaPrincipal(CategoriaTienda.FRUTAS_VERDURAS);
+            tienda1.setEstado(EstadoTienda.ACTIVA);
+            tienda1.setCorreo_tienda("huerto@campolibre.com");
+            tienda1.setTelefono_tienda("3101234567");
+            tienda1.setUbicacion("Medellín, Antioquia");
+            tienda1.setUsuario(proveedor);
+            tiendaRepository.save(tienda1);
+            System.out.println("✓ Tienda creada: " + tienda1.getNombre());
 
-        // ========== TIENDA 2: PROCESADOS ARTESANALES ==========
-        Tienda tienda2 = new Tienda();
-        tienda2.setNombre("Sabores del Campo");
-        tienda2.setDescripcion("Productos artesanales elaborados con ingredientes 100% naturales. Mermeladas, quesos y panes caseros.");
-        tienda2.setCategoriaPrincipal(CategoriaTienda.PROCESADOS_ARTESANALES);
-        tienda2.setEstado(EstadoTienda.ACTIVA);
-        tienda2.setCorreo_tienda("sabores@campolibre.com");
-        tienda2.setTelefono_tienda("3109876543");
-        tienda2.setUbicacion("Corregimiento San Cristóbal, Medellín");
-        tienda2.setUsuario(admin);
-        tienda2.setImagen_tienda("uploads/tiendas/sabores-campo.jpg");
-        tiendaRepository.save(tienda2);
-        System.out.println("✓ Tienda creada: " + tienda2.getNombre());
+            // Tienda 2: Procesados Artesanales
+            Tienda tienda2 = new Tienda();
+            tienda2.setNombre("Delicias del Valle");
+            tienda2.setDescripcion("Productos artesanales elaborados con ingredientes naturales");
+            tienda2.setCategoriaPrincipal(CategoriaTienda.PROCESADOS_ARTESANALES);
+            tienda2.setEstado(EstadoTienda.ACTIVA);
+            tienda2.setCorreo_tienda("delicias@campolibre.com");
+            tienda2.setTelefono_tienda("3102345678");
+            tienda2.setUbicacion("Cali, Valle del Cauca");
+            tienda2.setUsuario(proveedor);
+            tiendaRepository.save(tienda2);
+            System.out.println("✓ Tienda creada: " + tienda2.getNombre());
 
-        // ========== TIENDA 3: GRANOS Y SEMILLAS ==========
-        Tienda tienda3 = new Tienda();
-        tienda3.setNombre("Cosecha Dorada");
-        tienda3.setDescripcion("Granos, cereales y semillas de la mejor calidad. Productos cultivados con técnicas tradicionales.");
-        tienda3.setCategoriaPrincipal(CategoriaTienda.GRANOS_SEMILLAS);
-        tienda3.setEstado(EstadoTienda.ACTIVA);
-        tienda3.setCorreo_tienda("cosecha@campolibre.com");
-        tienda3.setTelefono_tienda("3157654321");
-        tienda3.setUbicacion("Vereda La Montaña, Rionegro");
-        tienda3.setUsuario(proveedor);
-        tienda3.setImagen_tienda("uploads/tiendas/cosecha-dorada.jpg");
-        tiendaRepository.save(tienda3);
-        System.out.println("✓ Tienda creada: " + tienda3.getNombre());
+            // Tienda 3: Granos y Semillas
+            Tienda tienda3 = new Tienda();
+            tienda3.setNombre("Semillas de Oro");
+            tienda3.setDescripcion("Granos, cereales y semillas de la mejor calidad");
+            tienda3.setCategoriaPrincipal(CategoriaTienda.GRANOS_SEMILLAS);
+            tienda3.setEstado(EstadoTienda.ACTIVA);
+            tienda3.setCorreo_tienda("semillas@campolibre.com");
+            tienda3.setTelefono_tienda("3103456789");
+            tienda3.setUbicacion("Bogotá, Cundinamarca");
+            tienda3.setUsuario(proveedor);
+            tiendaRepository.save(tienda3);
+            System.out.println("✓ Tienda creada: " + tienda3.getNombre());
+        }
 
-        // ========== TIENDA 4: HIERBAS Y ESPECIAS ==========
-        Tienda tienda4 = new Tienda();
-        tienda4.setNombre("Aromáticas del Valle");
-        tienda4.setDescripcion("Hierbas aromáticas y especias frescas. Cultivamos y secamos nuestras propias plantas medicinales.");
-        tienda4.setCategoriaPrincipal(CategoriaTienda.HIERBAS_ESPECIAS);
-        tienda4.setEstado(EstadoTienda.ACTIVA);
-        tienda4.setCorreo_tienda("aromaticas@campolibre.com");
-        tienda4.setTelefono_tienda("3203456789");
-        tienda4.setUbicacion("Vereda El Uvito, La Ceja");
-        tienda4.setUsuario(admin);
-        tienda4.setImagen_tienda("uploads/tiendas/aromaticas-valle.jpg");
-        tiendaRepository.save(tienda4);
-        System.out.println("✓ Tienda creada: " + tienda4.getNombre());
+        if (admin != null) {
+            // Tienda 4: Hierbas y Especias
+            Tienda tienda4 = new Tienda();
+            tienda4.setNombre("Aromas del Campo");
+            tienda4.setDescripcion("Hierbas aromáticas y especias naturales para tus recetas");
+            tienda4.setCategoriaPrincipal(CategoriaTienda.HIERBAS_ESPECIAS);
+            tienda4.setEstado(EstadoTienda.ACTIVA);
+            tienda4.setCorreo_tienda("aromas@campolibre.com");
+            tienda4.setTelefono_tienda("3104567890");
+            tienda4.setUbicacion("Pereira, Risaralda");
+            tienda4.setUsuario(admin);
+            tiendaRepository.save(tienda4);
+            System.out.println("✓ Tienda creada: " + tienda4.getNombre());
+        }
     }
 
     private void cargarProductos() {
-        System.out.println("🛒 Cargando productos de prueba...");
+        // Obtener las tiendas creadas
+        Tienda tienda1 = tiendaRepository.findAll().stream()
+                .filter(t -> t.getNombre().equals("El Huerto Fresco"))
+                .findFirst().orElse(null);
 
-        // Obtener tiendas
-        Tienda tienda1 = tiendaRepository.findByNombre("Finca El Paraíso").get(0);
-        Tienda tienda2 = tiendaRepository.findByNombre("Sabores del Campo").get(0);
-        Tienda tienda3 = tiendaRepository.findByNombre("Cosecha Dorada").get(0);
-        Tienda tienda4 = tiendaRepository.findByNombre("Aromáticas del Valle").get(0);
+        Tienda tienda2 = tiendaRepository.findAll().stream()
+                .filter(t -> t.getNombre().equals("Delicias del Valle"))
+                .findFirst().orElse(null);
 
-        // ========== PRODUCTOS DE TIENDA 1: FRUTAS Y VERDURAS ==========
+        Tienda tienda3 = tiendaRepository.findAll().stream()
+                .filter(t -> t.getNombre().equals("Semillas de Oro"))
+                .findFirst().orElse(null);
 
-        // Producto 1: Mango
-        Producto producto1 = new Producto();
-        producto1.setNombre("Mango Tommy");
-        producto1.setDescripcion("Mangos frescos y jugosos de excelente sabor. Perfectos para jugos y postres.");
-        producto1.setPrecio(3500.0);
-        producto1.setStock(50);
-        producto1.setStockMinimo(10);
-        producto1.setSubcategoria(SubcategoriaProducto.FRUTAS_TROPICALES);
-        producto1.setUnidadMedida(UnidadMedida.KILO);
-        producto1.setTienda(tienda1);
-        producto1.setImagen_producto("uploads/productos/mango.jpg");
-        producto1.setEstado("ACTIVO");
-        productoRepository.save(producto1);
+        Tienda tienda4 = tiendaRepository.findAll().stream()
+                .filter(t -> t.getNombre().equals("Aromas del Campo"))
+                .findFirst().orElse(null);
 
-        // Producto 2: Aguacate
-        Producto producto2 = new Producto();
-        producto2.setNombre("Aguacate Hass");
-        producto2.setDescripcion("Aguacates de excelente calidad, cremosos y con buen sabor.");
-        producto2.setPrecio(2800.0);
-        producto2.setStock(30);
-        producto2.setStockMinimo(8);
-        producto2.setSubcategoria(SubcategoriaProducto.FRUTAS_TROPICALES);
-        producto2.setUnidadMedida(UnidadMedida.UNIDAD);
-        producto2.setTienda(tienda1);
-        producto2.setImagen_producto("uploads/productos/aguacate.jpg");
-        producto2.setEstado("ACTIVO");
-        productoRepository.save(producto2);
+        // Productos de Tienda 1: Frutas y Verduras
+        if (tienda1 != null) {
+            crearProducto("Mango Tommy", "Mangos frescos y dulces de la variedad Tommy",
+                    5000.0, 50, 10, SubcategoriaProducto.FRUTAS_TROPICALES,
+                    UnidadMedida.KILO, tienda1);
 
-        // Producto 3: Naranjas
-        Producto producto3 = new Producto();
-        producto3.setNombre("Naranjas Valencia");
-        producto3.setDescripcion("Naranjas dulces perfectas para jugo natural. Frescas y jugosas.");
-        producto3.setPrecio(2500.0);
-        producto3.setStock(60);
-        producto3.setStockMinimo(15);
-        producto3.setSubcategoria(SubcategoriaProducto.FRUTAS_CITRICAS);
-        producto3.setUnidadMedida(UnidadMedida.KILO);
-        producto3.setTienda(tienda1);
-        producto3.setImagen_producto("uploads/productos/naranjas.jpg");
-        producto3.setEstado("ACTIVO");
-        productoRepository.save(producto3);
+            crearProducto("Plátano Hartón", "Plátanos verdes para cocinar",
+                    2500.0, 100, 15, SubcategoriaProducto.FRUTAS_TROPICALES,
+                    UnidadMedida.LIBRA, tienda1);
 
-        // Producto 4: Lechuga
-        Producto producto4 = new Producto();
-        producto4.setNombre("Lechuga Crespa");
-        producto4.setDescripcion("Lechuga fresca y crujiente, ideal para ensaladas.");
-        producto4.setPrecio(1500.0);
-        producto4.setStock(25);
-        producto4.setStockMinimo(5);
-        producto4.setSubcategoria(SubcategoriaProducto.VERDURAS_HOJA);
-        producto4.setUnidadMedida(UnidadMedida.UNIDAD);
-        producto4.setTienda(tienda1);
-        producto4.setImagen_producto("uploads/productos/lechuga.jpg");
-        producto4.setEstado("ACTIVO");
-        productoRepository.save(producto4);
+            crearProducto("Naranja Valencia", "Naranjas jugosas ideales para jugo",
+                    3000.0, 80, 10, SubcategoriaProducto.FRUTAS_CITRICAS,
+                    UnidadMedida.KILO, tienda1);
 
-        // Producto 5: Papa
-        Producto producto5 = new Producto();
-        producto5.setNombre("Papa Criolla");
-        producto5.setDescripcion("Papa criolla de la mejor calidad, perfecta para cualquier preparación.");
-        producto5.setPrecio(3200.0);
-        producto5.setStock(100);
-        producto5.setStockMinimo(20);
-        producto5.setSubcategoria(SubcategoriaProducto.TUBERCULOS);
-        producto5.setUnidadMedida(UnidadMedida.KILO);
-        producto5.setTienda(tienda1);
-        producto5.setImagen_producto("uploads/productos/papa-criolla.jpg");
-        producto5.setEstado("ACTIVO");
-        productoRepository.save(producto5);
+            crearProducto("Lechuga Crespa", "Lechuga fresca y crujiente",
+                    2000.0, 30, 5, SubcategoriaProducto.VERDURAS_HOJA,
+                    UnidadMedida.UNIDAD, tienda1);
 
-        // Producto 6: Tomate
-        Producto producto6 = new Producto();
-        producto6.setNombre("Tomate Chonto");
-        producto6.setDescripcion("Tomates frescos y maduros, ideales para salsas y ensaladas.");
-        producto6.setPrecio(2200.0);
-        producto6.setStock(40);
-        producto6.setStockMinimo(10);
-        producto6.setSubcategoria(SubcategoriaProducto.HORTALIZAS);
-        producto6.setUnidadMedida(UnidadMedida.KILO);
-        producto6.setTienda(tienda1);
-        producto6.setImagen_producto("uploads/productos/tomate.jpg");
-        producto6.setEstado("ACTIVO");
-        productoRepository.save(producto6);
+            crearProducto("Papa Criolla", "Papa criolla pequeña para freír",
+                    4000.0, 60, 10, SubcategoriaProducto.TUBERCULOS,
+                    UnidadMedida.LIBRA, tienda1);
 
-        // ========== PRODUCTOS DE TIENDA 2: PROCESADOS ARTESANALES ==========
+            crearProducto("Tomate Chonto", "Tomates maduros para ensaladas",
+                    3500.0, 45, 8, SubcategoriaProducto.HORTALIZAS,
+                    UnidadMedida.LIBRA, tienda1);
 
-        // Producto 7: Mermelada de Mora
-        Producto producto7 = new Producto();
-        producto7.setNombre("Mermelada de Mora");
-        producto7.setDescripcion("Mermelada artesanal elaborada con moras frescas del campo.");
-        producto7.setPrecio(8500.0);
-        producto7.setStock(20);
-        producto7.setStockMinimo(5);
-        producto7.setSubcategoria(SubcategoriaProducto.MERMELADAS);
-        producto7.setUnidadMedida(UnidadMedida.UNIDAD);
-        producto7.setTienda(tienda2);
-        producto7.setImagen_producto("uploads/productos/mermelada-mora.jpg");
-        producto7.setEstado("ACTIVO");
-        productoRepository.save(producto7);
+            crearProducto("Aguacate Hass", "Aguacate de excelente calidad",
+                    4500.0, 40, 5, SubcategoriaProducto.FRUTAS_TROPICALES,
+                    UnidadMedida.UNIDAD, tienda1);
 
-        // Producto 8: Queso Campesino
-        Producto producto8 = new Producto();
-        producto8.setNombre("Queso Campesino");
-        producto8.setDescripcion("Queso fresco artesanal elaborado con leche de vaca. Sabor tradicional.");
-        producto8.setPrecio(12000.0);
-        producto8.setStock(15);
-        producto8.setStockMinimo(3);
-        producto8.setSubcategoria(SubcategoriaProducto.QUESOS);
-        producto8.setUnidadMedida(UnidadMedida.LIBRA);
-        producto8.setTienda(tienda2);
-        producto8.setImagen_producto("uploads/productos/queso-campesino.jpg");
-        producto8.setEstado("ACTIVO");
-        productoRepository.save(producto8);
+            crearProducto("Limón Tahití", "Limones ácidos y aromáticos",
+                    2800.0, 70, 10, SubcategoriaProducto.FRUTAS_CITRICAS,
+                    UnidadMedida.DOCENA, tienda1);
+        }
 
-        // Producto 9: Pan Integral
-        Producto producto9 = new Producto();
-        producto9.setNombre("Pan Integral");
-        producto9.setDescripcion("Pan artesanal elaborado con harinas integrales y semillas.");
-        producto9.setPrecio(6000.0);
-        producto9.setStock(12);
-        producto9.setStockMinimo(3);
-        producto9.setSubcategoria(SubcategoriaProducto.PAN_ARTESANAL);
-        producto9.setUnidadMedida(UnidadMedida.UNIDAD);
-        producto9.setTienda(tienda2);
-        producto9.setImagen_producto("uploads/productos/pan-integral.jpg");
-        producto9.setEstado("ACTIVO");
-        productoRepository.save(producto9);
+        // Productos de Tienda 2: Procesados Artesanales
+        if (tienda2 != null) {
+            crearProducto("Mermelada de Mora", "Mermelada artesanal sin conservantes",
+                    8000.0, 25, 5, SubcategoriaProducto.MERMELADAS,
+                    UnidadMedida.UNIDAD, tienda2);
 
-        // Producto 10: Salsa de Tomate
-        Producto producto10 = new Producto();
-        producto10.setNombre("Salsa de Tomate Casera");
-        producto10.setDescripcion("Salsa de tomate artesanal sin conservantes ni colorantes.");
-        producto10.setPrecio(7500.0);
-        producto10.setStock(18);
-        producto10.setStockMinimo(5);
-        producto10.setSubcategoria(SubcategoriaProducto.SALSAS);
-        producto10.setUnidadMedida(UnidadMedida.UNIDAD);
-        producto10.setTienda(tienda2);
-        producto10.setImagen_producto("uploads/productos/salsa-tomate.jpg");
-        producto10.setEstado("ACTIVO");
-        productoRepository.save(producto10);
+            crearProducto("Queso Campesino", "Queso fresco hecho en casa",
+                    12000.0, 15, 3, SubcategoriaProducto.QUESOS,
+                    UnidadMedida.LIBRA, tienda2);
 
-        // ========== PRODUCTOS DE TIENDA 3: GRANOS Y SEMILLAS ==========
+            crearProducto("Pan Integral", "Pan artesanal con semillas",
+                    6000.0, 20, 5, SubcategoriaProducto.PAN_ARTESANAL,
+                    UnidadMedida.UNIDAD, tienda2);
 
-        // Producto 11: Frijol Rojo
-        Producto producto11 = new Producto();
-        producto11.setNombre("Frijol Rojo");
-        producto11.setDescripcion("Frijol rojo de primera calidad, cultivado tradicionalmente.");
-        producto11.setPrecio(5500.0);
-        producto11.setStock(80);
-        producto11.setStockMinimo(15);
-        producto11.setSubcategoria(SubcategoriaProducto.LEGUMINOSAS);
-        producto11.setUnidadMedida(UnidadMedida.KILO);
-        producto11.setTienda(tienda3);
-        producto11.setImagen_producto("uploads/productos/frijol-rojo.jpg");
-        producto11.setEstado("ACTIVO");
-        productoRepository.save(producto11);
+            crearProducto("Salsa de Tomate Casera", "Salsa natural sin químicos",
+                    7000.0, 30, 5, SubcategoriaProducto.SALSAS,
+                    UnidadMedida.UNIDAD, tienda2);
 
-        // Producto 12: Maíz Amarillo
-        Producto producto12 = new Producto();
-        producto12.setNombre("Maíz Amarillo");
-        producto12.setDescripcion("Maíz amarillo de excelente calidad para arepas y mazorcas.");
-        producto12.setPrecio(4200.0);
-        producto12.setStock(100);
-        producto12.setStockMinimo(20);
-        producto12.setSubcategoria(SubcategoriaProducto.CEREALES);
-        producto12.setUnidadMedida(UnidadMedida.KILO);
-        producto12.setTienda(tienda3);
-        producto12.setImagen_producto("uploads/productos/maiz-amarillo.jpg");
-        producto12.setEstado("ACTIVO");
-        productoRepository.save(producto12);
+            crearProducto("Conserva de Pepinillos", "Pepinillos en vinagre artesanal",
+                    9000.0, 18, 4, SubcategoriaProducto.CONSERVAS,
+                    UnidadMedida.UNIDAD, tienda2);
 
-        // Producto 13: Semillas de Chía
-        Producto producto13 = new Producto();
-        producto13.setNombre("Semillas de Chía");
-        producto13.setDescripcion("Semillas de chía naturales, ricas en omega 3 y fibra.");
-        producto13.setPrecio(8000.0);
-        producto13.setStock(25);
-        producto13.setStockMinimo(5);
-        producto13.setSubcategoria(SubcategoriaProducto.SEMILLAS);
-        producto13.setUnidadMedida(UnidadMedida.BOLSA_1KG);
-        producto13.setTienda(tienda3);
-        producto13.setImagen_producto("uploads/productos/chia.jpg");
-        producto13.setEstado("ACTIVO");
-        productoRepository.save(producto13);
+            crearProducto("Mermelada de Guayaba", "Mermelada dulce tradicional",
+                    8500.0, 22, 5, SubcategoriaProducto.MERMELADAS,
+                    UnidadMedida.UNIDAD, tienda2);
+        }
 
-        // Producto 14: Harina de Trigo Integral
-        Producto producto14 = new Producto();
-        producto14.setNombre("Harina de Trigo Integral");
-        producto14.setDescripcion("Harina integral molida artesanalmente, perfecta para panes y repostería.");
-        producto14.setPrecio(6500.0);
-        producto14.setStock(30);
-        producto14.setStockMinimo(8);
-        producto14.setSubcategoria(SubcategoriaProducto.HARINAS_ARTESANALES);
-        producto14.setUnidadMedida(UnidadMedida.KILO);
-        producto14.setTienda(tienda3);
-        producto14.setImagen_producto("uploads/productos/harina-integral.jpg");
-        producto14.setEstado("ACTIVO");
-        productoRepository.save(producto14);
+        // Productos de Tienda 3: Granos y Semillas
+        if (tienda3 != null) {
+            crearProducto("Fríjol Rojo", "Fríjol de excelente calidad",
+                    6000.0, 50, 10, SubcategoriaProducto.GRANOS_SECOS,
+                    UnidadMedida.LIBRA, tienda3);
 
-        // ========== PRODUCTOS DE TIENDA 4: HIERBAS Y ESPECIAS ==========
+            crearProducto("Arroz Integral", "Arroz sin procesar",
+                    5500.0, 60, 10, SubcategoriaProducto.CEREALES,
+                    UnidadMedida.KILO, tienda3);
 
-        // Producto 15: Albahaca Fresca
-        Producto producto15 = new Producto();
-        producto15.setNombre("Albahaca Fresca");
-        producto15.setDescripcion("Albahaca fresca cultivada orgánicamente, ideal para pastas y ensaladas.");
-        producto15.setPrecio(3000.0);
-        producto15.setStock(35);
-        producto15.setStockMinimo(8);
-        producto15.setSubcategoria(SubcategoriaProducto.HIERBAS_AROMATICAS);
-        producto15.setUnidadMedida(UnidadMedida.PAQUETE);
-        producto15.setTienda(tienda4);
-        producto15.setImagen_producto("uploads/productos/albahaca.jpg");
-        producto15.setEstado("ACTIVO");
-        productoRepository.save(producto15);
+            crearProducto("Semillas de Chía", "Semillas nutritivas y saludables",
+                    15000.0, 20, 5, SubcategoriaProducto.SEMILLAS,
+                    UnidadMedida.BOLSA_1KG, tienda3);
 
-        // Producto 16: Canela en Rama
-        Producto producto16 = new Producto();
-        producto16.setNombre("Canela en Rama");
-        producto16.setDescripcion("Canela en rama de excelente aroma y sabor.");
-        producto16.setPrecio(4500.0);
-        producto16.setStock(20);
-        producto16.setStockMinimo(5);
-        producto16.setSubcategoria(SubcategoriaProducto.ESPECIAS_SECAS);
-        producto16.setUnidadMedida(UnidadMedida.PAQUETE);
-        producto16.setTienda(tienda4);
-        producto16.setImagen_producto("uploads/productos/canela.jpg");
-        producto16.setEstado("ACTIVO");
-        productoRepository.save(producto16);
+            crearProducto("Harina de Trigo Integral", "Harina sin refinar",
+                    4500.0, 40, 8, SubcategoriaProducto.HARINAS_ARTESANALES,
+                    UnidadMedida.KILO, tienda3);
 
-        // Producto 17: Mezcla de Especias para Carne
-        Producto producto17 = new Producto();
-        producto17.setNombre("Mezcla Especias Carne");
-        producto17.setDescripcion("Mezcla artesanal de especias para sazonar carnes a la parrilla.");
-        producto17.setPrecio(5500.0);
-        producto17.setStock(15);
-        producto17.setStockMinimo(3);
-        producto17.setSubcategoria(SubcategoriaProducto.MEZCLAS_CONDIMENTOS);
-        producto17.setUnidadMedida(UnidadMedida.PAQUETE);
-        producto17.setTienda(tienda4);
-        producto17.setImagen_producto("uploads/productos/mezcla-especias.jpg");
-        producto17.setEstado("ACTIVO");
-        productoRepository.save(producto17);
+            crearProducto("Lentejas", "Lentejas de grano grande",
+                    7000.0, 35, 8, SubcategoriaProducto.LEGUMINOSAS,
+                    UnidadMedida.LIBRA, tienda3);
 
-        // Producto 18: Té de Manzanilla
-        Producto producto18 = new Producto();
-        producto18.setNombre("Té de Manzanilla");
-        producto18.setDescripcion("Manzanilla natural para infusiones relajantes.");
-        producto18.setPrecio(4000.0);
-        producto18.setStock(40);
-        producto18.setStockMinimo(10);
-        producto18.setSubcategoria(SubcategoriaProducto.INFUSIONES_TES);
-        producto18.setUnidadMedida(UnidadMedida.PAQUETE);
-        producto18.setTienda(tienda4);
-        producto18.setImagen_producto("uploads/productos/manzanilla.jpg");
-        producto18.setEstado("ACTIVO");
-        productoRepository.save(producto18);
+            crearProducto("Quinua", "Quinua andina de alta proteína",
+                    18000.0, 25, 5, SubcategoriaProducto.CEREALES,
+                    UnidadMedida.BOLSA_1KG, tienda3);
 
-        // Producto 19: Producto con stock bajo (para probar alertas)
-        Producto producto19 = new Producto();
-        producto19.setNombre("Orégano Seco");
-        producto19.setDescripcion("Orégano seco de aroma intenso, perfecto para pizzas y pastas.");
-        producto19.setPrecio(3500.0);
-        producto19.setStock(3); // Stock bajo
-        producto19.setStockMinimo(5);
-        producto19.setSubcategoria(SubcategoriaProducto.HIERBAS_AROMATICAS);
-        producto19.setUnidadMedida(UnidadMedida.PAQUETE);
-        producto19.setTienda(tienda4);
-        producto19.setImagen_producto("uploads/productos/oregano.jpg");
-        producto19.setEstado("ACTIVO");
-        productoRepository.save(producto19);
+            crearProducto("Garbanzos", "Garbanzos secos para cocinar",
+                    8000.0, 30, 6, SubcategoriaProducto.LEGUMINOSAS,
+                    UnidadMedida.LIBRA, tienda3);
+        }
 
-        // Producto 20: Producto sin stock (para probar sistema de inventario)
-        Producto producto20 = new Producto();
-        producto20.setNombre("Tomillo Fresco");
-        producto20.setDescripcion("Tomillo fresco para condimentar carnes y guisos.");
-        producto20.setPrecio(3200.0);
-        producto20.setStock(0); // Sin stock
-        producto20.setStockMinimo(5);
-        producto20.setSubcategoria(SubcategoriaProducto.HIERBAS_AROMATICAS);
-        producto20.setUnidadMedida(UnidadMedida.PAQUETE);
-        producto20.setTienda(tienda4);
-        producto20.setImagen_producto("uploads/productos/tomillo.jpg");
-        producto20.setEstado("SIN_STOCK"); // Se desactiva automáticamente
-        productoRepository.save(producto20);
+        // Productos de Tienda 4: Hierbas y Especias
+        if (tienda4 != null) {
+            crearProducto("Albahaca Fresca", "Albahaca aromática en maceta",
+                    3000.0, 15, 3, SubcategoriaProducto.HIERBAS_AROMATICAS,
+                    UnidadMedida.UNIDAD, tienda4);
 
-        System.out.println("✓ " + productoRepository.count() + " productos creados exitosamente");
+            crearProducto("Canela en Rama", "Canela de alta calidad",
+                    12000.0, 10, 2, SubcategoriaProducto.ESPECIAS_SECAS,
+                    UnidadMedida.PAQUETE, tienda4);
+
+            crearProducto("Mix de Especias Colombianas", "Mezcla tradicional",
+                    8000.0, 25, 5, SubcategoriaProducto.MEZCLAS_CONDIMENTOS,
+                    UnidadMedida.PAQUETE, tienda4);
+
+            crearProducto("Té de Hierbabuena", "Infusión natural digestiva",
+                    5000.0, 30, 5, SubcategoriaProducto.INFUSIONES_TES,
+                    UnidadMedida.PAQUETE, tienda4);
+
+            crearProducto("Romero Seco", "Romero para condimentar",
+                    4000.0, 20, 4, SubcategoriaProducto.ESPECIAS_SECAS,
+                    UnidadMedida.PAQUETE, tienda4);
+
+            crearProducto("Té de Manzanilla", "Infusión relajante natural",
+                    6000.0, 28, 5, SubcategoriaProducto.INFUSIONES_TES,
+                    UnidadMedida.PAQUETE, tienda4);
+        }
+    }
+
+    private void crearProducto(String nombre, String descripcion, Double precio,
+                               Integer stock, Integer stockMinimo,
+                               SubcategoriaProducto subcategoria,
+                               UnidadMedida unidadMedida, Tienda tienda) {
+        Producto producto = new Producto();
+        producto.setNombre(nombre);
+        producto.setDescripcion(descripcion);
+        producto.setPrecio(precio);
+        producto.setStock(stock);
+        producto.setStockMinimo(stockMinimo);
+        producto.setSubcategoria(subcategoria);
+        producto.setUnidadMedida(unidadMedida);
+        producto.setTienda(tienda);
+        producto.setEstado("ACTIVO");
+        productoRepository.save(producto);
+        System.out.println("  ✓ Producto creado: " + nombre + " (" + unidadMedida.getDisplayName() + ")");
+    }
+
+    // ==================== PQRS (SIN CAMBIOS) ====================
+    private void cargarPqrs() {
+        System.out.println("\n📝 Creando PQRS...");
+
+        Usuario consumidor = usuarioRepository.findByEmail("consumidor@campolibre.com");
+        Usuario proveedor = usuarioRepository.findByEmail("proveedor@campolibre.com");
+        Usuario admin = usuarioRepository.findByEmail("admin@campolibre.com");
+
+        Tienda tienda1 = tiendaRepository.findById(1L).orElse(null);
+        Evento evento1 = eventoRepository.findById(1L).orElse(null);
+
+        if (consumidor == null || tienda1 == null || evento1 == null || admin == null) {
+            System.out.println("⚠️ No se encontraron datos para crear PQRS");
+            return;
+        }
+
+        // --- PQRS 1 - PENDIENTE (sobre una tienda) ---
+        Pqrs pqrs1 = new Pqrs();
+        pqrs1.setTipo(TipoPqrs.PREGUNTA);
+        pqrs1.setDescripcion("¿Hacen envíos a domicilio? Me interesa comprar varios productos de su tienda pero vivo lejos.");
+        pqrs1.setEstado(EstadoPqrs.PENDIENTE);
+        pqrs1.setEmisor(consumidor);
+        pqrs1.setReceptor(admin);
+        pqrs1.setPendienteDe(RolProceso.PROVEEDOR);
+        pqrsRepository.save(pqrs1);
+
+        // Asociar con tienda
+        PqrsTienda pt1 = new PqrsTienda();
+        pt1.setPqrs(pqrs1);
+        pt1.setTienda(tienda1);
+        pqrsTiendaRepository.save(pt1);
+        System.out.println("✓ PQRS creada: Pregunta sobre tienda (PENDIENTE)");
+
+        // --- PQRS 2 - RESPONDIDA (sobre un evento) ---
+        Pqrs pqrs2 = new Pqrs();
+        pqrs2.setTipo(TipoPqrs.PREGUNTA);
+        pqrs2.setDescripcion("¿La entrada al evento es gratuita o tiene algún costo?");
+        pqrs2.setEstado(EstadoPqrs.RESPONDIDA);
+        pqrs2.setEmisor(consumidor);
+        pqrs2.setReceptor(consumidor);
+        pqrs2.setPendienteDe(RolProceso.CONSUMIDOR);
+        pqrsRepository.save(pqrs2);
+
+        // Crear el registro de respuesta
+        PqrsRespuesta resp2 = new PqrsRespuesta();
+        resp2.setPqrs(pqrs2);
+        resp2.setContenido("¡Hola! La entrada es completamente gratuita para todos los asistentes. Te esperamos.");
+        resp2.setEmisor(admin);
+        resp2.setEmitidoPor(RolProceso.PROVEEDOR);
+        resp2.setFechaEmision(LocalDateTime.now().minusDays(1));
+        pqrsRespuestaRepository.save(resp2);
+
+        // Asociar con evento
+        PqrsEvento pe1 = new PqrsEvento();
+        pe1.setPqrs(pqrs2);
+        pe1.setEvento(evento1);
+        pqrsEventoRepository.save(pe1);
+        System.out.println("✓ PQRS creada: Pregunta sobre evento (RESPONDIDA)");
+
+        // --- PQRS 3 - RESPONDIDA (sugerencia general) ---
+        Pqrs pqrs3 = new Pqrs();
+        pqrs3.setTipo(TipoPqrs.SUGERENCIA);
+        pqrs3.setDescripcion("Sería excelente si pudieran agregar filtros por precio en la búsqueda de productos. Facilitaría mucho encontrar lo que busco.");
+        pqrs3.setEstado(EstadoPqrs.RESPONDIDA);
+        pqrs3.setEmisor(proveedor);
+        pqrs3.setReceptor(proveedor);
+        pqrs3.setPendienteDe(RolProceso.CONSUMIDOR);
+        pqrsRepository.save(pqrs3);
+
+        // Crear el registro de respuesta
+        PqrsRespuesta resp3 = new PqrsRespuesta();
+        resp3.setPqrs(pqrs3);
+        resp3.setContenido("¡Gracias por tu sugerencia! La tomaremos en cuenta para futuras actualizaciones de la plataforma.");
+        resp3.setEmisor(admin);
+        resp3.setEmitidoPor(RolProceso.PROVEEDOR);
+        resp3.setFechaEmision(LocalDateTime.now().minusDays(2));
+        pqrsRespuestaRepository.save(resp3);
+
+        System.out.println("✓ PQRS creada: Sugerencia general (RESPONDIDA)");
     }
 }

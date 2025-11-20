@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+
+<head>
+    <title>Detalle del Pago - Campo Libre</title>
+</head>
+
+<body>
+<main th:fragment="content">
+    <div class="container mt-4 mb-5">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/}">Inicio</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/pagos-eventos/mis-pagos}">Historial de Pagos</a></li>
+                <li class="breadcrumb-item active">Detalle Pago #<span th:text="${pago.idPagoEvento}">000</span></li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="card shadow-lg mb-4">
+                    <div class="card-header bg-primary text-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">
+                                <i class="bi bi-receipt me-2"></i>
+                                Recibo de Pago
+                            </h3>
+                            <h5 class="mb-0 font-monospace">
+                                #<span th:text="${pago.numeroTransaccion}">PEVT-202501-XXXX</span>
+                            </h5>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center border-end">
+                                <small class="text-muted d-block mb-1">Estado</small>
+                                <span class="badge fs-5 py-2"
+                                      th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO} ? 'bg-success' :
+                                                           (${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO} ? 'bg-danger' :
+                                                           'bg-warning text-dark')"
+                                      th:text="${pago.estado}">
+                                    EXITOSO
+                                </span>
+                            </div>
+
+                            <div class="col-md-4 text-center border-end">
+                                <small class="text-muted d-block mb-1">Fecha y Hora</small>
+                                <h5 class="mb-0 text-dark">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm')}">
+                                        01/01/2025 10:30
+                                    </span>
+                                </h5>
+                            </div>
+
+                            <div class="col-md-4 text-center">
+                                <small class="text-muted d-block mb-1">Monto Total</small>
+                                <h2 class="mb-0"
+                                    th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO} ? 'text-success' : 'text-danger'">
+                                    $<span th:text="${#numbers.formatDecimal(pago.monto, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                </h2>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-primary">
+                                    <i class="bi bi-credit-card me-2"></i>
+                                    Detalles de la Transacción
+                                </h5>
+                                <dl class="row small">
+                                    <dt class="col-sm-5 text-muted">ID de Pago:</dt>
+                                    <dd class="col-sm-7"><code th:text="${pago.idPagoEvento}">123</code></dd>
+
+                                    <dt class="col-sm-5 text-muted">Transacción Ref.:</dt>
+                                    <dd class="col-sm-7"><code th:text="${pago.numeroTransaccion}">PEVT-202501-XXXX</code></dd>
+
+                                    <dt class="col-sm-5 text-muted">Método:</dt>
+                                    <dd class="col-sm-7" th:text="${pago.metodoPago}">TARJETA_CREDITO</dd>
+
+                                    <dt class="col-sm-5 text-muted">Proveedor:</dt>
+                                    <dd class="col-sm-7" th:text="${pago.nombreProveedor}">Tu Nombre</dd>
+                                </dl>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h5 class="mb-3 text-success">
+                                    <i class="bi bi-calendar-event me-2"></i>
+                                    Evento Asociado
+                                </h5>
+                                <dl class="row small">
+                                    <dt class="col-sm-5 text-muted">Evento:</dt>
+                                    <dd class="col-sm-7 fw-bold" th:text="${pago.nombreEvento}">Nombre del Evento</dd>
+
+                                    <dt class="col-sm-5 text-muted">ID Inscripción:</dt>
+                                    <dd class="col-sm-7"><code th:text="${pago.idInscripcion}">456</code></dd>
+
+                                    <dt class="col-sm-5 text-muted">Cód. Confirmación:</dt>
+                                    <dd class="col-sm-7">
+                                        <code th:if="${pago.codigoConfirmacion}" th:text="${pago.codigoConfirmacion}">EVT-202501-XXXX</code>
+                                        <span th:unless="${pago.codigoConfirmacion}" class="text-danger">Pendiente / No Aplica</span>
+                                    </dd>
+
+                                    <dt class="col-sm-5 text-muted">Monto Base:</dt>
+                                    <dd class="col-sm-7">
+                                        $<span th:text="${#numbers.formatDecimal(pago.monto, 0, 'COMMA', 0, 'POINT')}">50,000</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        <div th:if="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO}" class="mt-4">
+                            <hr>
+                            <div class="alert alert-danger">
+                                <h5 class="alert-heading">
+                                    <i class="bi bi-x-octagon me-2"></i>
+                                    Motivo del Rechazo
+                                </h5>
+                                <p class="mb-0" th:text="${pago.mensajeError}">
+                                    El pago fue rechazado por el banco emisor debido a fondos insuficientes.
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr class="mt-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a th:href="@{/pagos-eventos/mis-pagos}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver al Historial
+                            </a>
+
+                            <div>
+                                <a th:if="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO}"
+                                   th:href="@{/pagos-eventos/checkout/{id}(id=${pago.idInscripcion})}"
+                                   class="btn btn-warning me-2">
+                                    <i class="bi bi-arrow-clockwise"></i> Reintentar Pago
+                                </a>
+
+                                <a th:if="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO}"
+                                   th:href="@{/eventos/mi-codigo/{id}(id=${pago.idInscripcion})}"
+                                   class="btn btn-success">
+                                    <i class="bi bi-qr-code"></i> Ver Código QR
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-muted text-center">
+                        <small>Este es un registro digital de tu transacción en Campo Libre.</small>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button class="btn btn-outline-dark" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir Recibo
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    /* Estilos para impresión */
+    @media print {
+        body > *:not(.container) {
+            display: none; /* Oculta navbar, footer, etc. */
+        }
+        .container {
+            margin-top: 0 !important;
+        }
+        .card-shadow-lg {
+            box-shadow: none !important;
+            border: 1px solid #ccc;
+        }
+        .btn-outline-dark {
+            display: none; /* Oculta el botón de imprimir */
+        }
+    }
+
+    code {
+        font-size: 0.9rem;
+    }
+</style>
+</body>
+</html>

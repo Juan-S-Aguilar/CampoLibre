@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Gestión de Patrocinadores - Campo Libre</title>
+</head>
+<body>
+<main th:fragment="content">
+    <div class="container mt-4 mb-5">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm border-start border-success border-5">
+            <h1 class="h3 mb-0 text-success">
+                <i class="bi bi-handshake-fill me-2"></i> Gestión de Patrocinadores
+            </h1>
+            <a th:href="@{/admin/patrocinadores/crear}" class="btn btn-success btn-lg shadow-sm">
+                <i class="bi bi-plus-circle"></i> Nuevo Patrocinador
+            </a>
+        </div>
+
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="card shadow-sm mb-4 border-0">
+            <div class="card-body">
+                <h5 class="mb-3 text-dark"><i class="bi bi-funnel text-primary me-2"></i> Filtro de Registros</h5>
+                <form th:action="@{/admin/patrocinadores}" method="get">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="soloActivos" class="form-label fw-bold">Mostrar:</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="soloActivos" name="soloActivos" th:checked="${soloActivos}">
+                                <label class="form-check-label" for="soloActivos">Solo Patrocinadores **Activos**</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="submit" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-search"></i> Aplicar Filtro
+                            </button>
+                            <a th:href="@{/admin/patrocinadores}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> Ver Todos
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 text-dark">Total de Patrocinadores: <span th:text="${patrocinadores.size()}">0</span></h5>
+            </div>
+            <div class="card-body p-0">
+                <div th:if="${patrocinadores.isEmpty()}" class="p-4 text-center text-muted">
+                    <p class="mb-0">No hay patrocinadores registrados que coincidan con el filtro.</p>
+                </div>
+
+                <table th:unless="${patrocinadores.isEmpty()}" class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Contacto (Email)</th>
+                        <th>Teléfono</th>
+                        <th>Sitio Web</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${patrocinadores}" th:classappend="${p.activo} ? '' : 'table-danger'">
+                        <td th:text="${p.id_patrocinador}">1</td>
+                        <td th:text="${p.nombre}">Patrocinador Ejemplo</td>
+                        <td th:text="${p.contactoEmail}">demo@patrocinador.com</td>
+                        <td th:text="${p.telefonoContacto}">+57 1234567890</td>
+                        <td>
+                            <a th:if="${p.sitioWeb != null and !p.sitioWeb.isEmpty()}" th:href="${p.sitioWeb}" target="_blank">
+                                <i class="bi bi-link-45deg"></i>
+                            </a>
+                            <span th:unless="${p.sitioWeb != null and !p.sitioWeb.isEmpty()}" class="text-muted">N/A</span>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="${p.activo} ? 'bg-success' : 'bg-danger'" th:text="${p.activo} ? 'ACTIVO' : 'ARCHIVADO'">ACTIVO</span>
+                        </td>
+                        <td class="d-flex gap-2">
+                            <a th:href="@{/admin/patrocinadores/ver/{id}(id=${p.id_patrocinador})}"
+                               class="btn btn-info btn-sm" title="Ver Detalles">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a th:href="@{/admin/patrocinadores/editar/{id}(id=${p.id_patrocinador})}"
+                               class="btn btn-warning btn-sm" title="Editar Patrocinador">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+
+                            <form th:action="@{/admin/patrocinadores/cambiar-estado/{id}(id=${p.id_patrocinador})}"
+                                  method="post" class="d-inline">
+                                <input type="hidden" name="activo" th:value="${!p.activo}">
+                                <button type="submit" class="btn btn-sm"
+                                        th:classappend="${p.activo} ? 'btn-outline-danger' : 'btn-outline-success'"
+                                        th:title="${p.activo} ? 'Archivar' : 'Activar'"
+                                        onclick="return confirm('¿Está seguro de cambiar el estado de este patrocinador?');">
+                                    <i th:classappend="${p.activo} ? 'bi bi-archive' : 'bi bi-check-circle'"></i>
+                                </button>
+                            </form>
+
+                            <a th:href="@{/admin/patrocinadores/eliminar/{id}(id=${p.id_patrocinador})}"
+                               onclick="return confirm('ADVERTENCIA: ¿Desea ELIMINAR permanentemente este registro?');"
+                               class="btn btn-danger btn-sm" title="Eliminar Patrocinador">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
