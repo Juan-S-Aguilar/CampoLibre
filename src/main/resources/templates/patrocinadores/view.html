@@ -7,7 +7,8 @@
 </head>
 <body>
 <main th:fragment="content">
-    <div class="container mt-4 mb-5">
+    <div class="detail-container">
+        <!-- Breadcrumb -->
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
@@ -16,6 +17,7 @@
             </ol>
         </nav>
 
+        <!-- Header -->
         <div class="row mb-4 align-items-center">
             <div class="col-md-9">
                 <h1 class="display-6">
@@ -32,13 +34,12 @@
             </div>
         </div>
 
-        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
             <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div th:if="${error}" class="alert alert-danger" role="alert">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
         <div class="row">
@@ -50,14 +51,14 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-4 text-center mb-3">
-                                <img th:src="${patrocinador.logoUrl != null and !patrocinador.logoUrl.isEmpty()} ? ${patrocinador.logoUrl} : '/images/placeholder-logo.png'"
+                                <img th:src="${(patrocinador.logoUrl != null and !patrocinador.logoUrl.isEmpty()) ? patrocinador.logoUrl : '/images/placeholder-logo.png'}"
                                      alt="Logo del Patrocinador"
                                      class="img-thumbnail rounded-circle"
                                      style="width: 150px; height: 150px; object-fit: cover;">
                                 <div class="mt-2">
                                     <span class="badge fs-6 py-2"
-                                          th:classappend="${patrocinador.activo} ? 'bg-success' : 'bg-danger'"
-                                          th:text="${patrocinador.activo} ? 'ACTIVO' : 'ARCHIVADO'">Estado</span>
+                                          th:classappend="${patrocinador.activo ? 'bg-success' : 'bg-danger'}"
+                                          th:text="${patrocinador.activo ? 'ACTIVO' : 'ARCHIVADO'}">Estado</span>
                                 </div>
                             </div>
                             <div class="col-md-8">
@@ -120,10 +121,10 @@
                           method="post" class="d-grid gap-2">
                         <input type="hidden" name="activo" th:value="${!patrocinador.activo}">
                         <button type="submit" class="btn btn-lg"
-                                th:classappend="${patrocinador.activo} ? 'btn-outline-danger' : 'btn-outline-success'"
+                                th:classappend="${patrocinador.activo ? 'btn-outline-danger' : 'btn-outline-success'}"
                                 onclick="return confirm('¿Estás seguro de cambiar el estado de este patrocinador?');">
-                            <i th:classappend="${patrocinador.activo} ? 'bi bi-archive' : 'bi bi-check-circle-fill'"></i>
-                            <span th:text="${patrocinador.activo} ? 'Archivar Patrocinador' : 'Activar Patrocinador'"></span>
+                            <i th:class="${patrocinador.activo ? 'bi bi-archive' : 'bi bi-check-circle-fill'}"></i>
+                            <span th:text="${patrocinador.activo ? 'Archivar Patrocinador' : 'Activar Patrocinador'}"></span>
                         </button>
                     </form>
 

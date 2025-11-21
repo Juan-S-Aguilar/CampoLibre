@@ -10,33 +10,27 @@
 
 <body>
 <main th:fragment="content">
-    <div class="container mt-4 mb-5">
+    <div class="list-container">
 
-
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <h1 class="display-6">
-                    <i class="bi bi-receipt text-primary"></i>
-                    Historial de Pagos
-                </h1>
-                <p class="text-muted">
-                    Todos tus pagos por eventos agrícolas
-                </p>
-            </div>
-            <div class="col-md-4 text-end">
-                <a th:href="@{/eventos/mis-inscripciones}" class="btn btn-outline-primary">
+        <!-- Header de la lista -->
+        <div class="list-header">
+            <h2>
+                <i class="bi bi-receipt"></i>
+                Historial de Pagos
+            </h2>
+            <div class="list-header-actions">
+                <a th:href="@{/eventos/mis-inscripciones}" class="btn btn-primary">
                     <i class="bi bi-calendar-check"></i> Mis Inscripciones
                 </a>
             </div>
         </div>
 
-        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <!-- Mensajes -->
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
             <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div th:if="${error}" class="alert alert-danger" role="alert">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
         <div th:unless="${#lists.isEmpty(pagos)}" class="row mb-4">
@@ -147,15 +141,11 @@
                                 <div class="col-md-2 text-center border-end">
                                     <div class="mb-2">
                                         <i class="fs-1"
-                                           th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO} ? 'bi bi-check-circle-fill text-success' :
-                                                               (${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO} ? 'bi bi-x-circle-fill text-danger' :
-                                                               'bi bi-hourglass-split text-warning')">
+                                           th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO ? 'bi bi-check-circle-fill text-success' : (pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO ? 'bi bi-x-circle-fill text-danger' : 'bi bi-hourglass-split text-warning')}">
                                         </i>
                                     </div>
                                     <span class="badge fs-6"
-                                          th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO} ? 'bg-success' :
-                                                               (${pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO} ? 'bg-danger' :
-                                                               'bg-warning text-dark')"
+                                          th:classappend="${pago.estado == T(com.example.campolibre.Enum.EstadoPago).EXITOSO ? 'bg-success' : (pago.estado == T(com.example.campolibre.Enum.EstadoPago).FALLIDO ? 'bg-danger' : 'bg-warning text-dark')}"
                                           th:text="${pago.estado}">
                                     </span>
                                     <div class="mt-2 small text-muted">

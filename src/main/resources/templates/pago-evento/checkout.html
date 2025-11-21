@@ -11,24 +11,20 @@
 
 
 <main th:fragment="content">
-    <div class="container mt-4 mb-5">
+    <div class="form-container form-container-wide">
 
-
-        <!-- Header -->
-        <div class="text-center mb-4">
-            <h1 class="display-6">
-                <i class="bi bi-credit-card text-success"></i>
+        <!-- Header del formulario -->
+        <div class="form-header text-center">
+            <h2>
+                <i class="bi bi-credit-card"></i>
                 Confirmar Pago
-            </h1>
-            <p class="text-muted">
-                Completa tu inscripción al evento
-            </p>
+            </h2>
+            <p>Completa tu inscripción al evento</p>
         </div>
 
         <!-- Mensajes -->
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div th:if="${error}" class="alert alert-danger" role="alert">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
         <div class="row justify-content-center">

@@ -10,17 +10,24 @@
 <body>
 
 <main th:fragment="content">
-    <div class="container mt-4 mb-5">
+    <div class="form-container form-container-wide">
+
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-pencil-square"></i>
+                Editar Evento
+            </h2>
+            <p>Actualiza la información del evento</p>
+        </div>
 
         <!-- Mensajes -->
-        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
             <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div th:if="${error}" class="alert alert-danger" role="alert">
             <i class="bi bi-exclamation-triangle"></i>
             <strong>Error:</strong> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
         <!-- Formulario -->
