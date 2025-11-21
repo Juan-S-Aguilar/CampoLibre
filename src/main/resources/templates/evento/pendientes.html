@@ -86,7 +86,7 @@
                         data-bs-target="#todos"
                         type="button"
                         role="tab"
-                        onclick="window.location.href='/eventos'">
+                        onclick="window.location.href='/eventos/admin/todos'">
                     <i class="bi bi-grid"></i>
                     Ver Todos
                 </button>
@@ -142,7 +142,7 @@
                                     <!-- Imagen -->
                                     <td>
                                         <img th:if="${evento.imagen_evento != null}"
-                                             th:src="@{'/uploads/' + ${evento.imagen_evento}}"
+                                             th:src="@{${evento.imagen_evento}}"
                                              class="rounded"
                                              style="width: 50px; height: 50px; object-fit: cover;"
                                              th:alt="${evento.nombre}">

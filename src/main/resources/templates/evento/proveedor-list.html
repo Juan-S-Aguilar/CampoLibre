@@ -140,7 +140,7 @@
                                     <div class="rounded bg-light d-flex align-items-center justify-content-center me-3"
                                          style="width: 40px; height: 40px; overflow: hidden;">
                                         <img th:if="${evento.imagen_evento != null}"
-                                             th:src="@{'/uploads/' + ${evento.imagen_evento}}"
+                                             th:src="@{${evento.imagen_evento}}"
                                              class="img-fluid" style="object-fit: cover; height: 100%; width: 100%;">
                                         <i th:unless="${evento.imagen_evento != null}" class="bi bi-image text-muted"></i>
                                     </div>

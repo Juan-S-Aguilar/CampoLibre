@@ -5,146 +5,203 @@
 <head>
     <title>Eventos Disponibles - Campo Libre</title>
     <style>
+        /* Estilo para que la tarjeta flote suavemente al pasar el mouse */
         .hover-shadow {
-            transition: box-shadow 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
         }
         .hover-shadow:hover {
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+        }
+
+        /* Truco CSS para cortar el texto si es muy largo (max 3 líneas) */
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 4.5em; /* Mantiene la altura incluso si hay poco texto */
+        }
+
+        /* Fondo suave para la zona de detalles */
+        .card-details-bg {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
         }
     </style>
 </head>
 <body>
 <main th:fragment="content">
     <div class="container mt-5">
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <h1 class="display-5">
-                    <i class="bi bi-calendar-event text-success"></i>
-                    Eventos Agrícolas
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <div>
+                <h1 class="display-5 fw-bold text-success">
+                    <i class="bi bi-calendar-event"></i> Eventos Agrícolas
                 </h1>
-                <p class="lead text-muted">
-                    Descubre ferias, mercados y festivales del campo
-                </p>
+                <p class="lead text-muted mb-0">Descubre ferias, mercados y festivales del campo</p>
             </div>
-            <div class="col-md-4 text-end" sec:authorize="hasAuthority('ADMINISTRADOR')">
-                <a th:href="@{/eventos/crear}" class="btn btn-success">
+            <div sec:authorize="hasAuthority('ADMINISTRADOR')" class="mt-3 mt-md-0">
+                <a th:href="@{/eventos/crear}" class="btn btn-success shadow-sm">
                     <i class="bi bi-plus-circle"></i> Crear Evento
                 </a>
-                <a th:href="@{/eventos/pendientes}" class="btn btn-warning">
+                <a th:href="@{/eventos/pendientes}" class="btn btn-warning shadow-sm text-dark">
                     <i class="bi bi-hourglass-split"></i> Pendientes
                 </a>
             </div>
         </div>
 
-        <div class="card mb-4">
-            <div class="card-body">
-                <h5 class="card-title mb-3">
-                    <i class="bi bi-funnel"></i> Filtrar por Tipo
-                </h5>
-                <div class="btn-group" role="group">
+        <!-- Tabs de Navegación -->
+        <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="borradores-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#borradores"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos/pendientes'">
+                    <i class="bi bi-hourglass-split"></i>
+                    Borradores
+
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="publicados-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#publicados"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='#'">
+                    <i class="bi bi-check-circle"></i>
+                    Publicados
+                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="todos-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#todos"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos/admin/todos'">
+                    <i class="bi bi-grid"></i>
+                    Ver Todos
+                </button>
+            </li>
+        </ul>
+
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="card-body p-4">
+                <h6 class="text-uppercase text-muted fw-bold mb-3">
+                    <i class="bi bi-funnel-fill"></i> Filtrar por Tipo
+                </h6>
+                <div class="d-flex gap-2 flex-wrap">
                     <a th:href="@{/eventos}"
-                       class="btn btn-outline-success"
-                       th:classappend="${tipoSeleccionado == null} ? 'active' : ''">
-                        <i class="bi bi-grid"></i> Todos
+                       class="btn btn-sm rounded-pill px-3"
+                       th:classappend="${tipoSeleccionado == null} ? 'btn-success' : 'btn-outline-success'">
+                        Todos
                     </a>
                     <a th:each="tipo : ${tiposEvento}"
                        th:href="@{/eventos(tipo=${tipo})}"
                        th:text="${tipo.name()}"
-                       class="btn btn-outline-success"
-                       th:classappend="${tipoSeleccionado == tipo} ? 'active' : ''">
+                       class="btn btn-sm rounded-pill px-3"
+                       th:classappend="${tipoSeleccionado == tipo} ? 'btn-success' : 'btn-outline-success'">
                     </a>
                 </div>
             </div>
         </div>
 
-        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${mensaje}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <div th:if="${#lists.isEmpty(eventos)}" class="alert alert-info text-center">
-            <i class="bi bi-info-circle fs-1"></i>
+        <div th:if="${#lists.isEmpty(eventos)}" class="text-center py-5 text-muted">
+            <i class="bi bi-calendar-x display-1"></i>
             <h4 class="mt-3">No hay eventos disponibles</h4>
-            <p class="text-muted">Vuelve pronto para ver nuevos eventos agrícolas</p>
+            <p>Vuelve pronto para ver nuevos eventos agrícolas.</p>
         </div>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+
             <div class="col" th:each="evento : ${eventos}">
-                <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card h-100 border border-success border-opacity-25 shadow-sm hover-shadow overflow-hidden">
+
                     <div class="position-relative">
                         <img th:if="${evento.imagen_evento != null}"
-                             th:src="@{'/uploads/' + ${evento.imagen_evento}}"
+                             th:src="@{${evento.imagen_evento}}"
                              class="card-img-top"
-                             style="height: 200px; object-fit: cover;"
+                             style="height: 220px; object-fit: cover;"
                              th:alt="${evento.nombre}">
                         <img th:unless="${evento.imagen_evento != null}"
-                             src="https://via.placeholder.com/400x200/28a745/ffffff?text=Evento+Agricola"
+                             src="https://via.placeholder.com/400x220/198754/ffffff?text=Evento+Agricola"
                              class="card-img-top"
-                             style="height: 200px; object-fit: cover;"
+                             style="height: 220px; object-fit: cover;"
                              alt="Evento">
 
                         <span sec:authorize="hasAuthority('ADMINISTRADOR')"
-                              class="badge position-absolute top-0 end-0 m-2"
-                              th:classappend="${evento.estado == T(com.example.campolibre.Enum.EstadoEvento).PUBLICADO} ? 'bg-success' : 'bg-warning'"
+                              class="badge position-absolute top-0 end-0 m-3 shadow-sm"
+                              th:classappend="${evento.estado == T(com.example.campolibre.Enum.EstadoEvento).PUBLICADO} ? 'bg-success' : 'bg-warning text-dark'"
                               th:text="${evento.estado}">
-                            </span>
+                        </span>
+
+                        <span class="badge bg-white text-success position-absolute bottom-0 start-0 m-3 shadow-sm px-3 py-2 rounded-pill border"
+                              th:text="${evento.tipo_evento}">
+                        </span>
                     </div>
 
-                    <div class="card-body">
-                        <span class="badge bg-success mb-2" th:text="${evento.tipo_evento}"></span>
+                    <div class="card-body d-flex flex-column pt-4">
 
-                        <h5 class="card-title" th:text="${evento.nombre}">Nombre del Evento</h5>
+                        <h5 class="card-title fw-bold text-dark mb-2" th:text="${evento.nombre}">Nombre del Evento</h5>
 
-                        <p class="card-text text-muted small"
-                           th:text="${#strings.abbreviate(evento.descripcion, 100)}">
+                        <p class="card-text text-muted small line-clamp-3 mb-4"
+                           th:text="${evento.descripcion}">
                             Descripción del evento...
                         </p>
 
-                        <hr>
+                        <div class="card-details-bg mt-auto mb-3 small">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-calendar3 text-success me-2 fs-5"></i>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Fecha</span>
+                                    <span class="text-muted">
+                                        <span th:text="${#temporals.format(evento.fecha_evento, 'dd MMM yyyy')}"></span>
+                                        - <span th:text="${#temporals.format(evento.hora_evento, 'HH:mm')}"></span>
+                                    </span>
+                                </div>
+                            </div>
 
-                        <div class="small">
-                            <p class="mb-1">
-                                <i class="bi bi-calendar3 text-success"></i>
-                                <strong>Fecha:</strong>
-                                <span th:text="${#temporals.format(evento.fecha_evento, 'dd/MM/yyyy')}"></span>
-                                a las
-                                <span th:text="${#temporals.format(evento.hora_evento, 'HH:mm')}"></span>
-                            </p>
-                            <p class="mb-1">
-                                <i class="bi bi-geo-alt text-danger"></i>
-                                <strong>Lugar:</strong>
-                                <span th:text="${evento.ciudad}"></span>
-                            </p>
-                            <p class="mb-1" sec:authorize="hasAuthority('PROVEEDOR')">
-                                <i class="bi bi-people text-primary"></i>
-                                <strong>Cupos:</strong>
-                                <span th:text="${evento.cuposDisponibles}"></span>
-                                de
-                                <span th:text="${evento.cuposMaximosProveedor}"></span>
-                                disponibles
-                            </p>
-                            <p class="mb-1" sec:authorize="hasAuthority('PROVEEDOR')">
-                                <i class="bi bi-cash text-success"></i>
-                                <strong>Costo:</strong>
-                                $<span th:text="${#numbers.formatDecimal(evento.costoEspacio, 0, 'COMMA', 0, 'POINT')}"></span>
-                            </p>
-                            <p class="mb-0">
-                                <i class="bi bi-award text-warning"></i>
-                                <strong>Patrocinado por:</strong>
-                                <span th:text="${evento.nombrePatrocinador}"></span>
-                            </p>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-geo-alt text-danger me-2 fs-5"></i>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Lugar</span>
+                                    <span class="text-muted" th:text="${evento.ciudad}">Bogotá</span>
+                                </div>
+                            </div>
+
+                            <div sec:authorize="hasAuthority('PROVEEDOR')" class="border-top pt-2 mt-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-primary"><i class="bi bi-people-fill"></i> Cupos: <span th:text="${evento.cuposDisponibles}"></span></span>
+                                    <span class="text-success fw-bold">$<span th:text="${#numbers.formatDecimal(evento.costoEspacio, 0, 'COMMA', 0, 'POINT')}"></span></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="card-footer bg-white border-top-0">
+                        <div class="small text-muted mb-3 text-truncate">
+                            <i class="bi bi-award text-warning"></i> Patrocinado por: <strong th:text="${evento.nombrePatrocinador}"></strong>
+                        </div>
+
                         <a th:href="@{/eventos/ver/{id}(id=${evento.id_evento})}"
-                           class="btn btn-outline-success w-100">
-                            <i class="bi bi-eye"></i> Ver Detalles
+                           class="btn btn-outline-success w-100 fw-bold mt-auto">
+                            Ver Detalles
                         </a>
                     </div>
                 </div>

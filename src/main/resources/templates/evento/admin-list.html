@@ -58,6 +58,46 @@
             </div>
             <a th:href="@{/eventos/crear}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Nuevo Evento</a>
         </div>
+        <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="borradores-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#borradores"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos/pendientes'">
+                    <i class="bi bi-hourglass-split"></i>
+                    Borradores
+
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link "
+                        id="publicados-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#publicados"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos?estado=PUBLICADO'">
+                    <i class="bi bi-check-circle"></i>
+                    Publicados
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="todos-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#todos"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='#'">
+                    <i class="bi bi-grid"></i>
+                    Ver Todos
+                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
+                </button>
+            </li>
+        </ul>
 
         <div class="row mb-4 g-3">
             <div class="col-md-2 col-6">
@@ -173,7 +213,7 @@
                                     <div class="rounded bg-light d-flex align-items-center justify-content-center me-3"
                                          style="width: 40px; height: 40px; overflow: hidden;">
                                         <img th:if="${evento.imagen_evento != null}"
-                                             th:src="@{'/uploads/' + ${evento.imagen_evento}}"
+                                             th:src="@{${evento.imagen_evento}}"
                                              class="img-fluid" style="object-fit: cover; height: 100%; width: 100%;">
                                         <i th:unless="${evento.imagen_evento != null}" class="bi bi-image text-muted"></i>
                                     </div>

@@ -124,7 +124,7 @@
                         </span>
 
                         <img th:if="${inscripcion.imagenEvento != null}"
-                             th:src="@{'/uploads/' + ${inscripcion.imagenEvento}}"
+                             th:src="@{${inscripcion.imagenEvento}}"
                              class="card-img-top"
                              th:alt="${inscripcion.nombreEvento}">
                         <img th:unless="${inscripcion.imagenEvento != null}"
