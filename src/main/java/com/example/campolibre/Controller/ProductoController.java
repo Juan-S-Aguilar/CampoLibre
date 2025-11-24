@@ -3,6 +3,7 @@ package com.example.campolibre.Controller;
 import com.example.campolibre.DTO.ProductoDTO;
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
+import com.example.campolibre.Entity.Tienda;
 import com.example.campolibre.Enum.SubcategoriaProducto;
 import com.example.campolibre.Enum.UnidadMedida;
 import com.example.campolibre.Service.ProductoService;
@@ -20,7 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/productos")
@@ -44,9 +46,33 @@ public class ProductoController {
     // ========== LISTAR PRODUCTOS ==========
 
     @GetMapping
-    public String listarProductos(Model model) {
-        List<ProductoDTO> productos = productoService.obtenerProductosActivos();
+    public String listarProductos(
+            @RequestParam(value = "idTienda", required = false) Long idTienda,
+            Model model) {
+
+        List<ProductoDTO> productos = (idTienda != null)
+                ? productoService.obtenerProductosPorTienda(idTienda)
+                : productoService.obtenerProductosActivos();
+
+        // Crear mapa idTienda -> nombreTienda (solo para ids presentes)
+        Set<Long> tiendaIds = productos.stream()
+                .map(ProductoDTO::getId_tienda)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> tiendaNombres = new HashMap<>();
+        for (Long tid : tiendaIds) {
+            var tiendaDto = tiendaService.obtenerTiendaPorId(tid);
+            if (tiendaDto != null) {
+                tiendaNombres.put(tid, tiendaDto.getNombre());
+            }
+        }
+
         model.addAttribute("productos", productos);
+        model.addAttribute("tiendaNombres", tiendaNombres);
+        model.addAttribute("tienda", idTienda != null ? tiendaService.obtenerTiendaPorId(idTienda) : null);
+        model.addAttribute("tipoLista", idTienda != null ? "tienda" : "todos");
+
         return "producto/list";
     }
 

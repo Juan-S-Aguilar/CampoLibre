@@ -20,6 +20,10 @@
                 <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Volver a Tienda
                 </a>
+                <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
+                   class="btn btn-info">
+                    <i class="bi bi-box-seam"></i> Ver Productos
+                </a>
                 <a th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Nuevo Producto
                 </a>
@@ -277,7 +281,11 @@
                             <!-- Botón Incrementar -->
                             <button type="button"
                                     class="btn btn-sm btn-success"
-                                    onclick="mostrarModalStock([[${producto.id_producto}]], 'incrementar', '[[${producto.nombre}]]', [[${producto.stock}]])"
+                                    th:data-url-incrementar="@{/inventario/incrementar/{id}(id=${producto.id_producto})}"
+                                    th:data-producto-id="${producto.id_producto}"
+                                    th:data-producto-nombre="${producto.nombre}"
+                                    th:data-stock-actual="${producto.stock}"
+                                    onclick="mostrarModalStock(this, 'incrementar')"
                                     title="Incrementar stock">
                                 <i class="bi bi-plus-circle"></i> +
                             </button>
@@ -286,7 +294,11 @@
                             <button type="button"
                                     class="btn btn-sm btn-warning"
                                     th:disabled="${producto.stock == 0}"
-                                    onclick="mostrarModalStock([[${producto.id_producto}]], 'reducir', '[[${producto.nombre}]]', [[${producto.stock}]])"
+                                    th:data-url-reducir="@{/inventario/reducir/{id}(id=${producto.id_producto})}"
+                                    th:data-producto-id="${producto.id_producto}"
+                                    th:data-producto-nombre="${producto.nombre}"
+                                    th:data-stock-actual="${producto.stock}"
+                                    onclick="mostrarModalStock(this, 'reducir')"
                                     title="Reducir stock">
                                 <i class="bi bi-dash-circle"></i> -
                             </button>
@@ -302,7 +314,10 @@
                             <button type="button"
                                     th:if="${producto.sinStock != null and producto.sinStock}"
                                     class="btn btn-sm btn-info"
-                                    onclick="mostrarModalReactivar([[${producto.id_producto}]], '[[${producto.nombre}]]')"
+                                    th:data-url-reactivar="@{/inventario/reactivar/{id}(id=${producto.id_producto})}"
+                                    th:data-producto-id="${producto.id_producto}"
+                                    th:data-producto-nombre="${producto.nombre}"
+                                    onclick="mostrarModalReactivar(this)"
                                     title="Reactivar producto">
                                 <i class="bi bi-arrow-clockwise"></i> Reactivar
                             </button>
@@ -348,6 +363,7 @@
 
                     <input type="hidden" id="modalProductoId">
                     <input type="hidden" id="modalAccion">
+                    <input type="hidden" id="modalUrlAccion">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -397,9 +413,13 @@
     </div>
 
     <!-- ========== SCRIPTS ========== -->
-    <script>
+    <script th:inline="javascript">
         // Bootstrap modal instances
         let modalStock, modalReactivar;
+
+        // Obtener CSRF token de Thymeleaf
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
 
         document.addEventListener('DOMContentLoaded', function() {
             modalStock = new bootstrap.Modal(document.getElementById('modalStock'));
@@ -407,9 +427,17 @@
         });
 
         // Mostrar modal para incrementar/reducir stock
-        function mostrarModalStock(idProducto, accion, nombreProducto, stockActual) {
+        function mostrarModalStock(button, accion) {
+            // Leer datos desde los atributos data-* generados por Thymeleaf
+            const idProducto = button.dataset.productoId;
+            const nombreProducto = button.dataset.productoNombre;
+            const stockActual = button.dataset.stockActual;
+            const url = button.dataset[`url${accion.charAt(0).toUpperCase() + accion.slice(1)}`];
+
+            // Guardar datos en el modal
             document.getElementById('modalProductoId').value = idProducto;
             document.getElementById('modalAccion').value = accion;
+            document.getElementById('modalUrlAccion').value = url;
             document.getElementById('modalProductoNombre').textContent = nombreProducto;
             document.getElementById('modalStockActual').textContent = stockActual;
 
@@ -423,8 +451,7 @@
 
         // Ejecutar acción de stock (incrementar/reducir)
         function ejecutarAccionStock() {
-            const idProducto = document.getElementById('modalProductoId').value;
-            const accion = document.getElementById('modalAccion').value;
+            const url = document.getElementById('modalUrlAccion').value;
             const cantidad = document.getElementById('cantidadStock').value;
 
             if (!cantidad || cantidad < 1) {
@@ -432,12 +459,18 @@
                 return;
             }
 
-            const url = `/inventario/${accion}/${idProducto}`;
             const formData = new FormData();
             formData.append('cantidad', cantidad);
 
+            // Crear headers con CSRF token
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
             fetch(url, {
                 method: 'POST',
+                headers: headers,
                 body: formData
             })
             .then(response => response.json())
@@ -458,8 +491,13 @@
         }
 
         // Mostrar modal para reactivar producto
-        function mostrarModalReactivar(idProducto, nombreProducto) {
-            document.getElementById('modalReactivarId').value = idProducto;
+        function mostrarModalReactivar(button) {
+            // Leer datos desde los atributos data-* generados por Thymeleaf
+            const idProducto = button.dataset.productoId;
+            const nombreProducto = button.dataset.productoNombre;
+            const url = button.dataset.urlReactivar;
+
+            document.getElementById('modalReactivarId').value = url;
             document.getElementById('modalReactivarNombre').textContent = nombreProducto;
             document.getElementById('cantidadReactivar').value = 10;
 
@@ -468,7 +506,7 @@
 
         // Ejecutar reactivación
         function ejecutarReactivar() {
-            const idProducto = document.getElementById('modalReactivarId').value;
+            const url = document.getElementById('modalReactivarId').value;
             const cantidad = document.getElementById('cantidadReactivar').value;
 
             if (!cantidad || cantidad < 1) {
@@ -476,22 +514,24 @@
                 return;
             }
 
-            const url = `/inventario/reactivar/${idProducto}`;
             const formData = new FormData();
             formData.append('nuevoStock', cantidad);
 
+            // Crear headers con CSRF token
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
             fetch(url, {
                 method: 'POST',
+                headers: headers,
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
+            .then(response => {
+                // El endpoint de reactivar hace redirect, no devuelve JSON
+                // Simplemente recargamos la página
+                location.reload();
             })
             .catch(error => {
                 alert('Error al procesar la solicitud');

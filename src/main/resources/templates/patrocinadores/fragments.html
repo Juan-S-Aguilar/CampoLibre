@@ -2,26 +2,24 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<div th:fragment="form_content(patrocinador)" class="row justify-content-center">
-    <div class="col-lg-8 col-md-10">
+<div th:fragment="form_content(patrocinador)">
 
-        <div class="mb-4 p-3 bg-white rounded shadow-sm border-start border-success border-5">
-            <h1 class="h4 mb-0 text-success">
-                <i class="bi bi-handshake-fill me-2"></i>
-                <span th:if="${patrocinador.id_patrocinador}" th:text="'Editar Patrocinador: ' + ${patrocinador.nombre}">Editar Patrocinador</span>
-                <span th:unless="${patrocinador.id_patrocinador}">Crear Nuevo Patrocinador</span>
-            </h1>
-            <p class="text-muted mb-0 mt-1">
-                Gestione la información detallada del patrocinador.
-            </p>
-        </div>
+    <!-- Header del formulario -->
+    <div class="form-header">
+        <h2>
+            <i class="bi bi-handshake-fill"></i>
+            <span th:if="${patrocinador.id_patrocinador}" th:text="'Editar Patrocinador: ' + ${patrocinador.nombre}">Editar Patrocinador</span>
+            <span th:unless="${patrocinador.id_patrocinador}">Crear Nuevo Patrocinador</span>
+        </h2>
+        <p>Gestione la información detallada del patrocinador.</p>
+    </div>
 
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <!-- Mensajes -->
+    <div th:if="${error}" class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+    </div>
 
-        <div class="card shadow border-0 p-4">
+    <!-- Formulario -->
 
             <form
                     th:action="${patrocinador.id_patrocinador}
@@ -100,17 +98,14 @@
                     <a th:href="@{/admin/patrocinadores}" class="btn btn-secondary me-2">
                         <i class="bi bi-x-circle"></i> Cancelar
                     </a>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-primary">
                         <i th:if="${patrocinador.id_patrocinador}" class="bi bi-save"></i>
                         <i th:unless="${patrocinador.id_patrocinador}" class="bi bi-plus-circle"></i>
-                        <span th:text="${patrocinador.id_patrocinador} ? 'Guardar Cambios' : 'Crear Patrocinador'">Guardar</span>
+                        <span th:text="${patrocinador.id_patrocinador ? 'Guardar Cambios' : 'Crear Patrocinador'}">Guardar</span>
                     </button>
                 </div>
 
             </form>
-        </div>
-
-    </div>
 </div>
 
 <script>

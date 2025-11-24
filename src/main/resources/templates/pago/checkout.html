@@ -1,23 +1,184 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <title>Checkout - Pago</title>
+    <title>Checkout - Campo Libre</title>
 </head>
 <body>
-<h1>Confirmar pago</h1>
-<div>
-    <p>Pedido: <span th:text="${pedido.numero_pedido}"></span></p>
-    <p>Total: $<span th:text="${pedido.total}"></span></p>
-</div>
-<form th:action="@{/pagos/procesar/{id}(id=${pedido.id_pedido})}" method="post">
-    <label for="metodoPago">Selecciona método de pago:</label>
-    <select id="metodoPago" name="metodoPago">
-        <option th:each="m : ${metodos}" th:value="${m}" th:text="${m}"></option>
-    </select>
-    <button type="submit">Pagar</button>
-</form>
 
-<p><a th:href="@{/carrito}">Volver al carrito</a></p>
+<main th:fragment="content">
+    <div class="form-container">
+
+        <!-- Header del formulario -->
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-credit-card"></i>
+                Confirmar Pago
+            </h2>
+            <p>Revisa tu pedido y selecciona tu método de pago preferido</p>
+        </div>
+
+        <!-- Mensajes de error -->
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}">Error al procesar pago</span>
+        </div>
+
+        <!-- Sección: Resumen del Pedido -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <i class="bi bi-receipt"></i>
+                Resumen del Pedido
+            </h3>
+
+            <!-- Información del pedido -->
+            <div style="background-color: var(--color-bg-light); padding: 1.5rem; border-radius: var(--border-radius-sm); border: 2px solid var(--border-color);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <!-- Número de pedido -->
+                    <div>
+                        <p style="color: var(--color-text-light); margin-bottom: 0.25rem; font-size: 0.9rem;">
+                            <i class="bi bi-hash"></i> Número de Pedido
+                        </p>
+                        <p style="font-weight: 600; color: var(--color-text-dark); margin: 0; font-size: 1.1rem;">
+                            <span th:text="${pedido.numero_pedido}">PED-001</span>
+                        </p>
+                    </div>
+
+                    <!-- Total -->
+                    <div>
+                        <p style="color: var(--color-text-light); margin-bottom: 0.25rem; font-size: 0.9rem;">
+                            <i class="bi bi-currency-dollar"></i> Total a Pagar
+                        </p>
+                        <p style="font-weight: 700; color: var(--color-primary); margin: 0; font-size: 1.5rem;">
+                            $<span th:text="${#numbers.formatDecimal(pedido.total, 1, 'COMMA', 0, 'POINT')}">0</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Información adicional -->
+                <div style="padding-top: 1rem; border-top: 1px solid #ddd;">
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-light);">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Nota:</strong> Una vez procesado el pago, recibirás una confirmación en tu correo electrónico.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Pago -->
+        <form th:action="@{/pagos/procesar/{id}(id=${pedido.id_pedido})}" method="post">
+
+            <!-- Sección: Método de Pago -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-wallet2"></i>
+                    Método de Pago
+                </h3>
+
+                <div class="form-group">
+                    <label for="metodoPago">
+                        <i class="bi bi-credit-card-2-front"></i>
+                        Selecciona tu método de pago
+                        <span class="required">*</span>
+                    </label>
+                    <select id="metodoPago"
+                            name="metodoPago"
+                            class="form-select"
+                            required
+                            onchange="updateMetodoInfo()">
+                        <option value="">Seleccione un método...</option>
+                        <option th:each="m : ${metodos}"
+                                th:value="${m}"
+                                th:text="${m.name()}">
+                            Método de pago
+                        </option>
+                    </select>
+                    <small class="form-text">
+                        <i class="bi bi-info-circle"></i>
+                        Elige el método de pago que prefieras para completar tu compra
+                    </small>
+
+                    <!-- Info dinámica según método -->
+                    <div id="metodoInfo" style="margin-top: 0.75rem; padding: 0.75rem; background-color: var(--color-bg-light); border-radius: 8px; display: none; border-left: 4px solid var(--color-info);">
+                        <small id="metodoInfoText" style="color: var(--color-text-dark);"></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de seguridad -->
+            <div style="margin-bottom: 2rem; padding: 1rem; background-color: #e8f5e9; border-radius: var(--border-radius-sm); border-left: 4px solid var(--color-success);">
+                <h4 style="color: var(--color-success); margin-bottom: 0.5rem; font-size: 1rem;">
+                    <i class="bi bi-shield-check"></i> Pago seguro
+                </h4>
+                <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-dark);">
+                    Tu información de pago está protegida con encriptación de nivel bancario.
+                    Todos tus datos son procesados de forma segura.
+                </p>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+                <a th:href="@{/carrito}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left-circle"></i> Volver al carrito
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Confirmar y Pagar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Script para información dinámica del método de pago -->
+    <script>
+        function updateMetodoInfo() {
+            const metodoSelect = document.getElementById('metodoPago');
+            const metodoInfo = document.getElementById('metodoInfo');
+            const metodoInfoText = document.getElementById('metodoInfoText');
+
+            const selectedValue = metodoSelect.value;
+
+            if (selectedValue === '') {
+                metodoInfo.style.display = 'none';
+                return;
+            }
+
+            metodoInfo.style.display = 'block';
+
+            // Información según el método de pago
+            const infoTexts = {
+                'TARJETA_CREDITO': '<i class="bi bi-credit-card" style="color: var(--color-info);"></i> <strong>Tarjeta de Crédito:</strong> Pago instantáneo. Acepta Visa, Mastercard y American Express.',
+                'TARJETA_DEBITO': '<i class="bi bi-credit-card-2-back" style="color: var(--color-info);"></i> <strong>Tarjeta de Débito:</strong> Pago inmediato desde tu cuenta bancaria.',
+                'PSE': '<i class="bi bi-bank" style="color: var(--color-success);"></i> <strong>PSE:</strong> Pago electrónico a través de tu banco. Seguro y confiable.',
+                'EFECTIVO': '<i class="bi bi-cash-coin" style="color: var(--color-warning);"></i> <strong>Efectivo:</strong> Paga en efectivo al recibir tu pedido.',
+                'TRANSFERENCIA': '<i class="bi bi-arrow-left-right" style="color: var(--color-primary);"></i> <strong>Transferencia Bancaria:</strong> Realiza una transferencia directa a nuestra cuenta.'
+            };
+
+            metodoInfoText.innerHTML = infoTexts[selectedValue] || '<i class="bi bi-info-circle"></i> Método de pago seleccionado.';
+        }
+
+        // Validación del formulario
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const metodoPago = document.getElementById('metodoPago').value;
+
+            if (!metodoPago || metodoPago === '') {
+                e.preventDefault();
+                alert('Por favor selecciona un método de pago');
+                document.getElementById('metodoPago').focus();
+                return false;
+            }
+
+            // Confirmación antes de procesar
+            const confirmar = confirm('¿Estás seguro de procesar este pago?');
+            if (!confirmar) {
+                e.preventDefault();
+                return false;
+            }
+
+            return true;
+        });
+    </script>
+</main>
+
 </body>
 </html>

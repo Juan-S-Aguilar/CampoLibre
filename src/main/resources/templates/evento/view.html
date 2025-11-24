@@ -9,16 +9,14 @@
 <body>
 
 <main th:fragment="content">
-    <div class="container mt-4 mb-5">
+    <div class="detail-container">
 
         <!-- Mensajes de alerta -->
-        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
             <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div th:if="${error}" class="alert alert-danger" role="alert">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <div class="row">
             <!-- ==================== COLUMNA PRINCIPAL (col-lg-8) ==================== -->

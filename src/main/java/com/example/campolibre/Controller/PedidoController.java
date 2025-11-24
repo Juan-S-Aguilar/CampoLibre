@@ -3,10 +3,12 @@ package com.example.campolibre.Controller;
 import com.example.campolibre.DTO.ConfirmarPedidoRequest;
 import com.example.campolibre.DTO.ItemCarritoDTO;
 import com.example.campolibre.DTO.PedidoDTO;
+import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
 import com.example.campolibre.Exception.CustomException;
 import com.example.campolibre.Service.CarritoService;
 import com.example.campolibre.Service.PedidoService;
+import com.example.campolibre.Service.TiendaService;
 import com.example.campolibre.Service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -29,6 +32,9 @@ public class PedidoController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private TiendaService tiendaService;
 
     /**
      * Muestra el resumen del pedido con los productos del carrito del usuario
@@ -183,6 +189,109 @@ public class PedidoController {
         } catch (CustomException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/pedidos/mis-pedidos";
+        }
+    }
+
+    /**
+     * Panel de ventas para proveedores - muestra las ventas de todas sus tiendas
+     */
+    @GetMapping("/ventas")
+    public String panelVentas(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        try {
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(authentication.getName());
+
+            // Obtener las tiendas del proveedor
+            List<TiendaDTO> misTiendas = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
+
+            // Obtener pedidos que incluyan productos de las tiendas del proveedor
+            List<PedidoDTO> pedidos = new ArrayList<>();
+            double gananciasTotales = 0.0;
+            int totalVentas = 0;
+
+            // Por cada tienda del proveedor, obtener los pedidos relacionados
+            for (TiendaDTO tienda : misTiendas) {
+                try {
+                    List<PedidoDTO> pedidosTienda = pedidoService.obtenerPedidosPorTienda(tienda.getId_tienda());
+                    pedidos.addAll(pedidosTienda);
+
+                    // Calcular ganancias de esta tienda
+                    for (PedidoDTO pedido : pedidosTienda) {
+                        if (pedido.getTotal() != null) {
+                            gananciasTotales += pedido.getTotal();
+                            totalVentas++;
+                        }
+                    }
+                } catch (Exception e) {
+                    // Continuar con las demás tiendas si hay error
+                    continue;
+                }
+            }
+
+            model.addAttribute("misTiendas", misTiendas);
+            model.addAttribute("pedidos", pedidos);
+            model.addAttribute("gananciasTotales", gananciasTotales);
+            model.addAttribute("totalVentas", totalVentas);
+
+            return "pedido/ventas";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cargar el panel de ventas: " + e.getMessage());
+            return "redirect:/";
+        }
+    }
+
+    /**
+     * Panel de ventas para una tienda específica
+     */
+    @GetMapping("/ventas/tienda/{idTienda}")
+    public String ventasPorTienda(@PathVariable Long idTienda,
+                                   Authentication authentication,
+                                   Model model,
+                                   RedirectAttributes redirectAttributes) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        try {
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(authentication.getName());
+
+            // Verificar que la tienda pertenece al usuario
+            TiendaDTO tienda = tiendaService.obtenerTiendaPorId(idTienda);
+            if (!tienda.getId_usuario().equals(usuario.getId_usuario())) {
+                redirectAttributes.addFlashAttribute("error", "No tienes permiso para ver las ventas de esta tienda");
+                return "redirect:/pedidos/ventas";
+            }
+
+            // Obtener todas las tiendas del usuario para el selector
+            List<TiendaDTO> misTiendas = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
+
+            // Obtener pedidos solo de esta tienda
+            List<PedidoDTO> pedidos = pedidoService.obtenerPedidosPorTienda(idTienda);
+
+            // Calcular ganancias solo de esta tienda
+            double gananciasTotales = 0.0;
+            int totalVentas = 0;
+
+            for (PedidoDTO pedido : pedidos) {
+                if (pedido.getTotal() != null) {
+                    gananciasTotales += pedido.getTotal();
+                    totalVentas++;
+                }
+            }
+
+            model.addAttribute("tiendaSeleccionada", tienda);
+            model.addAttribute("misTiendas", misTiendas);
+            model.addAttribute("pedidos", pedidos);
+            model.addAttribute("gananciasTotales", gananciasTotales);
+            model.addAttribute("totalVentas", totalVentas);
+
+            return "pedido/ventas";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cargar las ventas de la tienda: " + e.getMessage());
+            return "redirect:/pedidos/ventas";
         }
     }
 }

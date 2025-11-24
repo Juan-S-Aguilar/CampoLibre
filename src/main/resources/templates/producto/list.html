@@ -26,6 +26,13 @@
                    class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Volver a Tienda
                 </a>
+                <!-- ventas -->
+                <a th:if="${tienda != null}"
+                   th:th:href="@{/pedidos/ventas/tienda//{id}(id=${tienda.id_tienda})}"
+                   sec:authorize="hasAuthority('PROVEEDOR')"
+                   class="btn btn-secondary">
+                    <i class="bi bi-arrow-right"></i> Volver a Tienda
+                </a>
 
                 <a th:if="${tienda != null}"
                    th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
@@ -60,6 +67,7 @@
             <span th:text="${error}">Error en la operación</span>
         </div>
 
+        <!-- Filtros y búsqueda -->
         <!-- Filtros y búsqueda -->
         <div class="list-filters">
             <div class="search-box">
@@ -195,13 +203,19 @@
                         </span>
                     </td>
 
-                    <!-- Tienda -->
-                    <td data-label="Tienda" th:if="${tienda == null}">
-                        <a th:href="@{/tiendas/ver/{id}(id=${producto.id_tienda})}"
+                    <!-- Tienda: siempre presente -->
+                    <td data-label="Tienda">
+                        <a th:if="${tienda == null}"
+                           th:href="@{/tiendas/ver/{id}(id=${producto.id_tienda})}"
                            style="color: var(--color-primary); text-decoration: none; font-weight: 500;"
-                           th:text="${producto.nombre_tienda}">
+                           th:text="${tiendaNombres[producto.id_tienda]}">
                             Tienda
                         </a>
+                        <span th:if="${tienda != null}"
+                              style="color: var(--color-text-dark); font-weight: 500;"
+                              th:text="${tienda.nombre}">
+        Tienda
+    </span>
                     </td>
 
                     <!-- Precio -->
@@ -262,6 +276,7 @@
                                   sec:authorize="hasAuthority('CONSUMIDOR')">
                                 <input type="hidden" name="idProducto" th:value="${producto.id_producto}" />
                                 <input type="hidden" name="cantidad" value="1" />
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                 <button type="submit" class="btn-action"
                                         style="background-color: var(--color-success); color: white; border: none;"
                                         title="Agregar al carrito"

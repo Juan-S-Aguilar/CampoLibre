@@ -11,7 +11,7 @@
 <body class="bg-light">
 
 <main th:fragment="content">
-    <div class="container mt-4 mb-5">
+    <div class="detail-container">
 
 
         <div class="row justify-content-center">
@@ -271,54 +271,5 @@
     }
 </script>
 
-<!-- Estilos para impresión -->
-<style>
-    @media print {
-        /* Ocultar navbar, breadcrumb y botones al imprimir */
-        nav, .breadcrumb, .card-footer, .btn, .alert-info {
-            display: none !important;
-        }
-
-        /* Centrar contenido */
-        body {
-            background: white !important;
-        }
-
-        .card {
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Hacer el código más grande para impresión */
-        .display-4 {
-            font-size: 3rem !important;
-        }
-    }
-
-    /* Animación de entrada */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .card {
-        animation: fadeInUp 0.5s ease-out;
-    }
-
-    /* Estilo del código QR */
-    #qrcode {
-        display: inline-block;
-    }
-
-    #qrcode canvas {
-        border-radius: 8px;
-    }
-</style>
 </body>
 </html>
