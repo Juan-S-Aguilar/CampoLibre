@@ -46,5 +46,13 @@ public interface InscripcionProveedorRepository extends JpaRepository<Inscripcio
             "AND i.estadoCupo = com.example.campolibre.Enum.EstadoCupo.CONFIRMADO")
     List<InscripcionProveedor> findEventosConfirmadosPorProveedor(@Param("idUsuario") Long idUsuario);
 
+    // ===== NUEVO MÉTODO PARA REPORTE DE INSCRIPCIONES =====
+    @Query("SELECT i FROM InscripcionProveedor i " +
+            "JOIN FETCH i.proveedor " +
+            "JOIN FETCH i.evento " +
+            "LEFT JOIN FETCH i.pagoEvento " +
+            "WHERE i.evento.id_evento = :idEvento " +
+            "ORDER BY i.fechaInscripcion DESC")
+    List<InscripcionProveedor> findInscripcionesConDetallesPorEvento(@Param("idEvento") Long idEvento);
 
 }

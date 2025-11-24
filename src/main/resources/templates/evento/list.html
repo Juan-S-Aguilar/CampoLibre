@@ -46,9 +46,7 @@
                 <a th:href="@{/eventos/crear}" class="btn btn-success shadow-sm">
                     <i class="bi bi-plus-circle"></i> Crear Evento
                 </a>
-                <a th:href="@{/eventos/pendientes}" class="btn btn-warning shadow-sm text-dark">
-                    <i class="bi bi-hourglass-split"></i> Pendientes
-                </a>
+
             </div>
         </div>
 
@@ -56,17 +54,17 @@
         <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link"
-                        id="borradores-tab"
+                        id="todos-tab"
                         data-bs-toggle="tab"
-                        data-bs-target="#borradores"
+                        data-bs-target="#todos"
                         type="button"
                         role="tab"
-                        onclick="window.location.href='/eventos/pendientes'">
-                    <i class="bi bi-hourglass-split"></i>
-                    Borradores
-
+                        onclick="window.location.href='/eventos/admin/todos'">
+                    <i class="bi bi-grid"></i>
+                    Ver Todos
                 </button>
             </li>
+
             <li class="nav-item" role="presentation">
                 <button class="nav-link active"
                         id="publicados-tab"
@@ -80,18 +78,21 @@
                     <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
                 </button>
             </li>
+
             <li class="nav-item" role="presentation">
                 <button class="nav-link"
-                        id="todos-tab"
+                        id="borradores-tab"
                         data-bs-toggle="tab"
-                        data-bs-target="#todos"
+                        data-bs-target="#borradores"
                         type="button"
                         role="tab"
-                        onclick="window.location.href='/eventos/admin/todos'">
-                    <i class="bi bi-grid"></i>
-                    Ver Todos
+                        onclick="window.location.href='/eventos/pendientes'">
+                    <i class="bi bi-hourglass-split"></i>
+                    Borradores
+
                 </button>
             </li>
+
         </ul>
 
         <div class="card border-0 shadow-sm mb-5">

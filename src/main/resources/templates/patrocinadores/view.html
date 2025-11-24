@@ -8,13 +8,6 @@
 <body>
 <main th:fragment="content">
     <div class="container mt-4 mb-5">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a th:href="@{/admin/patrocinadores}">Patrocinadores</a></li>
-                <li class="breadcrumb-item active" th:text="'Detalle: ' + ${patrocinador.nombre}">Detalle</li>
-            </ol>
-        </nav>
 
         <div class="row mb-4 align-items-center">
             <div class="col-md-9">

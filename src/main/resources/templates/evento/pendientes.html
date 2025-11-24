@@ -56,17 +56,18 @@
         <!-- Tabs de Navegación -->
         <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active"
-                        id="borradores-tab"
+                <button class="nav-link"
+                        id="todos-tab"
                         data-bs-toggle="tab"
-                        data-bs-target="#borradores"
+                        data-bs-target="#todos"
                         type="button"
-                        role="tab">
-                    <i class="bi bi-hourglass-split"></i>
-                    Borradores
-                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
+                        role="tab"
+                        onclick="window.location.href='/eventos/admin/todos'">
+                    <i class="bi bi-grid"></i>
+                    Ver Todos
                 </button>
             </li>
+
             <li class="nav-item" role="presentation">
                 <button class="nav-link"
                         id="publicados-tab"
@@ -79,16 +80,17 @@
                     Publicados
                 </button>
             </li>
+
             <li class="nav-item" role="presentation">
-                <button class="nav-link"
-                        id="todos-tab"
+                <button class="nav-link active"
+                        id="borradores-tab"
                         data-bs-toggle="tab"
-                        data-bs-target="#todos"
+                        data-bs-target="#borradores"
                         type="button"
-                        role="tab"
-                        onclick="window.location.href='/eventos/admin/todos'">
-                    <i class="bi bi-grid"></i>
-                    Ver Todos
+                        role="tab">
+                    <i class="bi bi-hourglass-split"></i>
+                    Borradores
+                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
                 </button>
             </li>
         </ul>
