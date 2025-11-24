@@ -1,6 +1,7 @@
 package com.example.campolibre.Service;
 
 import com.example.campolibre.DTO.EventoDTO;
+import com.example.campolibre.DTO.ReporteInscripcionesEventoDTO;
 import com.example.campolibre.Entity.Evento;
 import com.example.campolibre.Enum.EstadoEvento;
 import com.example.campolibre.Enum.TipoEvento;
@@ -42,5 +43,6 @@ public interface EventoService {
     // Método que trae todos los eventos que NO son BORRADOR.
     List<EventoDTO> obtenerEventosVisiblesParaPublico();
 
-
+    // ===== NUEVO MÉTODO PARA REPORTE DE INSCRIPCIONES =====
+    ReporteInscripcionesEventoDTO obtenerReporteInscripciones(Long eventoId);
 }

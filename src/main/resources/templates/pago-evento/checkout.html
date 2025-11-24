@@ -41,7 +41,7 @@
                         <!-- Información del Evento -->
                         <div class="mb-4">
                             <img th:if="${inscripcion.imagenEvento != null}"
-                                 th:src="@{'/uploads/' + ${inscripcion.imagenEvento}}"
+                                 th:src="@{'${inscripcion.imagenEvento}}"
                                  class="img-fluid rounded mb-3"
                                  style="max-height: 200px; width: 100%; object-fit: cover;"
                                  th:alt="${inscripcion.nombreEvento}">

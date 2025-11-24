@@ -6,58 +6,94 @@
 
     <title>Eventos Pendientes - Campo Libre</title>
 
+    <style>
+        .table tbody tr {
+            transition: background-color 0.2s;
+        }
+        .table tbody tr:hover {
+            background-color: rgba(40, 167, 69, 0.05);
+        }
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+
 </head>
 <body>
 
 
 <main th:fragment="content">
-    <div class="list-container">
+    <div class="container mt-4 mb-5">
 
-        <!-- Header de la lista -->
-        <div class="list-header">
-            <h2>
-                <i class="bi bi-kanban"></i>
-                Gestión de Eventos
-            </h2>
-            <div class="list-header-actions">
-                <a th:href="@{/eventos/crear}" class="btn btn-primary">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-6">
+                    <i class="bi bi-kanban text-warning"></i>
+                    Gestión de Eventos
+                </h1>
+                <p class="text-muted">
+                    Administra los eventos en estado borrador y publicados
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a th:href="@{/eventos/crear}" class="btn btn-success btn-lg">
                     <i class="bi bi-plus-circle"></i> Crear Evento
                 </a>
             </div>
         </div>
 
         <!-- Mensajes -->
-        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger" role="alert">
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Navegación con view-toggle -->
-        <div class="list-filters">
-            <div class="filter-group">
-                <label>Estado</label>
-                <div class="view-toggle">
-                    <a href="#"
-                       class="view-toggle-btn active">
-                        <i class="bi bi-hourglass-split"></i>
-                        Borradores
-                        <span class="badge bg-warning text-dark" style="margin-left: 0.5rem;" th:text="${eventos.size()}">0</span>
-                    </a>
-                    <a th:href="@{/eventos(estado='PUBLICADO')}"
-                       class="view-toggle-btn">
-                        <i class="bi bi-check-circle"></i>
-                        Publicados
-                    </a>
-                    <a th:href="@{/eventos}"
-                       class="view-toggle-btn">
-                        <i class="bi bi-grid"></i>
-                        Ver Todos
-                    </a>
-                </div>
-            </div>
-        </div>
+        <!-- Tabs de Navegación -->
+        <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="todos-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#todos"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos/admin/todos'">
+                    <i class="bi bi-grid"></i>
+                    Ver Todos
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="publicados-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#publicados"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos?estado=PUBLICADO'">
+                    <i class="bi bi-check-circle"></i>
+                    Publicados
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="borradores-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#borradores"
+                        type="button"
+                        role="tab">
+                    <i class="bi bi-hourglass-split"></i>
+                    Borradores
+                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
+                </button>
+            </li>
+        </ul>
 
         <!-- Contenido de Tabs -->
         <div class="tab-content" id="eventosTabContent">
@@ -108,7 +144,7 @@
                                     <!-- Imagen -->
                                     <td>
                                         <img th:if="${evento.imagen_evento != null}"
-                                             th:src="@{'/uploads/' + ${evento.imagen_evento}}"
+                                             th:src="@{${evento.imagen_evento}}"
                                              class="rounded"
                                              style="width: 50px; height: 50px; object-fit: cover;"
                                              th:alt="${evento.nombre}">
@@ -264,5 +300,9 @@
         </div>
     </div>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
 </body>
 </html>

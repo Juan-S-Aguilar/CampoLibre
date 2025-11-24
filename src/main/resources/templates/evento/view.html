@@ -24,7 +24,7 @@
                 <!-- Imagen Principal -->
                 <div class="card mb-4 shadow-sm">
                     <img th:if="${evento.imagen_evento != null}"
-                         th:src="@{'/uploads/' + ${evento.imagen_evento}}"
+                         th:src="@{${evento.imagen_evento}}"
                          class="card-img-top"
                          style="max-height: 400px; object-fit: cover;"
                          th:alt="${evento.nombre}">

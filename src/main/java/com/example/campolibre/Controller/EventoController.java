@@ -447,8 +447,6 @@ public class EventoController {
         }
     }
 
-
-
     //  NUEVO ENDPOINT PARA EL ADMINISTRADOR (Lista TODOS los eventos)
     @GetMapping("/admin/todos") // Puedes usar "/mis-eventos-admin" o similar
     public String listarTodosLosEventosAdmin(Model model, Authentication authentication) {
@@ -493,5 +491,35 @@ public class EventoController {
 
         // Necesitas una vista dedicada o modificar list.html, ver Paso 4.
         return "evento/proveedor-list";
+    }
+
+    /**
+     * ⚠️ NUEVO ENDPOINT: Reporte de proveedores inscritos a un evento (ADMIN)
+     */
+    @GetMapping("/admin/reporte-inscripciones/{idEvento}")
+    public String verReporteInscripciones(@PathVariable Long idEvento,
+                                          Model model,
+                                          Authentication authentication,
+                                          RedirectAttributes redirectAttributes) {
+        // 1. Verificar que sea ADMINISTRADOR
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
+            redirectAttributes.addFlashAttribute("error", "No tienes permisos para ver este reporte.");
+            return "redirect:/eventos";
+        }
+
+        try {
+            // 2. Obtener el reporte completo desde el servicio
+            ReporteInscripcionesEventoDTO reporte = eventoService.obtenerReporteInscripciones(idEvento);
+
+            // 3. Enviar datos a la vista
+            model.addAttribute("reporte", reporte);
+
+            return "evento/reporte-inscripciones"; // Vista que crearás después
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al obtener reporte de inscripciones: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error al cargar el reporte: " + e.getMessage());
+            return "redirect:/eventos/admin/todos";
+        }
     }
 }

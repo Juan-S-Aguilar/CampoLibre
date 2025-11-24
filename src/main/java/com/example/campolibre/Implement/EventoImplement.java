@@ -1,18 +1,13 @@
 package com.example.campolibre.Implement;
 
-import com.example.campolibre.DTO.EventoDTO;
-import com.example.campolibre.DTO.MisEventosDTO;
-import com.example.campolibre.Entity.Evento;
-import com.example.campolibre.Entity.MisEventos;
-import com.example.campolibre.Entity.Usuario;
+import com.example.campolibre.DTO.*;
+import com.example.campolibre.Entity.*;
 import com.example.campolibre.Enum.EstadoCupo;
 import com.example.campolibre.Enum.EstadoEvento;
 import com.example.campolibre.Enum.NombreRol;
 import com.example.campolibre.Enum.TipoEvento;
 import com.example.campolibre.Exception.CustomException;
-import com.example.campolibre.Repository.EventoRepository;
-import com.example.campolibre.Repository.InscripcionProveedorRepository;
-import com.example.campolibre.Repository.UsuarioRepository;
+import com.example.campolibre.Repository.*;
 import com.example.campolibre.Service.EmailService;
 import com.example.campolibre.Service.EventoService;
 import com.example.campolibre.Service.FileStorageService;
@@ -25,12 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-
-import com.example.campolibre.DTO.EventoCreacionDTO; // Importar el nuevo DTO
-import com.example.campolibre.Entity.Patrocinador; // Importar la nueva entidad Patrocinador
-import com.example.campolibre.Repository.PatrocinadorRepository; // Inyectar el nuevo Repository
-
 @Service
 public class EventoImplement implements EventoService {
 
@@ -41,6 +30,7 @@ public class EventoImplement implements EventoService {
     private final PatrocinadorRepository patrocinadorRepository; // Inyección de dependencia
     private final InscripcionProveedorRepository inscripcionProveedorRepository;
     private final EmailService emailService;
+    private final PagoEventoRepository pagoEventoRepository;
 
     @Autowired
     public EventoImplement(EventoRepository eventoRepository,
@@ -49,8 +39,8 @@ public class EventoImplement implements EventoService {
                            ModelMapper modelMapper,
                            PatrocinadorRepository patrocinadorRepository,
                            InscripcionProveedorRepository inscripcionProveedorRepository,
-                           EmailService emailService
-                           ) {
+                           EmailService emailService, PagoEventoRepository pagoEventoRepository
+    ) {
         this.eventoRepository = eventoRepository;
         this.usuarioRepository = usuarioRepository;
         this.fileStorageService = fileStorageService;
@@ -59,6 +49,7 @@ public class EventoImplement implements EventoService {
         this.inscripcionProveedorRepository = inscripcionProveedorRepository;
         this.emailService = emailService;
 
+        this.pagoEventoRepository = pagoEventoRepository;
     }
 //_________________________________________________________________
     @Override
@@ -187,7 +178,6 @@ public class EventoImplement implements EventoService {
                 .collect(Collectors.toList());
     }
 
-
     // --- LÓGICA DE ACTUALIZACIÓN DE EVENTOS REDISEÑADA ---
     @Override
     public EventoDTO actualizarEvento(Long id, EventoCreacionDTO eventoCreacionDTO, MultipartFile imagen) {
@@ -235,7 +225,6 @@ public class EventoImplement implements EventoService {
         // 7. Retornar DTO usando método reutilizable
         return convertirADTO(eventoActualizado);
     }
-
 
     @Override
     public void cambiarEstadoEvento(Long id, EstadoEvento estado) {
@@ -389,7 +378,109 @@ public class EventoImplement implements EventoService {
                 .collect(Collectors.toList());
     }
 
+    // ===== NUEVO MÉTODO: REPORTE DE INSCRIPCIONES =====
+    @Override
+    public ReporteInscripcionesEventoDTO obtenerReporteInscripciones(Long eventoId) {
 
+        // 1. Verificar que el evento existe
+        Evento evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new CustomException("Evento no encontrado"));
+
+        // 2. Obtener todas las inscripciones con sus relaciones (query optimizada)
+        List<InscripcionProveedor> inscripciones =
+                inscripcionProveedorRepository.findInscripcionesConDetallesPorEvento(eventoId);
+
+        // 3. Mapear inscripciones a DTOs
+        List<InscripcionProveedorDTO> proveedoresInscritos = inscripciones.stream()
+                .map(this::convertirInscripcionADTO)
+                .collect(Collectors.toList());
+
+        // 4. Calcular estadísticas de inscripciones por estado
+        Long confirmadas = inscripcionProveedorRepository
+                .countByEventoIdAndEstadoCupo(eventoId, EstadoCupo.CONFIRMADO);
+
+        Long pendientes = inscripcionProveedorRepository
+                .countByEventoIdAndEstadoCupo(eventoId, EstadoCupo.PENDIENTE);
+
+        Long canceladas = inscripcionProveedorRepository
+                .countByEventoIdAndEstadoCupo(eventoId, EstadoCupo.CANCELADO);
+
+        // 5. Calcular total recaudado (solo pagos exitosos)
+        Double totalRecaudado = pagoEventoRepository.calcularTotalRecaudadoPorEvento(eventoId);
+
+        // 6. Construir el DTO de respuesta
+        ReporteInscripcionesEventoDTO reporte = new ReporteInscripcionesEventoDTO();
+
+        // Información del evento
+        reporte.setEventoId(evento.getId_evento());
+        reporte.setNombreEvento(evento.getNombre());
+        reporte.setUbicacionEvento(evento.getUbicacion());
+        reporte.setFechaEvento(evento.getFecha_evento());
+        reporte.setHoraEvento(evento.getHora_evento());
+        reporte.setNombrePatrocinador(evento.getPatrocinador().getNombre());
+
+        // Estadísticas de cupos
+        reporte.setCuposTotales(evento.getCuposMaximosProveedor());
+        reporte.setCuposOcupados(confirmadas.intValue());
+        reporte.setCuposDisponibles(evento.getCuposMaximosProveedor() - confirmadas.intValue());
+
+        // Estadísticas de inscripciones
+        reporte.setInscripcionesConfirmadas(confirmadas);
+        reporte.setInscripcionesPendientes(pendientes);
+        reporte.setInscripcionesCanceladas(canceladas);
+
+        // Estadísticas financieras
+        reporte.setTotalRecaudado(totalRecaudado);
+        reporte.setCostoEspacio(evento.getCostoEspacio());
+
+        // Lista de proveedores
+        reporte.setProveedoresInscritos(proveedoresInscritos);
+
+        return reporte;
+    }
+
+    // ===== MÉTODO AUXILIAR: MAPEAR INSCRIPCIÓN A DTO =====
+    private InscripcionProveedorDTO convertirInscripcionADTO(InscripcionProveedor inscripcion) {
+        InscripcionProveedorDTO dto = new InscripcionProveedorDTO();
+
+        // IDs
+        dto.setId_inscripcion(inscripcion.getId_inscripcion());
+        dto.setId_proveedor(inscripcion.getProveedor().getId_usuario());
+        dto.setId_evento(inscripcion.getEvento().getId_evento());
+
+        // Info de la inscripción
+        dto.setEstadoCupo(inscripcion.getEstadoCupo());
+        dto.setCostoPagado(inscripcion.getCostoPagado());
+        dto.setFechaInscripcion(inscripcion.getFechaInscripcion());
+        dto.setCodigoConfirmacion(inscripcion.getCodigoConfirmacion());
+        dto.setFechaConfirmacion(inscripcion.getFechaConfirmacion());
+
+        // Info del proveedor
+        Usuario proveedor = inscripcion.getProveedor();
+        dto.setNombreProveedor(proveedor.getNombre());
+        dto.setEmailProveedor(proveedor.getEmail());
+        dto.setDocumentoProveedor(proveedor.getDocumento());
+        dto.setTelefonoProveedor(proveedor.getTelefono());
+
+        // Info del evento
+        Evento evento = inscripcion.getEvento();
+        dto.setNombreEvento(evento.getNombre());
+        dto.setFechaEvento(evento.getFecha_evento());
+        dto.setUbicacionEvento(evento.getUbicacion());
+        dto.setImagenEvento(evento.getImagen_evento());
+
+        // Info del pago (si existe)
+        if (inscripcion.getPagoEvento() != null) {
+            PagoEvento pago = inscripcion.getPagoEvento();
+            dto.setId_pago_evento(pago.getIdPagoEvento());
+            dto.setEstadoPago(pago.getEstado());
+            dto.setMetodoPago(pago.getMetodoPago());
+            dto.setNumeroTransaccion(pago.getNumeroTransaccion());
+            dto.setFechaPago(pago.getFechaPago());
+        }
+
+        return dto;
+    }
 
 
 }
