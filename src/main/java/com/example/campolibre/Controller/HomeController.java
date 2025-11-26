@@ -29,9 +29,6 @@ public class HomeController {
     private UsuarioService usuarioService;
 
     @Autowired
-    private UsuarioRolService usuarioRolService;
-
-    @Autowired
     private TiendaService tiendaService;
 
     @Autowired
@@ -78,40 +75,25 @@ public class HomeController {
     public String registrarUsuario(@ModelAttribute("usuario") UsuarioDTO usuarioDTO,
                                    RedirectAttributes redirectAttributes) {
         try {
-            // 1. Crear el usuario
+            // 1. Obtener el rol seleccionado del DTO
+            NombreRol rolSeleccionado = usuarioDTO.getRolSeleccionado();
+
+            // Si no seleccionó ningún rol, asignar CONSUMIDOR por defecto
+            if (rolSeleccionado == null) {
+                rolSeleccionado = NombreRol.CONSUMIDOR;
+            }
+
+            // 2. Buscar el rol en la base de datos
+            Rol rol = rolRepository.findByNombreRol(rolSeleccionado);
+            if (rol == null) {
+                throw new CustomException("Rol " + rolSeleccionado + " no encontrado.");
+            }
+
+            // 3. Asignar el ID del rol al DTO para que se guarde con el usuario
+            usuarioDTO.setId_rol(rol.getId_rol());
+
+            // 4. Crear el usuario (ahora con el rol asignado)
             UsuarioDTO nuevoUsuario = usuarioService.crearUsuario(usuarioDTO);
-            Long idNuevoUsuario = nuevoUsuario.getId_usuario();
-
-            // 2. Obtener el rol seleccionado del DTO
-            NombreRol rolPrincipal = usuarioDTO.getRolSeleccionado();
-
-            // 3. Asignar el rol CONSUMIDOR (siempre)
-            Rol rolConsumidor = rolRepository.findByNombreRol(NombreRol.CONSUMIDOR);
-            if (rolConsumidor == null) {
-                throw new CustomException("Rol CONSUMIDOR no encontrado.");
-            }
-            usuarioRolService.asignarRolAUsuario(
-                    new com.example.campolibre.DTO.UsuarioRolDTO(
-                            null,
-                            idNuevoUsuario,
-                            rolConsumidor.getId_rol()
-                    )
-            );
-
-            // 4. Si selecciona PROVEEDOR, asignar también el rol PROVEEDOR
-            if (rolPrincipal == NombreRol.PROVEEDOR) {
-                Rol rolProveedor = rolRepository.findByNombreRol(NombreRol.PROVEEDOR);
-                if (rolProveedor == null) {
-                    throw new CustomException("Rol PROVEEDOR no encontrado.");
-                }
-                usuarioRolService.asignarRolAUsuario(
-                        new com.example.campolibre.DTO.UsuarioRolDTO(
-                                null,
-                                idNuevoUsuario,
-                                rolProveedor.getId_rol()
-                        )
-                );
-            }
 
             // 5. Enviar correo de confirmación de cuenta (async dentro del servicio)
             try {

@@ -225,16 +225,17 @@
                         <div th:each="item, iterStat : ${pedido.items}"
                              th:if="${iterStat.index < 3}"
                              class="d-flex align-items-center mb-2">
-                            <img th:if="${item.imagen_producto != null}"
+                            <img th:if="${item.imagen_producto != null and !item.imagen_producto.isEmpty()}"
                                  th:src="@{${item.imagen_producto}}"
-                                 alt="Producto"
+                                 th:alt="${item.nombre_producto}"
                                  class="me-2"
-                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
-                            <img th:unless="${item.imagen_producto != null}"
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;"
+                                 onerror="this.onerror=null; this.src='/images/no-image.png';">
+                            <img th:if="${item.imagen_producto == null or item.imagen_producto.isEmpty()}"
                                  src="/images/no-image.png"
                                  alt="Sin imagen"
                                  class="me-2"
-                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px;">
+                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;">
                             <small>
                                 <span th:text="${item.nombre_producto}">Producto</span>
                                 <span class="text-muted">x<span th:text="${item.cantidad}">1</span></span>

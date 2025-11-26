@@ -64,8 +64,8 @@ public class EventoImplement implements EventoService {
                 .orElseThrow(() -> new CustomException("Administrador no encontrado"));
 
         // Validar que sea administrador
-        boolean esAdmin = creador.getRoles().stream()
-                .anyMatch(rol -> rol.getNombre_rol().equals(NombreRol.ADMINISTRADOR));
+        boolean esAdmin = creador.getRol() != null &&
+                creador.getRol().getNombre_rol().equals(NombreRol.ADMINISTRADOR);
 
         if (!esAdmin) {
             throw new CustomException("Solo los administradores pueden crear eventos");

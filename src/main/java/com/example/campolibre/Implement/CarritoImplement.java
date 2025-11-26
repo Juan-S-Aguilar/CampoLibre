@@ -30,7 +30,7 @@ public class CarritoImplement implements CarritoService {
     private ProductoRepository productoRepository;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CarritoCompraDTO obtenerCarritoPorUsuario(Long idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new CustomException("Usuario no encontrado"));

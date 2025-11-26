@@ -18,4 +18,12 @@ public class CarritoCompraDTO {
     private Integer cantidad_total_items;
     private LocalDateTime fecha_creacion;
     private LocalDateTime fecha_actualizacion;
+
+    // Método helper para verificar si hay items sin stock suficiente
+    public boolean getTieneItemsSinStock() {
+        if (items == null || items.isEmpty()) {
+            return false;
+        }
+        return items.stream().anyMatch(item -> !item.getStock_suficiente());
+    }
 }

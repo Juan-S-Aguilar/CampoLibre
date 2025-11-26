@@ -126,7 +126,7 @@
             <!-- Rol -->
             <div class="mb-3">
                 <label for="rolSeleccionado" class="form-label">
-                    <i class="bi bi-tag"></i> Rol Principal
+                    <i class="bi bi-tag"></i> Tu Rol en Campo Libre
                 </label>
                 <select th:field="*{rolSeleccionado}"
                         class="form-select"
@@ -135,12 +135,15 @@
                     <option value="">Selecciona tu rol...</option>
 
                     <option th:value="${T(com.example.campolibre.Enum.NombreRol).CONSUMIDOR}">
-                        Consumidor (Solo comprar productos)
+                        Consumidor - Comprar productos del campo
                     </option>
                     <option th:value="${T(com.example.campolibre.Enum.NombreRol).PROVEEDOR}">
-                        Proveedor (Vender productos y ser Consumidor)
+                        Proveedor - Vender productos y participar en eventos
                     </option>
                 </select>
+                <small class="form-text text-muted">
+                    Este será tu rol único en la plataforma
+                </small>
             </div>
 
             <!-- Botón de registro -->

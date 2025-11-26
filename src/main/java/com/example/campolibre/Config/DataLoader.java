@@ -2,12 +2,10 @@ package com.example.campolibre.Config;
 
 import com.example.campolibre.Entity.Rol;
 import com.example.campolibre.Entity.Usuario;
-import com.example.campolibre.Entity.UsuarioRol;
 import com.example.campolibre.Enum.NombreRol;
 import com.example.campolibre.Enum.TipoDocumento;
 import com.example.campolibre.Repository.RolRepository;
 import com.example.campolibre.Repository.UsuarioRepository;
-import com.example.campolibre.Repository.UsuarioRolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
@@ -25,9 +23,6 @@ public class DataLoader implements CommandLineRunner {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private UsuarioRolRepository usuarioRolRepository;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -37,15 +32,18 @@ public class DataLoader implements CommandLineRunner {
         crearRolSiNoExiste(NombreRol.PROVEEDOR);
         crearRolSiNoExiste(NombreRol.CONSUMIDOR);
 
-        // Crear usuarios de prueba
-        crearUsuarioConRoles("admin@campolibre.com", "admin123", "Administrador CampoLibre",
-                "1000000000", TipoDocumento.CC, new NombreRol[]{NombreRol.ADMINISTRADOR, NombreRol.PROVEEDOR, NombreRol.CONSUMIDOR});
+        // Crear usuarios de prueba con UN ÚNICO ROL cada uno
+        // Usuario administrador (acceso total al sistema)
+        crearUsuarioConRol("admin@campolibre.com", "admin123", "Administrador CampoLibre",
+                "1000000000", TipoDocumento.CC, NombreRol.ADMINISTRADOR);
 
-        crearUsuarioConRoles("proveedor@campolibre.com", "proveedor123", "Proveedor Test",
-                "2000000000", TipoDocumento.CC, new NombreRol[]{NombreRol.PROVEEDOR, NombreRol.CONSUMIDOR});
+        // Usuario proveedor (puede vender productos y participar en eventos)
+        crearUsuarioConRol("proveedor@campolibre.com", "proveedor123", "Proveedor Test",
+                "2000000000", TipoDocumento.CC, NombreRol.PROVEEDOR);
 
-        crearUsuarioConRoles("consumidor@campolibre.com", "consumidor123", "Consumidor Test",
-                "3000000000", TipoDocumento.CC, new NombreRol[]{NombreRol.CONSUMIDOR});
+        // Usuario consumidor (solo puede comprar productos y asistir a eventos)
+        crearUsuarioConRol("consumidor@campolibre.com", "consumidor123", "Consumidor Test",
+                "3000000000", TipoDocumento.CC, NombreRol.CONSUMIDOR);
     }
 
     private void crearRolSiNoExiste(NombreRol nombreRol) {
@@ -57,9 +55,17 @@ public class DataLoader implements CommandLineRunner {
         }
     }
 
-    private void crearUsuarioConRoles(String email, String contrasena, String nombre, String documento,
-                                      TipoDocumento tipoDocumento, NombreRol[] roles) {
+    private void crearUsuarioConRol(String email, String contrasena, String nombre, String documento,
+                                    TipoDocumento tipoDocumento, NombreRol nombreRol) {
         if (usuarioRepository.findByEmail(email) == null) {
+            // Buscar el rol
+            Rol rol = rolRepository.findByNombreRol(nombreRol);
+            if (rol == null) {
+                System.err.println("Error: Rol " + nombreRol + " no encontrado");
+                return;
+            }
+
+            // Crear usuario con su único rol
             Usuario usuario = new Usuario();
             usuario.setEmail(email);
             usuario.setContrasena(passwordEncoder.encode(contrasena));
@@ -67,20 +73,10 @@ public class DataLoader implements CommandLineRunner {
             usuario.setDocumento(documento);
             usuario.setTipo_documento(tipoDocumento);
             usuario.setTelefono("3001234567");
-            usuarioRepository.save(usuario);
+            usuario.setRol(rol); // Asignar el único rol directamente
 
-            // Asignar roles
-            for (NombreRol nombreRol : roles) {
-                Rol rol = rolRepository.findByNombreRol(nombreRol);
-                if (rol != null) {
-                    UsuarioRol usuarioRol = new UsuarioRol();
-                    usuarioRol.setUsuario(usuario);
-                    usuarioRol.setRol(rol);
-                    usuarioRolRepository.save(usuarioRol);
-                    System.out.println("Rol " + nombreRol + " asignado a " + email);
-                }
-            }
-            System.out.println("Usuario creado: " + email);
+            usuarioRepository.save(usuario);
+            System.out.println("Usuario creado: " + email + " con rol " + nombreRol);
         }
     }
 }

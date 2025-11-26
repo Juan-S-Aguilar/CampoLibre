@@ -1,9 +1,9 @@
 package com.example.campolibre.Controller;
 
 import com.example.campolibre.DTO.UsuarioDTO;
-import com.example.campolibre.DTO.UsuarioRolDTO;
+import com.example.campolibre.Entity.Rol;
 import com.example.campolibre.Enum.NombreRol;
-import com.example.campolibre.Service.UsuarioRolService;
+import com.example.campolibre.Repository.RolRepository;
 import com.example.campolibre.Service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -23,7 +23,7 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @Autowired
-    private UsuarioRolService usuarioRolService;
+    private RolRepository rolRepository;
 
     // Solo ADMIN puede acceder a la gestión de usuarios
     @GetMapping
@@ -63,7 +63,7 @@ public class UsuarioController {
 
     @PostMapping("/crear")
     public String crearUsuario(@ModelAttribute UsuarioDTO usuarioDTO,
-                               @RequestParam(value = "rolesSeleccionados", required = false) List<Long> rolesIds,
+                               @RequestParam(value = "rolId", required = true) Long rolId,
                                RedirectAttributes redirectAttributes,
                                Authentication authentication) {
         if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
@@ -71,17 +71,11 @@ public class UsuarioController {
         }
 
         try {
-            UsuarioDTO nuevoUsuario = usuarioService.crearUsuario(usuarioDTO);
+            // Asignar el rol único al DTO antes de crear el usuario
+            usuarioDTO.setId_rol(rolId);
 
-            // Asignar roles seleccionados
-            if (rolesIds != null && !rolesIds.isEmpty()) {
-                for (Long idRol : rolesIds) {
-                    UsuarioRolDTO usuarioRolDTO = new UsuarioRolDTO();
-                    usuarioRolDTO.setId_usuario(nuevoUsuario.getId_usuario());
-                    usuarioRolDTO.setId_rol(idRol);
-                    usuarioRolService.asignarRolAUsuario(usuarioRolDTO);
-                }
-            }
+            // Crear el usuario con su rol asignado
+            UsuarioDTO nuevoUsuario = usuarioService.crearUsuario(usuarioDTO);
 
             redirectAttributes.addFlashAttribute("mensaje", "Usuario creado exitosamente.");
         } catch (Exception e) {
@@ -97,10 +91,8 @@ public class UsuarioController {
         }
 
         UsuarioDTO usuario = usuarioService.obtenerUsuarioPorId(id);
-        List<UsuarioRolDTO> roles = usuarioRolService.obtenerRolesPorUsuario(id);
 
         model.addAttribute("usuario", usuario);
-        model.addAttribute("roles", roles);
         return "usuario/view";
     }
 
@@ -111,16 +103,15 @@ public class UsuarioController {
         }
 
         UsuarioDTO usuario = usuarioService.obtenerUsuarioPorId(id);
-        List<UsuarioRolDTO> rolesAsignados = usuarioRolService.obtenerRolesPorUsuario(id);
 
         model.addAttribute("usuario", usuario);
-        model.addAttribute("rolesAsignados", rolesAsignados);
         model.addAttribute("todosLosRoles", NombreRol.values());
         return "usuario/edit";
     }
 
     @PostMapping("/actualizar")
     public String actualizarUsuario(@ModelAttribute("usuario") UsuarioDTO usuarioDTO,
+                                    @RequestParam(value = "rolId", required = false) Long rolId,
                                     RedirectAttributes redirectAttributes,
                                     Authentication authentication) {
         if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
@@ -128,6 +119,11 @@ public class UsuarioController {
         }
 
         try {
+            // Si se proporciona un nuevo rol, actualizarlo
+            if (rolId != null) {
+                usuarioDTO.setId_rol(rolId);
+            }
+
             usuarioService.actualizarUsuario(usuarioDTO.getId_usuario(), usuarioDTO);
             redirectAttributes.addFlashAttribute("mensaje", "Usuario actualizado correctamente.");
         } catch (Exception e) {
@@ -158,10 +154,8 @@ public class UsuarioController {
     public String verPerfil(Model model, Authentication authentication) {
         String email = authentication.getName();
         UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
-        List<UsuarioRolDTO> roles = usuarioRolService.obtenerRolesPorUsuario(usuario.getId_usuario());
 
         model.addAttribute("usuario", usuario);
-        model.addAttribute("roles", roles);
         return "usuario/perfil";
     }
 

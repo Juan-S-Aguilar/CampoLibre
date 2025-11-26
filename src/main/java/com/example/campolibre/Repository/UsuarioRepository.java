@@ -24,6 +24,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query("SELECT u FROM Usuario u WHERE u.email = :email AND u.estado = 'ACTIVO'")
     Usuario findByEmailAndEstadoActivo(@Param("email") String email);
 
-    @Query("SELECT u FROM Usuario u JOIN u.roles r WHERE r.nombre_rol = :nombreRol AND u.estado = 'ACTIVO'")
+    @Query("SELECT u FROM Usuario u WHERE u.rol.nombre_rol = :nombreRol AND u.estado = 'ACTIVO'")
     List<Usuario> findByRolNombre(@Param("nombreRol") NombreRol nombreRol);
 }
