@@ -77,8 +77,27 @@ public class ProductoController {
     }
 
     @GetMapping("/tienda/{idTienda}")
-    public String listarProductosPorTienda(@PathVariable Long idTienda, Model model) {
+    public String listarProductosPorTienda(@PathVariable Long idTienda,
+                                           Model model,
+                                           Authentication authentication) {
         TiendaDTO tienda = tiendaService.obtenerTiendaPorId(idTienda);
+
+        // ✅ REDIRECCIÓN INTELIGENTE: Si es PROVEEDOR dueño de la tienda,
+        // redirigir a vista de inventario/panel
+        if (authentication != null &&
+            authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+
+            // Si es el propietario de la tienda, mostrar panel de inventario
+            if (tienda.getId_usuario().equals(usuario.getId_usuario())) {
+                return "redirect:/inventario/tienda/" + idTienda;
+            }
+        }
+
+        // Para CONSUMIDORES, ADMINISTRADORES o proveedores que no son dueños,
+        // mostrar vista de catálogo normal
         List<ProductoDTO> productos = productoService.obtenerProductosPorTienda(idTienda);
 
         model.addAttribute("tienda", tienda);
@@ -335,6 +354,72 @@ public class ProductoController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al eliminar producto: " + e.getMessage());
             return "redirect:/productos";
+        }
+    }
+
+    // ========== VER PRODUCTOS CON STOCK BAJO (PROVEEDOR) ==========
+
+    @GetMapping("/stock-bajo")
+    public String verProductosStockBajo(Model model,
+                                        Authentication authentication,
+                                        RedirectAttributes redirectAttributes) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
+            redirectAttributes.addFlashAttribute("error", "No tienes permisos para acceder a esta página.");
+            return "redirect:/";
+        }
+
+        try {
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+
+            // Obtener todas las tiendas del proveedor
+            List<TiendaDTO> misTiendas = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
+
+            // Obtener productos con stock bajo de todas las tiendas del proveedor
+            List<ProductoDTO> productosStockBajo = new java.util.ArrayList<>();
+            java.util.Set<Long> tiendasAfectadas = new java.util.HashSet<>();
+            java.util.Map<Long, String> tiendaNombres = new java.util.HashMap<>();
+
+            for (TiendaDTO tienda : misTiendas) {
+                List<ProductoDTO> productosConStockBajo = productoService.obtenerProductosConStockBajo(tienda.getId_tienda());
+                List<ProductoDTO> productosSinStock = productoService.obtenerProductosSinStock(tienda.getId_tienda());
+
+                productosStockBajo.addAll(productosConStockBajo);
+                productosStockBajo.addAll(productosSinStock);
+
+                if (!productosConStockBajo.isEmpty() || !productosSinStock.isEmpty()) {
+                    tiendasAfectadas.add(tienda.getId_tienda());
+                }
+
+                tiendaNombres.put(tienda.getId_tienda(), tienda.getNombre());
+            }
+
+            // Eliminar duplicados (en caso de que un producto esté en ambas listas)
+            productosStockBajo = productosStockBajo.stream()
+                    .distinct()
+                    .collect(java.util.stream.Collectors.toList());
+
+            // Calcular estadísticas
+            long productosSinStock = productosStockBajo.stream()
+                    .filter(p -> p.getSinStock() != null && p.getSinStock())
+                    .count();
+
+            long productosStockCritico = productosStockBajo.stream()
+                    .filter(p -> p.getStock() > 0 && p.getStock() < 5)
+                    .count();
+
+            model.addAttribute("productos", productosStockBajo);
+            model.addAttribute("totalProductos", productosStockBajo.size());
+            model.addAttribute("productosSinStock", productosSinStock);
+            model.addAttribute("productosStockCritico", productosStockCritico);
+            model.addAttribute("tiendasAfectadas", tiendasAfectadas.size());
+            model.addAttribute("tiendaNombres", tiendaNombres);
+
+            return "producto/low-stock";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cargar productos con stock bajo: " + e.getMessage());
+            return "redirect:/proveedor/dashboard";
         }
     }
 

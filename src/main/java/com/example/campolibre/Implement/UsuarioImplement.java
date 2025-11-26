@@ -1,8 +1,10 @@
 package com.example.campolibre.Implement;
 
 import com.example.campolibre.DTO.UsuarioDTO;
+import com.example.campolibre.Entity.Rol;
 import com.example.campolibre.Entity.Usuario;
 import com.example.campolibre.Exception.CustomException;
+import com.example.campolibre.Repository.RolRepository;
 import com.example.campolibre.Repository.UsuarioRepository;
 import com.example.campolibre.Service.UsuarioService;
 import org.modelmapper.ModelMapper;
@@ -18,12 +20,15 @@ public class UsuarioImplement implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RolRepository rolRepository;
 
     @Autowired
-    public UsuarioImplement(UsuarioRepository usuarioRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder) {
+    public UsuarioImplement(UsuarioRepository usuarioRepository, ModelMapper modelMapper,
+                           PasswordEncoder passwordEncoder, RolRepository rolRepository) {
         this.usuarioRepository = usuarioRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
+        this.rolRepository = rolRepository;
     }
 
     @Override
@@ -40,10 +45,24 @@ public class UsuarioImplement implements UsuarioService {
         usuario.setContrasena(passwordEncoder.encode(usuarioDTO.getContrasena()));
         usuario.setEstado("ACTIVO");
 
+        // Asignar el rol al usuario
+        if (usuarioDTO.getId_rol() != null) {
+            Rol rol = rolRepository.findById(usuarioDTO.getId_rol())
+                    .orElseThrow(() -> new CustomException("Rol no encontrado"));
+            usuario.setRol(rol);
+        }
+
         Usuario nuevoUsuario = usuarioRepository.save(usuario);
 
         UsuarioDTO resultado = modelMapper.map(nuevoUsuario, UsuarioDTO.class);
         resultado.setContrasena(null);
+
+        // Mapear el rol único
+        if (nuevoUsuario.getRol() != null) {
+            resultado.setId_rol(nuevoUsuario.getRol().getId_rol());
+            resultado.setNombreRol(nuevoUsuario.getRol().getNombre_rol());
+        }
+
         return resultado;
     }
 
@@ -54,6 +73,13 @@ public class UsuarioImplement implements UsuarioService {
 
         UsuarioDTO resultado = modelMapper.map(usuario, UsuarioDTO.class);
         resultado.setContrasena(null);
+
+        // Mapear el rol único
+        if (usuario.getRol() != null) {
+            resultado.setId_rol(usuario.getRol().getId_rol());
+            resultado.setNombreRol(usuario.getRol().getNombre_rol());
+        }
+
         return resultado;
     }
 
@@ -66,6 +92,13 @@ public class UsuarioImplement implements UsuarioService {
 
         UsuarioDTO resultado = modelMapper.map(usuario, UsuarioDTO.class);
         resultado.setContrasena(null);
+
+        // Mapear el rol único
+        if (usuario.getRol() != null) {
+            resultado.setId_rol(usuario.getRol().getId_rol());
+            resultado.setNombreRol(usuario.getRol().getNombre_rol());
+        }
+
         return resultado;
     }
 
@@ -76,6 +109,13 @@ public class UsuarioImplement implements UsuarioService {
                 .map(usuario -> {
                     UsuarioDTO dto = modelMapper.map(usuario, UsuarioDTO.class);
                     dto.setContrasena(null);
+
+                    // Mapear el rol único
+                    if (usuario.getRol() != null) {
+                        dto.setId_rol(usuario.getRol().getId_rol());
+                        dto.setNombreRol(usuario.getRol().getNombre_rol());
+                    }
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -88,6 +128,13 @@ public class UsuarioImplement implements UsuarioService {
                 .map(usuario -> {
                     UsuarioDTO dto = modelMapper.map(usuario, UsuarioDTO.class);
                     dto.setContrasena(null);
+
+                    // Mapear el rol único
+                    if (usuario.getRol() != null) {
+                        dto.setId_rol(usuario.getRol().getId_rol());
+                        dto.setNombreRol(usuario.getRol().getNombre_rol());
+                    }
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -100,6 +147,13 @@ public class UsuarioImplement implements UsuarioService {
                 .map(usuario -> {
                     UsuarioDTO dto = modelMapper.map(usuario, UsuarioDTO.class);
                     dto.setContrasena(null);
+
+                    // Mapear el rol único
+                    if (usuario.getRol() != null) {
+                        dto.setId_rol(usuario.getRol().getId_rol());
+                        dto.setNombreRol(usuario.getRol().getNombre_rol());
+                    }
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -130,10 +184,24 @@ public class UsuarioImplement implements UsuarioService {
             usuarioExistente.setContrasena(passwordEncoder.encode(usuarioDTO.getContrasena()));
         }
 
+        // Actualizar el rol si se proporciona un nuevo id_rol
+        if (usuarioDTO.getId_rol() != null) {
+            Rol nuevoRol = rolRepository.findById(usuarioDTO.getId_rol())
+                    .orElseThrow(() -> new CustomException("Rol no encontrado"));
+            usuarioExistente.setRol(nuevoRol);
+        }
+
         Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
 
         UsuarioDTO resultado = modelMapper.map(usuarioActualizado, UsuarioDTO.class);
         resultado.setContrasena(null);
+
+        // Mapear el rol único
+        if (usuarioActualizado.getRol() != null) {
+            resultado.setId_rol(usuarioActualizado.getRol().getId_rol());
+            resultado.setNombreRol(usuarioActualizado.getRol().getNombre_rol());
+        }
+
         return resultado;
     }
 

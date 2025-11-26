@@ -156,26 +156,27 @@
                 </div>
             </div>
 
-            <!-- Sección: Asignación de Roles -->
+            <!-- Sección: Asignación de Rol -->
             <div class="form-section">
                 <h3 class="form-section-title">
                     <i class="bi bi-shield-lock"></i>
-                    Asignación de Roles
+                    Asignación de Rol
                 </h3>
 
                 <p style="margin-bottom: 1rem; color: var(--color-text-light);">
                     <i class="bi bi-info-circle"></i>
-                    Seleccione uno o más roles para el usuario. Puede asignar múltiples roles según sea necesario.
+                    Seleccione UN ÚNICO rol para el usuario. Cada usuario solo puede tener un rol asignado.
                 </p>
 
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <!-- Rol Administrador -->
                     <div class="form-check">
                         <input class="form-check-input"
-                               type="checkbox"
-                               name="rolesSeleccionados"
+                               type="radio"
+                               name="rolId"
                                value="1"
-                               id="rolAdmin">
+                               id="rolAdmin"
+                               required>
                         <label class="form-check-label" for="rolAdmin">
                             <strong style="color: var(--color-danger);">
                                 <i class="bi bi-shield-check"></i> Administrador
@@ -187,10 +188,11 @@
                     <!-- Rol Proveedor -->
                     <div class="form-check">
                         <input class="form-check-input"
-                               type="checkbox"
-                               name="rolesSeleccionados"
+                               type="radio"
+                               name="rolId"
                                value="2"
-                               id="rolProveedor">
+                               id="rolProveedor"
+                               required>
                         <label class="form-check-label" for="rolProveedor">
                             <strong style="color: var(--color-primary);">
                                 <i class="bi bi-shop"></i> Proveedor
@@ -202,11 +204,12 @@
                     <!-- Rol Consumidor -->
                     <div class="form-check">
                         <input class="form-check-input"
-                               type="checkbox"
-                               name="rolesSeleccionados"
+                               type="radio"
+                               name="rolId"
                                value="3"
                                id="rolConsumidor"
-                               checked>
+                               checked
+                               required>
                         <label class="form-check-label" for="rolConsumidor">
                             <strong style="color: var(--color-success);">
                                 <i class="bi bi-person"></i> Consumidor
@@ -218,8 +221,8 @@
 
                 <small class="form-text" style="display: block; margin-top: 1rem;">
                     <i class="bi bi-lightbulb"></i>
-                    <strong>Nota:</strong> Por defecto, todos los usuarios tienen el rol de Consumidor.
-                    Los usuarios con rol Administrador pueden acceder a todos los dashboards.
+                    <strong>Nota:</strong> El rol seleccionado será el único rol del usuario en la plataforma.
+                    No es posible asignar múltiples roles.
                 </small>
             </div>
 

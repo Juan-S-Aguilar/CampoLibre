@@ -4,7 +4,6 @@ import com.example.campolibre.Enum.TipoDocumento;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Entity
 @Table(name = "usuarios")
@@ -41,14 +40,10 @@ public class Usuario {
     @Column(name = "estado", nullable = false)
     private String estado = "ACTIVO";
 
-    // ✅ AGREGAR ESTA RELACIÓN
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "usuarios_roles",
-            joinColumns = @JoinColumn(name = "id_usuario"),
-            inverseJoinColumns = @JoinColumn(name = "id_rol")
-    )
-    private Set<Rol> roles;
+    // Relación ManyToOne: Un usuario tiene UN único rol
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_rol", nullable = false)
+    private Rol rol;
 
     @PrePersist
     protected void onCreate() {

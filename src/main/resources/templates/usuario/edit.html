@@ -150,6 +150,72 @@
                 </small>
             </div>
 
+            <!-- Sección: Asignación de Rol -->
+            <div class="form-section">
+                <h3 class="form-section-title">
+                    <i class="bi bi-shield-lock"></i>
+                    Rol del Usuario
+                </h3>
+
+                <p style="margin-bottom: 1rem; color: var(--color-text-light);">
+                    <i class="bi bi-info-circle"></i>
+                    Seleccione el rol único para este usuario.
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- Rol Administrador -->
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="rolId"
+                               value="1"
+                               id="rolAdmin"
+                               th:checked="${usuario.id_rol == 1}"
+                               required>
+                        <label class="form-check-label" for="rolAdmin">
+                            <strong style="color: var(--color-danger);">
+                                <i class="bi bi-shield-check"></i> Administrador
+                            </strong>
+                            - Acceso total al sistema
+                        </label>
+                    </div>
+
+                    <!-- Rol Proveedor -->
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="rolId"
+                               value="2"
+                               id="rolProveedor"
+                               th:checked="${usuario.id_rol == 2}"
+                               required>
+                        <label class="form-check-label" for="rolProveedor">
+                            <strong style="color: var(--color-primary);">
+                                <i class="bi bi-shop"></i> Proveedor
+                            </strong>
+                            - Vender productos y participar en eventos
+                        </label>
+                    </div>
+
+                    <!-- Rol Consumidor -->
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="rolId"
+                               value="3"
+                               id="rolConsumidor"
+                               th:checked="${usuario.id_rol == 3}"
+                               required>
+                        <label class="form-check-label" for="rolConsumidor">
+                            <strong style="color: var(--color-success);">
+                                <i class="bi bi-person"></i> Consumidor
+                            </strong>
+                            - Comprar productos y asistir a eventos
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sección: Información del Sistema -->
             <div class="form-section">
                 <h3 class="form-section-title">
@@ -208,7 +274,7 @@
             <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem; color: var(--color-text-dark);">
                 <li>El email y documento no se pueden modificar por motivos de seguridad</li>
                 <li>La contraseña solo se actualizará si ingresa una nueva</li>
-                <li>Para cambiar los roles del usuario, use la vista de detalle</li>
+                <li>Cada usuario solo puede tener un rol asignado en el sistema</li>
             </ul>
         </div>
     </div>

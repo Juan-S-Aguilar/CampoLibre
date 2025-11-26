@@ -85,6 +85,7 @@
                     </th>
                     <th>Documento</th>
                     <th>Teléfono</th>
+                    <th>Rol</th>
                     <th>Fecha Registro</th>
                     <th>Estado</th>
                     <th style="text-align: center;">Acciones</th>
@@ -101,6 +102,20 @@
                         <span th:text="${usuario.documento}">1234567890</span>
                     </td>
                     <td th:text="${usuario.telefono}" data-label="Teléfono">3001234567</td>
+                    <td data-label="Rol">
+                        <span th:if="${usuario.id_rol == 1}"
+                              style="padding: 0.25rem 0.75rem; background-color: var(--color-danger); color: white; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                            <i class="bi bi-shield-check"></i> ADMIN
+                        </span>
+                        <span th:if="${usuario.id_rol == 2}"
+                              style="padding: 0.25rem 0.75rem; background-color: var(--color-primary); color: white; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                            <i class="bi bi-shop"></i> PROVEEDOR
+                        </span>
+                        <span th:if="${usuario.id_rol == 3}"
+                              style="padding: 0.25rem 0.75rem; background-color: var(--color-success); color: white; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                            <i class="bi bi-person"></i> CONSUMIDOR
+                        </span>
+                    </td>
                     <td th:text="${#temporals.format(usuario.fecha_registro, 'dd/MM/yyyy HH:mm')}"
                         data-label="Fecha Registro">01/01/2024 10:00</td>
                     <td data-label="Estado">

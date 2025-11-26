@@ -20,5 +20,9 @@ public class UsuarioDTO {
     private TipoDocumento tipo_documento;
     private LocalDateTime fecha_registro;
     private String estado = "ACTIVO";
-    private NombreRol rolSeleccionado;
+
+    // Rol único del usuario
+    private Long id_rol;
+    private NombreRol nombreRol; // Para mostrar el nombre del rol
+    private NombreRol rolSeleccionado; // Para formularios de registro/edición
 }

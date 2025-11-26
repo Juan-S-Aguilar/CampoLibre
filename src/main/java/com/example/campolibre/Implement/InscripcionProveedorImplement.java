@@ -59,9 +59,9 @@ public class InscripcionProveedorImplement implements InscripcionProveedorServic
         Usuario proveedor = usuarioRepository.findById(idProveedor)
                 .orElseThrow(() -> new CustomException("Proveedor no encontrado."));
 
-        // ✅ Validar que sea proveedor (con Set<Rol>)
-        boolean esProveedor = proveedor.getRoles().stream()
-                .anyMatch(rol -> rol.getNombre_rol().equals(NombreRol.PROVEEDOR));
+        // Validar que sea proveedor (sistema de rol único)
+        boolean esProveedor = proveedor.getRol() != null &&
+                proveedor.getRol().getNombre_rol().equals(NombreRol.PROVEEDOR);
 
         if (!esProveedor) {
             throw new CustomException("Solo los proveedores pueden inscribirse a eventos.");

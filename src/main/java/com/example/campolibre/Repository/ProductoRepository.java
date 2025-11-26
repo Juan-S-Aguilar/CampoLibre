@@ -91,4 +91,30 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
             @Param("subcategoria") SubcategoriaProducto subcategoria,
             @Param("unidad") UnidadMedida unidad
     );
+
+    // ========== VALIDACIÓN DE NOMBRES DUPLICADOS ==========
+
+    /**
+     * Busca productos por nombre (case-insensitive) en una tienda específica,
+     * excluyendo productos eliminados.
+     */
+    @Query("SELECT p FROM Producto p WHERE p.tienda.id_tienda = :idTienda " +
+            "AND LOWER(p.nombre) = LOWER(:nombre) AND p.estado != 'ELIMINADO'")
+    List<Producto> findByTiendaIdAndNombreIgnoreCase(
+            @Param("idTienda") Long idTienda,
+            @Param("nombre") String nombre
+    );
+
+    /**
+     * Busca productos por nombre (case-insensitive) en una tienda específica,
+     * excluyendo un producto dado (útil para actualización).
+     */
+    @Query("SELECT p FROM Producto p WHERE p.tienda.id_tienda = :idTienda " +
+            "AND LOWER(p.nombre) = LOWER(:nombre) AND p.estado != 'ELIMINADO' " +
+            "AND p.id_producto != :idProducto")
+    List<Producto> findByTiendaIdAndNombreIgnoreCaseExcludingId(
+            @Param("idTienda") Long idTienda,
+            @Param("nombre") String nombre,
+            @Param("idProducto") Long idProducto
+    );
 }

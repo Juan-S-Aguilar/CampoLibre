@@ -60,16 +60,17 @@
                                         <!-- Producto -->
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img th:if="${item.imagen_producto != null}"
+                                                <img th:if="${item.imagen_producto != null and !item.imagen_producto.isEmpty()}"
                                                      th:src="@{${item.imagen_producto}}"
-                                                     alt="Producto"
+                                                     th:alt="${item.nombre_producto}"
                                                      class="me-3"
-                                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
-                                                <img th:unless="${item.imagen_producto != null}"
+                                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;"
+                                                     onerror="this.onerror=null; this.src='/images/no-image.png';">
+                                                <img th:if="${item.imagen_producto == null or item.imagen_producto.isEmpty()}"
                                                      src="/images/no-image.png"
                                                      alt="Sin imagen"
                                                      class="me-3"
-                                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
                                                 <div>
                                                     <strong th:text="${item.nombre_producto}">Producto</strong>
                                                     <br>
@@ -102,23 +103,26 @@
                                             <form th:action="@{/carrito/actualizar/{id}(id=${item.id_item_carrito})}"
                                                   method="post"
                                                   class="d-inline">
-                                                <div class="input-group input-group-sm" style="width: 120px; margin: 0 auto;">
-                                                    <button class="btn btn-outline-secondary"
+                                                <div class="input-group input-group-sm justify-content-center" style="width: 130px; margin: 0 auto;">
+                                                    <button class="btn btn-outline-success"
                                                             type="button"
+                                                            style="width: 32px; padding: 0.25rem;"
                                                             onclick="this.parentElement.querySelector('input[type=number]').stepDown(); this.form.submit();">
-                                                        <i class="fas fa-minus"></i>
+                                                        <i class="fas fa-minus" style="font-size: 0.75rem;"></i>
                                                     </button>
                                                     <input type="number"
                                                            name="cantidad"
                                                            th:value="${item.cantidad}"
                                                            class="form-control text-center"
+                                                           style="width: 50px;"
                                                            min="1"
                                                            th:max="${item.stock_disponible}"
                                                            onchange="this.form.submit();">
-                                                    <button class="btn btn-outline-secondary"
+                                                    <button class="btn btn-outline-success"
                                                             type="button"
+                                                            style="width: 32px; padding: 0.25rem;"
                                                             onclick="this.parentElement.querySelector('input[type=number]').stepUp(); this.form.submit();">
-                                                        <i class="fas fa-plus"></i>
+                                                        <i class="fas fa-plus" style="font-size: 0.75rem;"></i>
                                                     </button>
                                                 </div>
                                             </form>
@@ -135,9 +139,11 @@
                                         <!-- Acciones -->
                                         <td class="text-center align-middle">
                                             <a th:href="@{/carrito/eliminar/{id}(id=${item.id_item_carrito})}"
-                                               class="btn btn-sm btn-outline-danger"
-                                               onclick="return confirm('¿Eliminar este producto del carrito?')">
-                                                <i class="fas fa-trash"></i>
+                                               class="btn btn-sm btn-danger"
+                                               style="padding: 0.375rem 0.5rem;"
+                                               onclick="return confirm('¿Eliminar este producto del carrito?')"
+                                               title="Eliminar producto">
+                                                <i class="fas fa-trash-alt"></i>
                                             </a>
                                         </td>
                                     </tr>
@@ -188,7 +194,7 @@
 
                             <!-- Alerta de stock -->
                             <div th:if="${!carrito.items.isEmpty()}" class="mt-3">
-                                <div th:if="${carrito.items.stream().anyMatch(item -> !item.stock_suficiente)}"
+                                <div th:if="${carrito.tieneItemsSinStock}"
                                      class="alert alert-warning mb-0">
                                     <small>
                                         <i class="fas fa-exclamation-triangle"></i>

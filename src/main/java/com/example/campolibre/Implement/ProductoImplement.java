@@ -68,6 +68,18 @@ public class ProductoImplement implements ProductoService {
             throw new CustomException("Debe especificar una unidad de medida para el producto.");
         }
 
+        // ✅ VALIDACIÓN 4: Nombre del producto debe ser único en la tienda (case-insensitive)
+        List<Producto> productosConMismoNombre = productoRepository.findByTiendaIdAndNombreIgnoreCase(
+                productoDTO.getId_tienda(),
+                productoDTO.getNombre()
+        );
+        if (!productosConMismoNombre.isEmpty()) {
+            throw new CustomException(
+                    "Ya existe un producto con el nombre '" + productoDTO.getNombre() +
+                            "' en esta tienda. Por favor, utilice un nombre diferente."
+            );
+        }
+
         Producto producto = modelMapper.map(productoDTO, Producto.class);
         producto.setTienda(tienda);
         producto.setEstado("ACTIVO");
@@ -133,7 +145,22 @@ public class ProductoImplement implements ProductoService {
         Producto productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
 
-        // ✅ VALIDACIÓN: Si se cambia subcategoría, validar coherencia
+        // ✅ VALIDACIÓN 1: Si se cambia el nombre, verificar que no exista otro producto con ese nombre
+        if (!productoExistente.getNombre().equals(productoDTO.getNombre())) {
+            List<Producto> productosConMismoNombre = productoRepository.findByTiendaIdAndNombreIgnoreCaseExcludingId(
+                    productoExistente.getTienda().getId_tienda(),
+                    productoDTO.getNombre(),
+                    id
+            );
+            if (!productosConMismoNombre.isEmpty()) {
+                throw new CustomException(
+                        "Ya existe otro producto con el nombre '" + productoDTO.getNombre() +
+                                "' en esta tienda. Por favor, utilice un nombre diferente."
+                );
+            }
+        }
+
+        // ✅ VALIDACIÓN 2: Si se cambia subcategoría, validar coherencia
         if (productoDTO.getSubcategoria() != null &&
                 !productoDTO.getSubcategoria().equals(productoExistente.getSubcategoria())) {
 

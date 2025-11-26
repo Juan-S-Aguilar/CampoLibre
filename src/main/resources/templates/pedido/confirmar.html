@@ -39,16 +39,17 @@
                         </div>
                         <div class="card-body">
                             <div th:each="item : ${entry.value}" class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                                <img th:if="${item.imagen_producto != null}"
+                                <img th:if="${item.imagen_producto != null and !item.imagen_producto.isEmpty()}"
                                      th:src="@{${item.imagen_producto}}"
-                                     alt="Producto"
+                                     th:alt="${item.nombre_producto}"
                                      class="me-3"
-                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
-                                <img th:unless="${item.imagen_producto != null}"
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;"
+                                     onerror="this.onerror=null; this.src='/images/no-image.png';">
+                                <img th:if="${item.imagen_producto == null or item.imagen_producto.isEmpty()}"
                                      src="/images/no-image.png"
                                      alt="Sin imagen"
                                      class="me-3"
-                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
 
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1" th:text="${item.nombre_producto}">Producto</h6>

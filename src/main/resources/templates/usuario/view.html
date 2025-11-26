@@ -120,29 +120,41 @@
             </div>
         </div>
 
-        <!-- Roles Asignados -->
+        <!-- Rol del Usuario -->
         <div class="dashboard-section">
             <div class="dashboard-section-header">
                 <h2>
                     <i class="bi bi-shield-lock"></i>
-                    Roles Asignados
+                    Rol del Usuario
                 </h2>
             </div>
 
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <div th:each="rol : ${roles}"
-                     style="padding: 1rem 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
-                    <i class="bi bi-shield-check" style="color: var(--color-primary); font-size: 1.5rem;"></i>
-                    <span style="margin-left: 0.5rem; font-weight: 600; color: var(--color-text-dark);">
-                        [[${rol.id_rol == 1 ? 'ADMINISTRADOR' : (rol.id_rol == 2 ? 'PROVEEDOR' : 'CONSUMIDOR')}]]
-                    </span>
+            <div th:if="${usuario.nombreRol != null}"
+                 style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid"
+                 th:classappend="${usuario.id_rol == 1 ? 'var(--color-danger)' : (usuario.id_rol == 2 ? 'var(--color-primary)' : 'var(--color-success)')}"
+                 th:style="'border-left-color: ' + ${usuario.id_rol == 1 ? 'var(--color-danger)' : (usuario.id_rol == 2 ? 'var(--color-primary)' : 'var(--color-success)')} + ';'">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <i th:class="${usuario.id_rol == 1 ? 'bi bi-shield-check' : (usuario.id_rol == 2 ? 'bi bi-shop' : 'bi bi-person')}"
+                       style="font-size: 2rem;"
+                       th:style="'color: ' + ${usuario.id_rol == 1 ? 'var(--color-danger)' : (usuario.id_rol == 2 ? 'var(--color-primary)' : 'var(--color-success)')} + ';'"></i>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.5rem; font-weight: 700;"
+                            th:style="'color: ' + ${usuario.id_rol == 1 ? 'var(--color-danger)' : (usuario.id_rol == 2 ? 'var(--color-primary)' : 'var(--color-success)')} + ';'"
+                            th:text="${usuario.nombreRol}">CONSUMIDOR</h3>
+                        <p style="margin: 0.25rem 0 0 0; color: var(--color-text-light); font-size: 0.95rem;"
+                           th:text="${usuario.id_rol == 1 ? 'Acceso total al sistema, gestión de usuarios y eventos' :
+                                     (usuario.id_rol == 2 ? 'Puede crear tiendas, publicar productos y solicitar eventos' :
+                                      'Puede explorar tiendas, comprar productos y asistir a eventos')}">
+                            Descripción del rol
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <div th:if="${roles.isEmpty()}" class="empty-state" style="padding: 2rem;">
+            <div th:if="${usuario.nombreRol == null}" class="empty-state" style="padding: 2rem;">
                 <i class="bi bi-shield-x"></i>
-                <h3>Sin roles asignados</h3>
-                <p>Este usuario no tiene ningún rol asignado</p>
+                <h3>Sin rol asignado</h3>
+                <p>Este usuario no tiene ningún rol asignado. Edite el usuario para asignarle un rol.</p>
             </div>
         </div>
 

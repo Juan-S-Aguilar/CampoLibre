@@ -51,6 +51,16 @@
         </div>
     </div>
 
+    <!-- ✅ NUEVA: Alerta de Productos con Stock Bajo -->
+    <div th:if="${productosStockBajo != null && productosStockBajo > 0}" class="dashboard-alert warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div>
+            <strong>¡Atención! Productos con Stock Bajo:</strong>
+            Tienes <span th:text="${productosStockBajo}">0</span> producto(s) con stock bajo o agotado en tus tiendas.
+            <a th:href="@{/productos/stock-bajo}">Ver y gestionar inventario</a>
+        </div>
+    </div>
+
     <!-- Grid de Estadísticas -->
     <div class="stats-grid">
         <!-- Mis Tiendas -->
