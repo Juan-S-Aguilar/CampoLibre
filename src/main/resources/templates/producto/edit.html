@@ -152,7 +152,7 @@
                 </h3>
 
                 <div class="form-row">
-                    <!-- Precio -->
+                    <!-- ✅ PRECIO (COMPLETAMENTE CORREGIDO) -->
                     <div class="form-group">
                         <label for="precio">
                             <i class="bi bi-cash"></i>
@@ -165,10 +165,15 @@
                                    th:field="*{precio}"
                                    class="form-control"
                                    id="precio"
-                                   min="1"
-                                   step="100"
+                                   placeholder="1000"
+                                   min="100"
+                                   step="any"
                                    required>
                         </div>
+                        <small class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Precio en pesos colombianos (COP). Mínimo: $100
+                        </small>
                     </div>
 
                     <!-- Stock Actual -->

@@ -218,6 +218,18 @@ public class HomeController {
             model.addAttribute("inscripcionesPendientes", inscripcionesPendientes);
             model.addAttribute("totalInvertido", totalInvertido);
 
+            // ========== ✅ NUEVAS ESTADÍSTICAS DE PRODUCTOS CON STOCK BAJO ==========
+
+            // Contar productos con stock bajo en todas las tiendas del proveedor
+            Long productosStockBajo = 0L;
+            for (TiendaDTO tienda : misTiendasList) {
+                productosStockBajo += productoService.contarProductosConStockBajo(tienda.getId_tienda());
+                productosStockBajo += productoService.contarProductosSinStock(tienda.getId_tienda());
+            }
+
+            // ✅ NUEVA VARIABLE PARA ALERTAS DE STOCK
+            model.addAttribute("productosStockBajo", productosStockBajo);
+
         } catch (Exception e) {
             model.addAttribute("error", "Error al cargar estadísticas: " + e.getMessage());
             e.printStackTrace(); // Para debugging
