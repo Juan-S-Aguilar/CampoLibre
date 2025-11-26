@@ -52,48 +52,32 @@
 
         <!-- Tabs de Navegación -->
         <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
+
             <li class="nav-item" role="presentation">
-                <button class="nav-link"
-                        id="todos-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#todos"
-                        type="button"
-                        role="tab"
-                        onclick="window.location.href='/eventos/admin/todos'">
+                <a class="nav-link"
+                   th:href="${#authorization.expression('hasAuthority(''ADMINISTRADOR'')')} ? @{/eventos/admin/todos} : @{/eventos/proveedor/todos}">
                     <i class="bi bi-grid"></i>
                     Ver Todos
-                </button>
+                </a>
             </li>
 
             <li class="nav-item" role="presentation">
-                <button class="nav-link active"
-                        id="publicados-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#publicados"
-                        type="button"
-                        role="tab"
-                        onclick="window.location.href='#'">
+                <a class="nav-link active" href="#">
                     <i class="bi bi-check-circle"></i>
                     Publicados
-                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
-                </button>
+                    <span class="badge bg-warning text-dark" th:text="${eventos != null ? eventos.size() : 0}">0</span>
+                </a>
             </li>
 
-            <li class="nav-item" role="presentation">
-                <button class="nav-link"
-                        id="borradores-tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#borradores"
-                        type="button"
-                        role="tab"
-                        onclick="window.location.href='/eventos/pendientes'">
+            <li sec:authorize="hasAuthority('ADMINISTRADOR')" class="nav-item" role="presentation">
+                <a class="nav-link" th:href="@{/eventos/pendientes}">
                     <i class="bi bi-hourglass-split"></i>
                     Borradores
-
-                </button>
+                </a>
             </li>
 
         </ul>
+
 
         <div class="card border-0 shadow-sm mb-5">
             <div class="card-body p-4">

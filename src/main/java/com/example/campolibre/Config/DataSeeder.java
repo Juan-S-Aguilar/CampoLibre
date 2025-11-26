@@ -192,7 +192,7 @@ public class DataSeeder implements CommandLineRunner {
         evento1.setFechaPublicacion(LocalDateTime.now().minusDays(5));
         evento1.setCreado_por(admin);
         evento1.setPatrocinador(patAlcaldia);
-        evento1.setImagen_evento("https://ejemplo.com/eventos/feria-agricola-2025.jpg");
+        evento1.setImagen_evento("https://elgoibar.eus/wp-content/uploads/2024/05/azoka2.jpg");
         evento1.setCuposMaximosProveedor(50);
         evento1.setCostoEspacio(80000.0);
         evento1.setCuposOcupados(0); // Se incrementará con inscripciones
@@ -220,7 +220,7 @@ public class DataSeeder implements CommandLineRunner {
         evento2.setFechaPublicacion(LocalDateTime.now().minusDays(10));
         evento2.setCreado_por(admin);
         evento2.setPatrocinador(patMinAgricultura);
-        evento2.setImagen_evento("https://ejemplo.com/eventos/taller-agricultura-organica.jpg");
+        evento2.setImagen_evento("https://d3puay5pkxu9s4.cloudfront.net/curso/545/800_imagen.jpg");
         evento2.setCuposMaximosProveedor(30);
         evento2.setCostoEspacio(35000.0);
         evento2.setCuposOcupados(0);
@@ -247,7 +247,7 @@ public class DataSeeder implements CommandLineRunner {
         evento3.setFechaPublicacion(LocalDateTime.now().minusDays(3));
         evento3.setCreado_por(admin);
         evento3.setPatrocinador(patProcolombia);
-        evento3.setImagen_evento("https://ejemplo.com/eventos/festival-cafe-cacao.jpg");
+        evento3.setImagen_evento("https://www.coffeemedia.com.co/wp-content/uploads/2024/03/Feria-Internacional-de-Cafe-Cacao-y-Agroturismo-FICCA.png");
         evento3.setCuposMaximosProveedor(40);
         evento3.setCostoEspacio(120000.0);
         evento3.setCuposOcupados(0);
@@ -274,7 +274,7 @@ public class DataSeeder implements CommandLineRunner {
         evento4.setFechaPublicacion(LocalDateTime.now().minusDays(7));
         evento4.setCreado_por(admin);
         evento4.setPatrocinador(patAlcaldia);
-        evento4.setImagen_evento("https://ejemplo.com/eventos/mercado-campesino.jpg");
+        evento4.setImagen_evento("https://bogota.gov.co/sites/default/files/u3884/mercados1.jpg");
         evento4.setCuposMaximosProveedor(25);
         evento4.setCostoEspacio(25000.0);
         evento4.setCuposOcupados(0);
@@ -301,7 +301,7 @@ public class DataSeeder implements CommandLineRunner {
         evento5.setFechaPublicacion(LocalDateTime.now().minusDays(8));
         evento5.setCreado_por(admin);
         evento5.setPatrocinador(patFedepanela);
-        evento5.setImagen_evento("https://ejemplo.com/eventos/capacitacion-lacteos.jpg");
+        evento5.setImagen_evento("https://cajica.gov.co/wp-content/uploads/2021/09/241324563_4360624100670269_4875759541628949259_n.jpg");
         evento5.setCuposMaximosProveedor(20);
         evento5.setCostoEspacio(50000.0);
         evento5.setCuposOcupados(0);
@@ -328,7 +328,7 @@ public class DataSeeder implements CommandLineRunner {
         evento6.setFechaPublicacion(LocalDateTime.now().minusDays(30));
         evento6.setCreado_por(admin);
         evento6.setPatrocinador(patBancoldex);
-        evento6.setImagen_evento("https://ejemplo.com/eventos/expo-maquinaria.jpg");
+        evento6.setImagen_evento("https://www.clarin.com/img/2022/07/27/ol6Sxmm7S_2000x1500__1.jpg");
         evento6.setCuposMaximosProveedor(80);
         evento6.setCostoEspacio(350000.0);
         evento6.setCuposOcupados(0); // Se llenará con inscripciones históricas
@@ -354,7 +354,7 @@ public class DataSeeder implements CommandLineRunner {
         evento7.setFechaPublicacion(null);
         evento7.setCreado_por(admin);
         evento7.setPatrocinador(patFedepanela);
-        evento7.setImagen_evento(null);
+        evento7.setImagen_evento("https://viajaporcolombia.com/images/turistico-y-reinado-nacional-de-la-panela-2024-en-villeta-cundinamarca.jpg");
         evento7.setCuposMaximosProveedor(35);
         evento7.setCostoEspacio(60000.0);
         evento7.setCuposOcupados(0);
@@ -376,7 +376,7 @@ public class DataSeeder implements CommandLineRunner {
         evento8.setFechaPublicacion(LocalDateTime.now().minusDays(15));
         evento8.setCreado_por(admin);
         evento8.setPatrocinador(patMinAgricultura);
-        evento8.setImagen_evento("https://ejemplo.com/eventos/taller-apicultura.jpg");
+        evento8.setImagen_evento("https://escueladeabejas.com/wp-content/uploads/2025/06/taller-subproductos-apicolas-escuela-de-abejas.png");
         evento8.setCuposMaximosProveedor(15);
         evento8.setCostoEspacio(40000.0);
         evento8.setCuposOcupados(0);
@@ -399,7 +399,7 @@ public class DataSeeder implements CommandLineRunner {
         evento9.setFechaPublicacion(LocalDateTime.now().minusDays(12));
         evento9.setCreado_por(admin);
         evento9.setPatrocinador(patAlcaldia);
-        evento9.setImagen_evento("https://ejemplo.com/eventos/mercado-agroecologico.jpg");
+        evento9.setImagen_evento("https://desarrolloeconomico.gov.co/wp-content/uploads/2025/10/01032025-_W5A5223MERCADOS-CAMPESINOS-JARDIN-BOTANICO-s.jpg");
         evento9.setCuposMaximosProveedor(30);
         evento9.setCostoEspacio(45000.0);
         evento9.setCuposOcupados(0);
@@ -426,7 +426,7 @@ public class DataSeeder implements CommandLineRunner {
         evento10.setFechaPublicacion(LocalDateTime.now().minusDays(45));
         evento10.setCreado_por(admin);
         evento10.setPatrocinador(patProcolombia);
-        evento10.setImagen_evento("https://ejemplo.com/eventos/festival-gastronomico.jpg");
+        evento10.setImagen_evento("https://www.sena.edu.co/es-co/Noticias/NoticiasImg/Guajira3-19102023.jpg");
         evento10.setCuposMaximosProveedor(55);
         evento10.setCostoEspacio(95000.0);
         evento10.setCuposOcupados(0); // Se llenará con inscripciones

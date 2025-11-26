@@ -155,11 +155,12 @@
                                     </a>
 
                                     <a th:if="${inscripcion.estadoCupo == T(com.example.campolibre.Enum.EstadoCupo).CONFIRMADO}"
-                                       th:href="@{/eventos/mi-codigo/{id}(id=${inscripcion.id_inscripcion})}"
+                                       th:href="@{/pagos-eventos/codigo-confirmacion/{id}(id=${inscripcion.id_inscripcion})}"
                                        class="btn btn-success btn-sm">
                                         <i class="bi bi-qr-code"></i> Ver QR
                                     </a>
                                 </div>
+
                             </div>
                         </div>
 

@@ -318,5 +318,46 @@ public class PagoEventoController {
         }
     }
 
+    /**
+     * Ver código de confirmación con QR
+     */
+    @GetMapping("/codigo-confirmacion/{idInscripcion}")
+    @PreAuthorize("hasAuthority('PROVEEDOR')")
+    public String verCodigoConfirmacion(@PathVariable Long idInscripcion,
+                                        Model model,
+                                        Authentication authentication,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            String email = authentication.getName();
+            UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
 
+            // Obtener la inscripción
+            InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
+
+            // Validar que la inscripción pertenezca al proveedor
+            if (!inscripcion.getId_proveedor().equals(proveedor.getId_usuario())) {
+                redirectAttributes.addFlashAttribute("error",
+                        "No tienes permiso para ver este código.");
+                return "redirect:/eventos/mis-inscripciones";
+            }
+
+            // Validar que esté CONFIRMADO
+            if (inscripcion.getEstadoCupo() != com.example.campolibre.Enum.EstadoCupo.CONFIRMADO) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Esta inscripción aún no está confirmada. Completa el pago primero.");
+                return "redirect:/eventos/mis-inscripciones";
+            }
+
+            model.addAttribute("inscripcion", inscripcion);
+            model.addAttribute("proveedor", proveedor);
+
+            return "pago-evento/codigo-confirmacion"; // ✅ AJUSTA ESTA RUTA
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al mostrar código de confirmación: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error",
+                    "Error al cargar el código: " + e.getMessage());
+            return "redirect:/eventos/mis-inscripciones";
+        }
+    }
 }

@@ -418,34 +418,7 @@ public class EventoController {
 
         return "redirect:/eventos/mis-inscripciones";
     }
-    /**
-     * Proveedor ve su código de confirmación para presentar en el evento.
-     */
-    @GetMapping("/mi-codigo/{idInscripcion}")
-    public String verCodigoConfirmacion(@PathVariable Long idInscripcion,
-                                        Model model,
-                                        Authentication authentication) {
-        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
-            return "redirect:/login";
-        }
 
-        try {
-            String email = authentication.getName();
-            UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
-
-            InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
-
-            if (!inscripcion.getId_proveedor().equals(proveedor.getId_usuario())) {
-                return "redirect:/eventos/mis-inscripciones";
-            }
-
-            model.addAttribute("inscripcion", inscripcion);
-            return "evento/codigo-confirmacion"; // Vista con QR o código grande
-
-        } catch (Exception e) {
-            return "redirect:/eventos/mis-inscripciones";
-        }
-    }
 
     //  NUEVO ENDPOINT PARA EL ADMINISTRADOR (Lista TODOS los eventos)
     @GetMapping("/admin/todos") // Puedes usar "/mis-eventos-admin" o similar

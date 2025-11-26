@@ -92,10 +92,17 @@
             border-color: #dc3545 !important;
         }
 
-        /* Badges y Etiquetas */
-        .badge-estado-confirmado { background-color: #198754; color: white; box-shadow: 0 2px 4px rgba(25, 135, 84, 0.3); }
-        .badge-estado-pendiente { background-color: #ffc107; color: #212529; }
-        .badge-estado-cancelado { background-color: #dc3545; color: white; }
+        .badge-estado-confirmado {
+    /* Quitar el fondo verde y la sombra */
+    background-color: transparent !important; /* Fondo transparente */
+    box-shadow: none !important;
+
+    /* Forzar el color del texto a un negro fuerte de Bootstrap */
+    color: #212529 !important;
+
+    /* Opcional: Para mantener una distinción sutil */
+    border: 1px solid rgba(0, 0, 0, 0.2); /* Borde gris muy suave */
+}
 
         .codigo-confirmacion {
             font-family: 'Consolas', monospace;
@@ -133,12 +140,7 @@
 
         <div class="d-flex justify-content-between align-items-end mb-4">
             <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1 small">
-                        <li class="breadcrumb-item"><a th:href="@{/eventos/admin/todos}" class="text-decoration-none text-success fw-bold">Eventos</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Reporte</li>
-                    </ol>
-                </nav>
+
                 <h2 class="fw-bold mb-0" style="color: var(--cl-green-dark);">
                     Reporte de Inscripciones
                 </h2>
@@ -382,12 +384,11 @@
                             </td>
 
                             <td>
-                                    <span class="badge rounded-pill"
-                                          th:classappend="${inscripcion.estadoCupo.name() == 'CONFIRMADO' ? 'badge-estado-confirmado' :
-                                                          (inscripcion.estadoCupo.name() == 'PENDIENTE' ? 'badge-estado-pendiente' : 'badge-estado-cancelado')}"
-                                          th:text="${inscripcion.estadoCupo.name()}">
-                                        ESTADO
-                                    </span>
+    <span class="badge rounded-pill text-dark"  th:classappend="${inscripcion.estadoCupo.name() == 'CONFIRMADO' ? 'badge-estado-confirmado' :
+                          (inscripcion.estadoCupo.name() == 'PENDIENTE' ? 'badge-estado-pendiente' : 'badge-estado-cancelado')}"
+          th:text="${inscripcion.estadoCupo.name()}">
+        ESTADO
+    </span>
                             </td>
 
                             <td>

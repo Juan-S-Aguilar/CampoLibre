@@ -60,6 +60,11 @@ public class PqrsImplement implements PqrsService {
         this.entityManager = entityManager;
     }
 
+    // ============================================================================
+// MÉTODOS CORREGIDOS PARA QUE ADMIN VEA PQRS DE EVENTOS
+// ============================================================================
+
+    // 1️⃣ Método crearPqrs - PQRS de eventos van al Admin
     @Override
     @Transactional
     public PqrsDTO crearPqrs(PqrsDTO pqrsDTO) {
@@ -71,21 +76,24 @@ public class PqrsImplement implements PqrsService {
 
         // Prioridad a la Tienda asociada
         if (pqrsDTO.getId_tienda() != null) {
-            // 💡 CORRECCIÓN 1: Usar TiendaRepository.findById() para obtener la Tienda
             Tienda tienda = tiendaRepository.findById(pqrsDTO.getId_tienda())
                     .orElseThrow(() -> new CustomException("Tienda asociada no encontrada"));
             receptorInicial = tienda.getUsuario(); // Asigna al dueño de la tienda (Proveedor)
         }
-        // Luego al Evento asociado
+        // ✅ CORRECCIÓN: Si es un Evento, va directo al Administrador
         else if (pqrsDTO.getId_evento() != null) {
-            // 💡 CORRECCIÓN 2: Usar EventoRepository.findById() para obtener el Evento
+            // Verificar que el evento existe
             Evento evento = eventoRepository.findById(pqrsDTO.getId_evento())
                     .orElseThrow(() -> new CustomException("Evento asociado no encontrado"));
-            receptorInicial = evento.getCreado_por(); // Asigna al creador del evento
+
+            // Asignar al Administrador General
+            receptorInicial = usuarioRepository.findByEmail("admin@campolibre.com");
+            if (receptorInicial == null) {
+                throw new CustomException("No se encontró un usuario Administrador para asignar la PQRS del evento");
+            }
         }
         // Si no hay asociación, va al Administrador General
         else {
-            // Asumiendo que esta búsqueda de Admin funciona
             receptorInicial = usuarioRepository.findByEmail("admin@campolibre.com");
             if (receptorInicial == null) {
                 throw new CustomException("No se encontró un usuario Administrador para asignar la PQRS");
@@ -99,8 +107,6 @@ public class PqrsImplement implements PqrsService {
         pqrs.setReceptor(receptorInicial); // Asigna el responsable
         pqrs.setEstado(EstadoPqrs.PENDIENTE);
         pqrs.setFecha_envio(LocalDateTime.now());
-
-        // SOLUCIÓN AL ERROR: Establecer el turno de respuesta inicial
         pqrs.setPendienteDe(RolProceso.PROVEEDOR);
 
         Pqrs nuevaPqrs = pqrsRepository.save(pqrs);
@@ -109,13 +115,11 @@ public class PqrsImplement implements PqrsService {
         if (pqrsDTO.getId_tienda() != null) {
             PqrsTienda pt = new PqrsTienda();
             pt.setPqrs(nuevaPqrs);
-            // CORRECCIÓN 3: Obtener la Tienda usando TiendaRepository
             pt.setTienda(tiendaRepository.findById(pqrsDTO.getId_tienda()).get());
             pqrsTiendaRepository.save(pt);
         } else if (pqrsDTO.getId_evento() != null) {
             PqrsEvento pe = new PqrsEvento();
             pe.setPqrs(nuevaPqrs);
-            // CORRECCIÓN 4: Obtener el Evento usando EventoRepository
             pe.setEvento(eventoRepository.findById(pqrsDTO.getId_evento()).get());
             pqrsEventoRepository.save(pe);
         }
@@ -124,6 +128,110 @@ public class PqrsImplement implements PqrsService {
         return resultado;
     }
 
+    // 2️⃣ Método obtenerPqrsVisibles - Admin ve PQRS sin asociación + PQRS de eventos
+    @Override
+    public List<PqrsDTO> obtenerPqrsVisibles(Long idUsuario, boolean esAdmin) {
+        Set<Pqrs> visibles = new HashSet<>();
+
+        if (esAdmin) {
+            // ✅ CORRECCIÓN: ADMIN ve:
+            // 1. PQRS sin asociación (sin tienda ni evento)
+            List<Pqrs> unlinked = pqrsRepository.findUnlinkedPqrs();
+            visibles.addAll(unlinked);
+
+            // 2. PQRS asociadas a eventos (porque eventos son manejados por admin)
+            List<Pqrs> todasPqrs = pqrsRepository.findAll();
+            for (Pqrs p : todasPqrs) {
+                try {
+                    var pe = pqrsEventoRepository.findByPqrsId(p.getId_pqrs());
+                    if (pe != null) {
+                        visibles.add(p); // Tiene evento, admin puede verla
+                    }
+                } catch (Exception ignored) {}
+            }
+        } else {
+            // Usuarios normales ven:
+            if (idUsuario != null) {
+                // 1. PQRS que ellos crearon (como emisores)
+                List<Pqrs> misEnviadas = pqrsRepository.findByEmisorId(idUsuario);
+                visibles.addAll(misEnviadas);
+
+                // 2. PQRS asociadas a sus tiendas (como dueños)
+                List<Pqrs> deMisTiendas = pqrsRepository.findByTiendaOwnerId(idUsuario);
+                visibles.addAll(deMisTiendas);
+
+                // 3. PQRS asociadas a sus eventos (como creadores)
+                List<Pqrs> deMisEventos = pqrsRepository.findByEventoOwnerId(idUsuario);
+                visibles.addAll(deMisEventos);
+            }
+        }
+
+        // Convertir a DTO y marcar permisos de respuesta
+        return visibles.stream()
+                .map(pqrs -> {
+                    PqrsDTO dto = mapToDto(pqrs);
+                    boolean tienePermisoEstatico = puedeResponder(dto.getId_pqrs(), idUsuario, esAdmin);
+                    boolean puedeResponderAhora = tienePermisoEstatico &&
+                            dto.getPendienteDe() == RolProceso.PROVEEDOR;
+                    dto.setPuede_responder(puedeResponderAhora);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    // 3️⃣ Método obtenerPqrsPendientesAdmin - Admin ve pendientes sin tienda O con evento
+    @Override
+    public List<PqrsDTO> obtenerPqrsPendientesAdmin() {
+        // ✅ CORRECCIÓN: Admin ve PQRS sin tienda (incluye eventos y sin asociación)
+        List<Pqrs> pendientes = pqrsRepository.findAllPendientes();
+        return pendientes.stream()
+                .map(this::mapToDto)
+                .filter(dto -> dto.getId_tienda() == null) // Excluye solo las de tiendas
+                .collect(Collectors.toList());
+    }
+
+    // 4️⃣ Método puedeResponder - Admin puede responder PQRS sin tienda
+    @Override
+    public boolean puedeResponder(Long idPqrs, Long idUsuario, boolean esAdmin) {
+        // ✅ CORRECCIÓN: Admin puede responder PQRS sin tienda (incluye eventos)
+        if (esAdmin) {
+            try {
+                var pt = pqrsTiendaRepository.findByPqrsId(idPqrs);
+                if (pt != null) return false; // Tiene tienda, admin NO puede responder
+
+                // Si no tiene tienda, admin SÍ puede responder (sea evento o sin asociación)
+                return true;
+            } catch (Exception e) {
+                return true;
+            }
+        }
+
+        // Usuarios normales solo pueden responder si son dueños de la tienda/evento asociado
+        if (idUsuario == null) return false;
+
+        // Verificar asociación con tienda
+        try {
+            var pt = pqrsTiendaRepository.findByPqrsId(idPqrs);
+            if (pt != null && pt.getTienda() != null && pt.getTienda().getUsuario() != null) {
+                if (idUsuario.equals(pt.getTienda().getUsuario().getId_usuario())) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Verificar asociación con evento
+        try {
+            var pe = pqrsEventoRepository.findByPqrsId(idPqrs);
+            if (pe != null && pe.getEvento() != null && pe.getEvento().getCreado_por() != null) {
+                if (idUsuario.equals(pe.getEvento().getCreado_por().getId_usuario())) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return false;
+    }
+//__________________________________________________________________________________________________
     @Override
     public PqrsDTO obtenerPqrsPorId(Long id) {
         Pqrs pqrs = pqrsRepository.findById(id)
@@ -198,127 +306,6 @@ public class PqrsImplement implements PqrsService {
         pqrsRepository.save(pqrs);
     }
 
-    // Nuevo método: devuelve PQRS visibles para el usuario
-    @Override
-    public List<PqrsDTO> obtenerPqrsVisibles(Long idUsuario, boolean esAdmin) {
-        Set<Pqrs> visibles = new HashSet<>();
-
-        if (esAdmin) {
-            // ADMIN ve SOLO las PQRS sin asociación (sin tienda ni evento)
-            List<Pqrs> unlinked = pqrsRepository.findUnlinkedPqrs();
-            visibles.addAll(unlinked);
-        } else {
-            // Usuarios normales ven:
-            if (idUsuario != null) {
-                // 1. PQRS que ellos crearon (como emisores)
-                List<Pqrs> misEnviadas = pqrsRepository.findByEmisorId(idUsuario);
-                visibles.addAll(misEnviadas);
-
-                // 2. PQRS asociadas a sus tiendas (como dueños)
-                List<Pqrs> deMisTiendas = pqrsRepository.findByTiendaOwnerId(idUsuario);
-                visibles.addAll(deMisTiendas);
-
-                // 3. PQRS asociadas a sus eventos (como creadores)
-                List<Pqrs> deMisEventos = pqrsRepository.findByEventoOwnerId(idUsuario);
-                visibles.addAll(deMisEventos);
-            }
-        }
-
-        // Convertir a DTO y marcar permisos de respuesta
-        return visibles.stream()
-                .map(pqrs -> {
-                    // 1. Mapeamos el DTO (esto nos da el campo 'pendienteDe')
-                    PqrsDTO dto = mapToDto(pqrs);
-
-                    // 2. Verificamos el permiso estático (si es dueño/admin)
-                    boolean tienePermisoEstatico = puedeResponder(dto.getId_pqrs(), idUsuario, esAdmin);
-
-                    // 3. Verificamos el turno (si le toca al PROVEEDOR)
-                    boolean puedeResponderAhora = tienePermisoEstatico &&
-                            dto.getPendienteDe() == RolProceso.PROVEEDOR;
-
-                    dto.setPuede_responder(puedeResponderAhora);
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public boolean puedeResponder(Long idPqrs, Long idUsuario, boolean esAdmin) {
-        // Admin puede responder SOLO las PQRS sin asociación
-        if (esAdmin) {
-            try {
-                // Verificar si NO tiene asociación con tienda
-                var pt = pqrsTiendaRepository.findByPqrsId(idPqrs);
-                if (pt != null) return false; // Tiene tienda, admin NO puede responder
-
-                // Verificar si NO tiene asociación con evento
-                var pe = pqrsEventoRepository.findByPqrsId(idPqrs);
-                if (pe != null) return false; // Tiene evento, admin NO puede responder
-
-                // No tiene asociaciones, admin SÍ puede responder
-                return true;
-            } catch (Exception e) {
-                return true; // Si hay error, asumimos que no tiene asociaciones
-            }
-        }
-
-        // Usuarios normales solo pueden responder si son dueños de la tienda/evento asociado
-        if (idUsuario == null) return false;
-
-        // Verificar asociación con tienda
-        try {
-            var pt = pqrsTiendaRepository.findByPqrsId(idPqrs);
-            if (pt != null && pt.getTienda() != null && pt.getTienda().getUsuario() != null) {
-                if (idUsuario.equals(pt.getTienda().getUsuario().getId_usuario())) {
-                    return true; // Es dueño de la tienda
-                }
-            }
-        } catch (Exception ignored) {}
-
-        // Verificar asociación con evento
-        try {
-            var pe = pqrsEventoRepository.findByPqrsId(idPqrs);
-            if (pe != null && pe.getEvento() != null && pe.getEvento().getCreado_por() != null) {
-                if (idUsuario.equals(pe.getEvento().getCreado_por().getId_usuario())) {
-                    return true; // Es creador del evento
-                }
-            }
-        } catch (Exception ignored) {}
-
-        return false;
-    }
-
-    @Override
-    public List<PqrsDTO> obtenerPqrsPendientesAdmin() {
-        // Devuelve PQRS con estado PENDIENTE y sin asociación a tienda ni evento
-        List<Pqrs> pendientes = pqrsRepository.findAllPendientes();
-        return pendientes.stream()
-                .map(this::mapToDto)
-                .filter(dto -> dto.getId_tienda() == null && dto.getId_evento() == null)
-                .collect(Collectors.toList());
-    }
-
-    // Helper: mapear entidad Pqrs a PqrsDTO y completar asociaciones (tienda/evento)
-/*    private PqrsDTO mapToDto(Pqrs pqrs) {
-        PqrsDTO dto = modelMapper.map(pqrs, PqrsDTO.class);
-        if (pqrs.getEmisor() != null) dto.setId_emisor(pqrs.getEmisor().getId_usuario());
-        if (pqrs.getReceptor() != null) dto.setId_receptor(pqrs.getReceptor().getId_usuario());
-
-        // comprobar si tiene asociación a tienda
-        try {
-            var pt = pqrsTiendaRepository.findByPqrsId(pqrs.getId_pqrs());
-            if (pt != null && pt.getTienda() != null) dto.setId_tienda(pt.getTienda().getId_tienda());
-        } catch (Exception ignored) {}
-
-        // comprobar si tiene asociación a evento
-        try {
-            var pe = pqrsEventoRepository.findByPqrsId(pqrs.getId_pqrs());
-            if (pe != null && pe.getEvento() != null) dto.setId_evento(pe.getEvento().getId_evento());
-        } catch (Exception ignored) {}
-
-        return dto;
-    }*/
 
     @Override
     public List<Pqrs> buscarPqrsConFiltros(LocalDateTime fechaDesde, LocalDateTime fechaHasta,

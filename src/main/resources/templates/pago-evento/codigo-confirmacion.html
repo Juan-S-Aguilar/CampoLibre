@@ -3,17 +3,35 @@
       xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 <head>
-
     <title>Código de Confirmación - Campo Libre</title>
-    <!-- QR Code Generator -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+
+
+    <!-- Estilos para impresión -->
+    <style media="print">
+        .card-footer, .navbar, .alert-warning, .card.border-warning {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+        .bg-success, .text-success, .border-success {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+    </style>
+
 </head>
+
 <body class="bg-light">
 
 <main th:fragment="content">
     <div class="detail-container">
-
-
         <div class="row justify-content-center">
             <div class="col-lg-8">
 
@@ -194,82 +212,174 @@
             </div>
         </div>
     </div>
+
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const codigoConfirmacion = /*[[${inscripcion.codigoConfirmacion}]]*/ 'EVT-202501-XXXX';
+        const nombreEvento = /*[[${inscripcion.nombreEvento}]]*/ 'Evento';
+        const fechaEvento = /*[[${#temporals.format(inscripcion.fechaEvento, 'dd/MM/yyyy')}]]*/ '';
+        const ubicacion = /*[[${inscripcion.ubicacionEvento}]]*/ '';
+        const nombreProveedor = /*[[${inscripcion.nombreProveedor}]]*/ 'Proveedor';
+        const montoPagado = /*[[${#numbers.formatDecimal(inscripcion.costoPagado, 0, 'COMMA', 0, 'POINT')}]]*/ '0';
+
+        let qrcodeInstance = null;
+
+        function generarCodigoQR() {
+            const qrContainer = document.getElementById("qrcode");
+
+            if (typeof QRCode === 'undefined') {
+                console.warn('⏳ Esperando librería QRCode...');
+                setTimeout(generarCodigoQR, 200);
+                return;
+            }
+
+            qrContainer.innerHTML = '';
+
+            try {
+                qrcodeInstance = new QRCode(qrContainer, {
+                    text: codigoConfirmacion,
+                    width: 250,
+                    height: 250,
+                    colorDark: "#198754",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                console.log('✅ Código QR generado correctamente');
+            } catch (error) {
+                console.error('❌ Error al generar QR:', error);
+                qrContainer.innerHTML = '<p class="text-danger">Error al generar código QR. <button class="btn btn-sm btn-warning" onclick="generarCodigoQR()">Reintentar</button></p>';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            generarCodigoQR();
+        });
+
+        function copiarCodigo() {
+            const codigo = document.getElementById('codigoTexto').textContent.trim();
+            const boton = document.getElementById('btnCopiar');
+
+            navigator.clipboard.writeText(codigo).then(() => {
+                boton.innerHTML = '<i class="bi bi-check"></i> ¡Copiado!';
+                boton.parentElement.classList.remove('btn-outline-success');
+                boton.parentElement.classList.add('btn-success');
+
+                setTimeout(() => {
+                    boton.innerHTML = 'Copiar Código';
+                    boton.parentElement.classList.remove('btn-success');
+                    boton.parentElement.classList.add('btn-outline-success');
+                }, 2000);
+            }).catch(err => {
+                console.error('❌ Error al copiar:', err);
+                alert('No se pudo copiar el código. Por favor, cópialo manualmente.');
+            });
+        }
+
+        function imprimirCodigo() {
+            console.log('🖨️ Preparando impresión...');
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        function descargarComoImagen() {
+            console.log('📥 Iniciando descarga de imagen...');
+
+            try {
+                const canvas = document.querySelector('#qrcode canvas');
+
+                if (!canvas) {
+                    console.error('❌ No se encontró el canvas del QR');
+                    alert('Error: El código QR aún no se ha generado. Espera un momento e intenta nuevamente.');
+                    return;
+                }
+
+                const finalCanvas = document.createElement('canvas');
+                const ctx = finalCanvas.getContext('2d');
+
+                const padding = 40;
+                const qrSize = 250;
+                const textHeight = 200;
+                const canvasWidth = qrSize + (padding * 2);
+                const canvasHeight = qrSize + textHeight + (padding * 2);
+
+                finalCanvas.width = canvasWidth;
+                finalCanvas.height = canvasHeight;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+                ctx.drawImage(canvas, padding, padding, qrSize, qrSize);
+
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'center';
+                const centerX = canvasWidth / 2;
+                let currentY = qrSize + padding + 30;
+
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText(nombreEvento, centerX, currentY);
+                currentY += 40;
+
+                ctx.font = 'bold 20px monospace';
+                ctx.fillStyle = '#198754';
+                ctx.fillText(codigoConfirmacion, centerX, currentY);
+                currentY += 35;
+
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666666';
+                ctx.fillText('📅 ' + fechaEvento, centerX, currentY);
+                currentY += 25;
+                ctx.fillText('📍 ' + ubicacion, centerX, currentY);
+                currentY += 25;
+                ctx.fillText('👤 ' + nombreProveedor, centerX, currentY);
+
+                finalCanvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = 'codigo-confirmacion-' + codigoConfirmacion + '.png';
+                    link.href = url;
+                    link.click();
+
+                    setTimeout(function() {
+                        URL.revokeObjectURL(url);
+                    }, 100);
+
+                    console.log('✅ Imagen descargada correctamente');
+                }, 'image/png');
+
+            } catch (error) {
+                console.error('❌ Error al descargar imagen:', error);
+                alert('Error al generar la imagen. Por favor, intenta nuevamente o toma una captura de pantalla.');
+            }
+        }
+
+        function compartirPorWhatsApp() {
+            const mensaje = '🎉 ¡Tengo mi cupo confirmado para ' + nombreEvento + '!\n\n' +
+                          '📅 Fecha: ' + fechaEvento + '\n' +
+                          '📍 Lugar: ' + ubicacion + '\n' +
+                          '🎫 Código: ' + codigoConfirmacion + '\n' +
+                          '💰 Monto: $' + montoPagado;
+
+            const url = 'https://wa.me/?text=' + encodeURIComponent(mensaje);
+            window.open(url, '_blank');
+
+            console.log('✅ Abriendo WhatsApp...');
+        }
+
+        window.addEventListener('error', function(e) {
+            console.error('❌ Error detectado:', e.message);
+        });
+        /*]]>*/
+    </script>
+
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Scripts -->
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    // Obtener datos del backend
-    const codigoConfirmacion = /*[[${inscripcion.codigoConfirmacion}]]*/ 'EVT-202501-XXXX';
-    const nombreEvento = /*[[${inscripcion.nombreEvento}]]*/ 'Evento';
-    const fechaEvento = /*[[${inscripcion.fechaEvento}]]*/ '';
-    const ubicacion = /*[[${inscripcion.ubicacionEvento}]]*/ '';
-    /*]]>*/
 
-    // Generar código QR al cargar la página
-    window.addEventListener('DOMContentLoaded', function() {
-        const qrcode = new QRCode(document.getElementById("qrcode"), {
-            text: codigoConfirmacion,
-            width: 250,
-            height: 250,
-            colorDark: "#198754", // Verde success de Bootstrap
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-    });
-
-    // Copiar código al portapapeles
-    function copiarCodigo() {
-        const codigo = document.getElementById('codigoTexto').textContent;
-        const boton = document.getElementById('btnCopiar');
-
-        navigator.clipboard.writeText(codigo).then(() => {
-            // Cambiar texto del botón
-            boton.innerHTML = '<i class="bi bi-check"></i> ¡Copiado!';
-            boton.parentElement.classList.remove('btn-outline-success');
-            boton.parentElement.classList.add('btn-success');
-
-            setTimeout(() => {
-                boton.innerHTML = 'Copiar Código';
-                boton.parentElement.classList.remove('btn-success');
-                boton.parentElement.classList.add('btn-outline-success');
-            }, 2000);
-        }).catch(err => {
-            alert('No se pudo copiar: ' + err);
-        });
-    }
-
-    // Imprimir página
-    function imprimirCodigo() {
-        window.print();
-    }
-
-    // Descargar QR como imagen
-    function descargarComoImagen() {
-        const canvas = document.querySelector('#qrcode canvas');
-        if (canvas) {
-            const link = document.createElement('a');
-            link.download = `codigo-${codigoConfirmacion}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-        } else {
-            alert('Error al generar la imagen del código QR');
-        }
-    }
-
-    // Compartir por WhatsApp
-    function compartirPorWhatsApp() {
-        const mensaje = `¡Tengo mi cupo confirmado para ${nombreEvento}!\n\n` +
-                      `📅 Fecha: ${fechaEvento}\n` +
-                      `📍 Lugar: ${ubicacion}\n` +
-                      `🎫 Código: ${codigoConfirmacion}`;
-
-        const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, '_blank');
-    }
-</script>
 
 </body>
 </html>
