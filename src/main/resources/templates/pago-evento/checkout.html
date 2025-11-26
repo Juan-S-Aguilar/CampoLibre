@@ -41,10 +41,10 @@
                         <!-- Información del Evento -->
                         <div class="mb-4">
                             <img th:if="${inscripcion.imagenEvento != null}"
-                                 th:src="@{'${inscripcion.imagenEvento}}"
-                                 class="img-fluid rounded mb-3"
+                                 th:src="@{${inscripcion.imagenEvento}}"  class="img-fluid rounded mb-3"
                                  style="max-height: 200px; width: 100%; object-fit: cover;"
                                  th:alt="${inscripcion.nombreEvento}">
+
                             <img th:unless="${inscripcion.imagenEvento != null}"
                                  src="https://via.placeholder.com/400x200/28a745/ffffff?text=Evento"
                                  class="img-fluid rounded mb-3"
@@ -200,18 +200,18 @@
                                         </label>
                                     </div>
 
-                                    <!-- Transferencia -->
+                                    <!-- Efectivo -->
                                     <div class="col-md-6">
                                         <input type="radio"
                                                class="btn-check"
                                                name="metodoPago"
-                                               id="transferencia"
-                                               value="TRANSFERENCIA_BANCARIA"
+                                               id="efectivo"
+                                               value="EFECTIVO"
                                                required>
-                                        <label class="btn btn-outline-success w-100 p-3" for="transferencia">
-                                            <i class="bi bi-arrow-left-right fs-3"></i>
-                                            <div class="mt-2">Transferencia</div>
-                                            <small class="text-muted">Bancaria</small>
+                                        <label class="btn btn-outline-success w-100 p-3" for="efectivo">
+                                            <i class="bi bi-cash-coin fs-3"></i>
+                                            <div class="mt-2">Efectivo</div>
+                                            <small class="text-muted">Pago en efectivo</small>
                                         </label>
                                     </div>
                                 </div>

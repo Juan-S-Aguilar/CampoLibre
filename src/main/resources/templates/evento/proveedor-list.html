@@ -44,6 +44,36 @@
                 <p class="text-muted mb-0">Explora todos los eventos disponibles, activos y pasados.</p>
             </div>
         </div>
+        <!-- Tabs de Navegación -->
+        <ul class="nav nav-tabs mb-4" id="eventosTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="todos-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#todos"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos/proveedor/todos'">
+                    <i class="bi bi-grid"></i>
+                    Ver Todos
+                    <span class="badge bg-warning text-dark" th:text="${eventos.size()}">0</span>
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link "
+                        id="publicados-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#publicados"
+                        type="button"
+                        role="tab"
+                        onclick="window.location.href='/eventos?estado=PUBLICADO'">
+                    <i class="bi bi-check-circle"></i>
+                    Publicados
+                </button>
+            </li>
+
+        </ul>
 
         <div class="row mb-4 g-3 justify-content-center">
             <div class="col-md-2 col-6">
