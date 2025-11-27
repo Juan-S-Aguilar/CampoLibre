@@ -27,6 +27,13 @@
                 <a th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Nuevo Producto
                 </a>
+                <!-- Boton para ver el panel de ventas de la tienda -->
+                <a th:if="${tienda != null}"
+                   th:href="@{/pedidos/ventas/tienda/{id}(id=${tienda.id_tienda})}"
+                   class="btn btn-success"
+                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                    <i class="bi bi-bar-chart-line"></i> Panel de Ventas
+                </a>
             </div>
         </div>
 
