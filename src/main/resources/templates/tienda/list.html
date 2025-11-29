@@ -133,7 +133,7 @@
                     </td>
 
                     <!-- ✅ CATEGORÍA (ACTUALIZADO) -->
-                    <td data-label="Categoría">
+                    <td data-label="Categoría" th:data-categoria="${tienda.categoriaPrincipal.name()}">
                         <span class="badge"
                               style="padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;"
                               th:style="${tienda.categoriaPrincipal.name() == 'FRUTAS_VERDURAS' ? 'background-color: #dcfce7; color: #166534;' :
@@ -176,7 +176,7 @@
                     </td>
 
                     <!-- Estado -->
-                    <td data-label="Estado">
+                    <td data-label="Estado" th:data-estado="${tienda.estado.name()}">
                         <span class="status-badge active" th:if="${tienda.estado.name() == 'ACTIVA'}">
                             <i class="bi bi-check-circle"></i> Activa
                         </span>
@@ -239,16 +239,18 @@
                 if (rows[i].getElementsByTagName('td').length === 1) continue; // Skip "no data" row
 
                 const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const categoria = rows[i].getElementsByTagName('td')[2].textContent;
+                const categoriaCell = rows[i].getElementsByTagName('td')[2];
+                const categoria = categoriaCell.getAttribute('data-categoria') || '';
                 const ubicacion = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
                 const contacto = rows[i].getElementsByTagName('td')[4].textContent.toLowerCase();
-                const estadoBadge = rows[i].querySelector('.status-badge').textContent.trim();
+                const estadoCell = rows[i].getElementsByTagName('td')[rows[i].getElementsByTagName('td').length - 2];
+                const estado = estadoCell.getAttribute('data-estado') || '';
 
                 const matchSearch = nombre.includes(searchInput) ||
                                    ubicacion.includes(searchInput) ||
                                    contacto.includes(searchInput);
-                const matchCategoria = filterCategoria === '' || categoria.includes(filterCategoria);
-                const matchEstado = filterEstado === '' || estadoBadge.includes(filterEstado);
+                const matchCategoria = filterCategoria === '' || categoria === filterCategoria;
+                const matchEstado = filterEstado === '' || estado === filterEstado;
 
                 if (matchSearch && matchCategoria && matchEstado) {
                     rows[i].style.display = '';

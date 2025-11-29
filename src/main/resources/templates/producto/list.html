@@ -187,7 +187,7 @@
                     </td>
 
                     <!-- ✅ SUBCATEGORÍA (NUEVO) -->
-                    <td data-label="Subcategoría">
+                    <td data-label="Subcategoría" th:data-subcategoria="${producto.subcategoria.name()}">
                         <span class="badge"
                               style="padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.85rem; font-weight: 500; background-color: var(--color-bg-light); color: var(--color-primary); border: 1px solid var(--color-primary);"
                               th:text="${producto.subcategoria.displayName}">
@@ -229,7 +229,8 @@
                     </td>
 
                     <!-- ✅ STOCK (MEJORADO CON COLORES) -->
-                    <td data-label="Stock">
+                    <td data-label="Stock"
+                        th:data-stock="${producto.stock == 0 ? 'agotado' : (producto.stock <= producto.stockMinimo ? 'bajo' : 'disponible')}">
                         <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                             <span th:if="${producto.stock == 0}"
                                   style="color: var(--color-danger); font-weight: bold;">
@@ -314,21 +315,14 @@
                 if (rows[i].getElementsByTagName('td').length === 1) continue; // Skip "no data" row
 
                 const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const subcategoria = rows[i].getElementsByTagName('td')[2].textContent.trim();
+                const subcategoriaCell = rows[i].getElementsByTagName('td')[2];
+                const subcategoria = subcategoriaCell.getAttribute('data-subcategoria') || '';
                 const stockCell = rows[i].getElementsByTagName('td')[6];
-                const stockText = stockCell.textContent.toLowerCase();
+                const stock = stockCell.getAttribute('data-stock') || '';
 
                 const matchSearch = nombre.includes(searchInput);
-                const matchSubcategoria = filterSubcategoria === '' || subcategoria.includes(filterSubcategoria);
-
-                let matchStock = true;
-                if (filterStock === 'agotado') {
-                    matchStock = stockText.includes('agotado');
-                } else if (filterStock === 'bajo') {
-                    matchStock = stockText.includes('exclamation-triangle');
-                } else if (filterStock === 'disponible') {
-                    matchStock = stockText.includes('check-circle');
-                }
+                const matchSubcategoria = filterSubcategoria === '' || subcategoria === filterSubcategoria;
+                const matchStock = filterStock === '' || stock === filterStock;
 
                 if (matchSearch && matchSubcategoria && matchStock) {
                     rows[i].style.display = '';
