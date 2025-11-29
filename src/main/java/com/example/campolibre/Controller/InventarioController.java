@@ -34,7 +34,78 @@ public class InventarioController {
     @Autowired
     private UsuarioService usuarioService;
 
-    // ========== VER PANEL DE INVENTARIO ==========
+    // ========== VER PANEL DE INVENTARIO (TODAS LAS TIENDAS) ==========
+
+    @GetMapping("/panel")
+    public String verPanelInventarioGeneral(@RequestParam(required = false) String filtro,
+                                           Model model,
+                                           Authentication authentication,
+                                           RedirectAttributes redirectAttributes) {
+        try {
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+
+            // Obtener todas las tiendas del proveedor
+            List<TiendaDTO> misTiendas = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
+
+            if (misTiendas.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "No tienes tiendas registradas.");
+                return "redirect:/tiendas";
+            }
+
+            // Obtener productos de todas las tiendas
+            List<ProductoDTO> todosProductos = misTiendas.stream()
+                    .flatMap(tienda -> productoService.obtenerProductosPorTienda(tienda.getId_tienda()).stream())
+                    .collect(Collectors.toList());
+
+            // Calcular resumen agregado
+            ResumenInventarioDTO resumen = calcularResumenAgregado(todosProductos);
+
+            // Aplicar filtros
+            List<ProductoDTO> productos;
+            String tituloFiltro = "Todos los productos";
+
+            if ("sin_stock".equals(filtro)) {
+                productos = todosProductos.stream()
+                        .filter(p -> p.getSinStock() != null && p.getSinStock())
+                        .collect(Collectors.toList());
+                tituloFiltro = "Productos sin stock";
+            } else if ("stock_bajo".equals(filtro)) {
+                productos = todosProductos.stream()
+                        .filter(p -> p.getTieneStockBajo() != null && p.getTieneStockBajo())
+                        .collect(Collectors.toList());
+                tituloFiltro = "Productos con stock bajo";
+            } else if ("activos".equals(filtro)) {
+                productos = todosProductos.stream()
+                        .filter(p -> "ACTIVO".equals(p.getEstado()))
+                        .collect(Collectors.toList());
+                tituloFiltro = "Productos activos";
+            } else {
+                productos = todosProductos;
+                tituloFiltro = "Todos los productos";
+            }
+
+            // Crear un mapa de nombres de tiendas para usar en la vista
+            Map<Long, String> tiendaNombres = misTiendas.stream()
+                    .collect(Collectors.toMap(TiendaDTO::getId_tienda, TiendaDTO::getNombre));
+
+            model.addAttribute("tienda", null); // No hay tienda específica
+            model.addAttribute("resumen", resumen);
+            model.addAttribute("productos", productos);
+            model.addAttribute("filtroActual", filtro);
+            model.addAttribute("tituloFiltro", tituloFiltro);
+            model.addAttribute("misTiendas", misTiendas);
+            model.addAttribute("tiendaNombres", tiendaNombres);
+            model.addAttribute("viendoTodasTiendas", true);
+
+            return "inventario/panel";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al cargar inventario: " + e.getMessage());
+            return "redirect:/tiendas";
+        }
+    }
+
+    // ========== VER PANEL DE INVENTARIO (TIENDA ESPECÍFICA) ==========
 
     @GetMapping("/tienda/{idTienda}")
     public String verInventario(@PathVariable Long idTienda,
@@ -50,6 +121,10 @@ public class InventarioController {
         }
 
         try {
+            String email = authentication.getName();
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
+            List<TiendaDTO> misTiendas = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
+
             TiendaDTO tienda = tiendaService.obtenerTiendaPorId(idTienda);
             ResumenInventarioDTO resumen = productoService.obtenerResumenInventario(idTienda);
 
@@ -78,12 +153,36 @@ public class InventarioController {
             model.addAttribute("productos", productos);
             model.addAttribute("filtroActual", filtro);
             model.addAttribute("tituloFiltro", tituloFiltro);
+            model.addAttribute("misTiendas", misTiendas);
+            model.addAttribute("viendoTodasTiendas", false);
 
             return "inventario/panel";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al cargar inventario: " + e.getMessage());
             return "redirect:/tiendas";
         }
+    }
+
+    // ========== MÉTODO AUXILIAR - CALCULAR RESUMEN AGREGADO ==========
+
+    private ResumenInventarioDTO calcularResumenAgregado(List<ProductoDTO> productos) {
+        ResumenInventarioDTO resumen = new ResumenInventarioDTO();
+
+        resumen.setTotalProductos(productos.size());
+        resumen.setProductosActivos((int) productos.stream()
+                .filter(p -> "ACTIVO".equals(p.getEstado()))
+                .count());
+        resumen.setProductosConStockBajo((int) productos.stream()
+                .filter(p -> p.getTieneStockBajo() != null && p.getTieneStockBajo())
+                .count());
+        resumen.setProductosSinStock((int) productos.stream()
+                .filter(p -> p.getSinStock() != null && p.getSinStock())
+                .count());
+        resumen.setValorTotalInventario(productos.stream()
+                .mapToDouble(p -> p.getPrecio() * p.getStock())
+                .sum());
+
+        return resumen;
     }
 
     // ========== INCREMENTAR STOCK (AJAX) ==========
