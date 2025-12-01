@@ -60,12 +60,19 @@
                     <label for="password" class="form-label">
                         <i class="bi bi-lock"></i> Contraseña
                     </label>
-                    <input type="password"
-                           class="form-control"
-                           id="password"
-                           name="password"
-                           placeholder="Ingresa tu contraseña"
-                           required>
+                    <div class="input-group">
+                        <input type="password"
+                               class="form-control"
+                               id="password"
+                               name="password"
+                               placeholder="Ingresa tu contraseña"
+                               required>
+                        <button class="btn btn-secondary"
+                                type="button"
+                                id="togglePassword">
+                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Botón de submit -->
@@ -96,6 +103,33 @@
         </div>
     </div>
 </main>
+<!-- Script para validaciones -->
+<script th:src="@{/js/validaciones-auth.js}"></script>
 
+<!-- Script para toggle password -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordField = document.getElementById('password');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+
+        if (togglePassword && passwordField) {
+            togglePassword.addEventListener('click', function() {
+                // Alternar tipo de input
+                const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordField.setAttribute('type', type);
+
+                // Cambiar ícono
+                if (type === 'password') {
+                    toggleIcon.classList.remove('bi-eye-slash');
+                    toggleIcon.classList.add('bi-eye');
+                } else {
+                    toggleIcon.classList.remove('bi-eye');
+                    toggleIcon.classList.add('bi-eye-slash');
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
