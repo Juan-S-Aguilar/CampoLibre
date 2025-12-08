@@ -21,7 +21,7 @@
             </h2>
             <div class="list-header-actions">
                 <a th:href="@{/tiendas/nueva}"
-                   class="btn btn-primary"
+                   class="btn btn-store-green"
                    sec:authorize="hasAuthority('PROVEEDOR')">
                     <i class="bi bi-plus-circle"></i> Nueva Tienda
                 </a>
@@ -32,7 +32,7 @@
                             th:onclick="'window.location.href=\'/tiendas\''">
                         <i class="bi bi-list"></i> Todas
                     </button>
-                    <button class="view-toggle-btn"
+                    <button class="view-toggle-btn btn-store-green"
                             th:classappend="${tipoLista == 'mis_tiendas' ? 'active' : ''}"
                             th:onclick="'window.location.href=\'/tiendas/mis-tiendas\''">
                         <i class="bi bi-shop"></i> Mis Tiendas
@@ -198,7 +198,7 @@
                             </a>
 
                             <a th:href="@{/tiendas/editar/{id}(id=${tienda.id_tienda})}"
-                               class="btn-action btn-edit"
+                               class="btn-action btn-editar"
                                title="Editar tienda"
                                sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>

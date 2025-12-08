@@ -121,7 +121,7 @@
 
                     <!-- Editar (PROVEEDOR/ADMIN) -->
                     <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
-                       class="btn btn-warning"
+                       class="btn btn-editar"
                        sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                         <i class="bi bi-pencil"></i> Editar Producto
                     </a>

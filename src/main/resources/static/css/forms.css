@@ -431,3 +431,127 @@ textarea.form-control {
         width: 100%;
     }
 }
+
+/* Estilos específicos para el formulario de producto con bordes coloreados */
+.product-form {
+    position: relative;
+    z-index: 0;
+}
+
+/* Eliminamos el halo; solo aplicaremos un borde degradado */
+.form-bg-yellow {
+    background: var(--color-bg-white); /* fondo blanco neutro */
+    color: var(--color-text-dark);
+    border-radius: var(--border-radius);
+    /* Bordes con degradado amarillo -> azul */
+    border: 4px solid transparent;
+    border-image: linear-gradient(135deg, #FECC47 0%, #A4DDE6 100%) 1;
+    /* sombra sutil para elevación sin colores fuertes */
+    box-shadow: var(--shadow-md);
+}
+
+/* Asegurar que elementos internos sigan siendo legibles */
+.form-bg-yellow .form-header,
+.form-bg-yellow .form-actions,
+.form-bg-yellow .form-section {
+    background: transparent;
+}
+
+.form-bg-yellow .form-control,
+.form-bg-yellow .form-select {
+    background-color: var(--color-bg-white);
+}
+
+/* Bordes degradados para el formulario de tiendas: azul arriba -> amarillo abajo */
+.form-bg-blue-top {
+    background: var(--color-bg-white);
+    color: var(--color-text-dark);
+    border-radius: var(--border-radius);
+    border: 4px solid transparent;
+    /* gradiente vertical azul (arriba) a amarillo (abajo) */
+    border-image: linear-gradient(180deg, #A4DDE6 0%, #FECC47 100%) 1;
+    box-shadow: var(--shadow-md);
+}
+
+.form-bg-blue-top .form-control,
+.form-bg-blue-top .form-select {
+    background-color: var(--color-bg-white);
+}
+
+/* Botones específicos para formulario de producto */
+.btn-cancel-yellow {
+    background-color: #FECC47; /* amarillo */
+    color: #12202a; /* texto oscuro para contraste */
+    border: 3px solid transparent;
+    border-radius: var(--border-radius-sm);
+    border-image: linear-gradient(135deg, #FECC47 0%, #A4DDE6 100%) 1;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.btn-cancel-yellow:hover,
+.btn-cancel-yellow:focus {
+    filter: brightness(0.95);
+    text-decoration: none;
+    outline: none;
+}
+
+.btn-publish-blue {
+    background-color: #A4DDE6; /* azul suave */
+    color: #06202a; /* texto oscuro */
+    border: 3px solid transparent;
+    border-radius: var(--border-radius-sm);
+    border-image: linear-gradient(135deg, #A4DDE6 0%, #FECC47 100%) 1;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.btn-publish-blue:hover,
+.btn-publish-blue:focus {
+    filter: brightness(0.95);
+    outline: none;
+}
+
+/* Asegurar que el icono dentro del botón mantenga buen contraste */
+.btn-cancel-yellow i,
+.btn-publish-blue i {
+    color: inherit;
+}
+
+/* Botón verde para acciones relacionadas con tiendas (Nueva Tienda / Mis Tiendas) */
+.btn-store-green {
+    background-color: #C1D95C;
+    color: #15321a; /* texto oscuro para contraste */
+    border: 2px solid rgba(0,0,0,0.05);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    border-radius: var(--border-radius-sm);
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-store-green:hover,
+.btn-store-green:focus {
+    filter: brightness(0.95);
+    text-decoration: none;
+    outline: none;
+}
+
+/* Letrero del nombre de tienda en la vista de detalle */
+.shop-name-badge {
+    background-color: #FFF59D; /* fondo amarillo */
+    border: 3px solid #FF9100; /* borde naranja más visible */
+    color: #12202a;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+/* Ajustes responsivos: botones a full-width en móvil como el resto */
+@media (max-width: 768px) {
+    .form-actions .btn {
+        width: 100%;
+    }
+}

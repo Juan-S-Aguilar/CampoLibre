@@ -148,11 +148,17 @@
                         <label style="display: block; font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 0.5rem; font-weight: 600;">
                             <i class="bi bi-envelope"></i> CORREO
                         </label>
-                        <a th:href="'mailto:' + ${tienda.correo_tienda}"
-                           style="color: var(--color-primary); text-decoration: none; font-weight: 500;"
-                           th:text="${tienda.correo_tienda}">
-                            correo@tienda.com
-                        </a>
+                        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                            <a th:href="'mailto:' + ${tienda.correo_tienda}"
+                               style="color: var(--color-primary); text-decoration: none; font-weight: 500;"
+                               th:text="${tienda.correo_tienda}">
+                                correo@tienda.com
+                            </a>
+
+                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Copiar correo" onclick="copiarCorreo(this)" th:data-correo="${tienda.correo_tienda}">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Teléfono -->
@@ -200,7 +206,7 @@
 
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <a th:href="@{/tiendas/editar/{id}(id=${tienda.id_tienda})}"
-                   class="btn btn-warning">
+                   class="btn btn-warning btn-editar">
                     <i class="bi bi-pencil"></i> Editar Tienda
                 </a>
 
@@ -219,6 +225,25 @@
 
     </div>
 </main>
+
+<script>
+    function copiarCorreo(button) {
+        try {
+            const correo = button.getAttribute('data-correo') || '';
+            if (!correo) return alert('No hay correo disponible para copiar.');
+            navigator.clipboard.writeText(correo).then(() => {
+                // notificar al usuario
+                alert('Correo copiado al portapapeles: ' + correo);
+            }).catch(err => {
+                console.error(err);
+                alert('No fue posible copiar el correo.');
+            });
+        } catch (e) {
+            console.error(e);
+            alert('Error al copiar correo.');
+        }
+    }
+</script>
 
 </body>
 </html>

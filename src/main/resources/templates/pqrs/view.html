@@ -8,7 +8,7 @@
 <body>
 
 <main th:fragment="content">
-    <div class="form-container">
+    <div class="form-container form-bg-blue-top">
 
         <div class="form-header">
             <h2>
@@ -141,71 +141,71 @@
                     Descripción (PQRS Inicial)
                 </h2>
             </div>
-            <div style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary);">
-                <p style="margin: 0; font-size: 1rem; line-height: 1.8; color: var(--color-text-dark); white-space: pre-wrap;"
-                   th:text="${pqrs.descripcion}">
-                    Descripción completa de la PQRS...
-                </p>
-            </div>
-        </div>
+            <!-- Caja de descripción con acciones (copiar / imprimir) -->
+            <div style="padding: 0.75rem 1.5rem; display:flex; align-items:flex-start; gap:0.75rem;">
+                <div style="flex:1; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-primary); padding:1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <i class="bi bi-chat-left-text" style="font-size:1.15rem; color:var(--color-primary);"></i>
+                            <strong style="font-size:0.95rem; color:var(--color-text-dark);">Descripción completa</strong>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Copiar descripción" onclick="copiarTexto('pqrsDescripcion')">
+                                <i class="bi bi-clipboard"></i> Copiar
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Imprimir descripción" onclick="imprimirElemento('pqrsDescripcion')">
+                                <i class="bi bi-printer"></i>
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="dashboard-section">
-            <div class="dashboard-section-header">
-                <h2>
-                    <i class="bi bi-journals"></i>
-                    Historial de Interacciones
-                </h2>
-            </div>
-
-            <div th:if="${pqrs.respuesta != null}"
-                 style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-success);">
-                <h4 style="color: var(--color-success); margin-bottom: 0.5rem;">
-                    <i class="bi bi-chat-right-text"></i> Última Interacción
-                </h4>
-                <p style="margin: 0; font-size: 0.9rem; color: var(--color-text-light);">
-                    Tipo: <strong th:text="${pqrs.estado.name() == 'EN_REPLICA'} ? 'Réplica del Consumidor' : 'Respuesta del Proveedor'">Respuesta</strong>
-                    | Emisor: <strong th:text="${pqrs.id_receptor}">ID</strong>
-                    | Fecha: <strong th:text="${#temporals.format(pqrs.fecha_respuesta, 'dd/MM/yyyy HH:mm')}">Fecha</strong>
+                    <div id="pqrsDescripcion">
+                        <p style="margin: 0; font-size: 1rem; line-height: 1.8; color: var(--color-text-dark); white-space: pre-wrap;"
+                           th:text="${pqrs.descripcion}">
+                            Descripción completa de la PQRS...
+                        </p>
+                    </div>
+                </div>
                 </p>
                 <div style="margin-top: 1rem; padding: 1rem; background-color: white; border-radius: 4px; border: 1px solid var(--color-border);">
-                    <p style="margin: 0; font-size: 1rem; line-height: 1.8; color: var(--color-text-dark); white-space: pre-wrap;"
-                       th:text="${pqrs.respuesta}">Contenido de la última interacción...</p>
-                </div>
-            </div>
 
-            <div th:if="${pqrs.respuesta == null}"
-                 style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-warning);">
-                <p style="margin: 0;">Aún no hay interacciones registradas aparte de la PQRS inicial.</p>
-            </div>
-        </div>
+        <!-- Scripts locales para acciones de copia e impresión en la vista PQRS -->
+        <script>
+            function copiarTexto(elementId) {
+                try {
+                    const text = document.getElementById(elementId).innerText.trim();
+                    if (!text) {
+                        alert('No hay texto para copiar.');
+                        return;
+                    }
+                    navigator.clipboard.writeText(text).then(() => {
+                        // pequeña confirmación visual
+                        alert('Descripción copiada al portapapeles.');
+                    }).catch(err => {
+                        console.error('Error al copiar:', err);
+                        alert('No fue posible copiar el texto.');
+                    });
+                } catch (e) {
+                    console.error(e);
+                    alert('Error al intentar copiar.');
+                }
+            }
 
-        <div class="dashboard-section"
-             th:if="${puedeReplicar} and (${pqrs.estado.name()} == 'RESPONDIDA')">
-            <div class="dashboard-section-header">
-                <h2>
-                    <i class="bi bi-decision"></i>
-                    Acción del Consumidor
-                </h2>
-                <div style="display: flex; gap: 0.5rem;">
-                    <form th:action="@{/pqrs/cerrar-pqrs/{id}(id=${pqrs.id_pqrs})}" method="post">
-                        <button type="submit" class="btn btn-success"
-                                onclick="return confirm('¿Está seguro de que acepta la respuesta y desea cerrar la PQRS? Esta acción es definitiva.');">
-                            <i class="bi bi-check2-circle"></i> Aceptar y Cerrar
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div style="padding: 1.5rem; background-color: var(--color-bg-light); border-radius: 8px; border-left: 4px solid var(--color-warning);">
-                <h4 style="color: var(--color-warning); margin-bottom: 1rem;">
-                    <i class="bi bi-arrow-repeat"></i> ¿Necesitas replicar?
-                </h4>
-                <form th:action="@{/pqrs/registrar-replica/{id}(id=${pqrs.id_pqrs})}" method="post">
-                    <div class="form-group">
-                        <label for="contenidoReplica">Contenido de la Réplica (Máx. 1000 caracteres)</label>
-                        <textarea id="contenidoReplica" name="contenido" class="form-control" rows="4" maxlength="1000" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-warning" style="margin-top: 1rem;">
+            function imprimirElemento(elementId) {
+                const contenido = document.getElementById(elementId);
+                if (!contenido) return alert('No se encontró el contenido a imprimir.');
+                const ventana = window.open('', '_blank');
+                ventana.document.write('<html><head><title>Imprimir descripción</title>');
+                ventana.document.write('<link rel="stylesheet" href="/css/styles.css">');
+                ventana.document.write('</head><body>');
+                ventana.document.write('<pre style="white-space:pre-wrap; font-family:inherit;">' + contenido.innerText + '</pre>');
+                ventana.document.write('</body></html>');
+                ventana.document.close();
+                ventana.focus();
+                ventana.print();
+                ventana.close();
+            }
+        </script>
                         <i class="bi bi-send"></i> Enviar Réplica
                     </button>
                 </form>

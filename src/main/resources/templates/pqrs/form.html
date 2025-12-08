@@ -7,7 +7,7 @@
 <body>
 
 <main th:fragment="content">
-    <div class="form-container">
+    <div class="form-container form-bg-blue-top">
 
         <!-- Header del formulario -->
         <div class="form-header">
@@ -151,12 +151,12 @@
                         <select name="idEvento"
                                 class="form-select"
                                 id="idEvento"
-                                th:selected="${idEventoSeleccionado}">
+                                th:selected="${idEventoSeleccionada}">
                             <option value="">-- Sin asociar --</option>
                             <option th:each="evento : ${eventos}"
                                     th:value="${evento.id_evento}"
                                     th:text="${evento.nombre}"
-                                    th:selected="${evento.id_evento == idEventoSeleccionado}">
+                                    th:selected="${evento.id_evento == idEventoSeleccionada}">
                                 Evento
                             </option>
                         </select>

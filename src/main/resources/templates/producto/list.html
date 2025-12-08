@@ -186,7 +186,7 @@
                         </small>
                     </td>
 
-                    <!-- ✅ SUBCATEGORÍA (NUEVO) -->
+                    <!-- Subcategoría (restaurado al estado anterior) -->
                     <td data-label="Subcategoría">
                         <span class="badge"
                               style="padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.85rem; font-weight: 500; background-color: var(--color-bg-light); color: var(--color-primary); border: 1px solid var(--color-primary);"
@@ -264,7 +264,7 @@
                             </a>
 
                             <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
-                               class="btn-action btn-edit"
+                               class="btn-action btn-editar"
                                title="Editar producto"
                                sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>

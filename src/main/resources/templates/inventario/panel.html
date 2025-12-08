@@ -17,11 +17,11 @@
                 Panel de Inventario
             </h2>
             <div class="list-header-actions">
-                <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-secondary">
+                <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-secondary btn-volver-tienda">
                     <i class="bi bi-arrow-left"></i> Volver a Tienda
                 </a>
                 <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
-                   class="btn btn-info">
+                   class="btn btn-ver-productos">
                     <i class="bi bi-box-seam"></i> Ver Productos
                 </a>
                 <a th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}" class="btn btn-primary">
@@ -305,7 +305,7 @@
 
                             <!-- Botón Editar -->
                             <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
-                               class="btn btn-sm btn-primary"
+                               class="btn btn-sm btn-primary btn-editar-inventario"
                                title="Editar producto">
                                 <i class="bi bi-pencil"></i>
                             </a>

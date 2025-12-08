@@ -259,6 +259,64 @@ button.btn-action { background:none; border:none; color:inherit; cursor:pointer;
     border: 1px solid #f5c6cb;
 }
 
+/* Estilos para badges de subcategoría (vista de inventario) */
+.subcategory-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 12px;
+    color: #072b33; /* color de texto por defecto */
+    border: 1px solid transparent;
+}
+
+/* Colores alternados solicitados */
+.subcat-1 {
+    background-color: #A4DDE6; /* azul */
+    color: #072b33;
+    border-color: #8fd4de;
+}
+
+.subcat-2 {
+    background-color: #FF7771; /* rojo-rosado */
+    color: #3b0b0a;
+    border-color: #e66b6a;
+}
+
+.subcat-3 {
+    background-color: #DC7A91; /* rosa */
+    color: #3b0b0a;
+    border-color: #c66d7f;
+}
+
+/* Nuevos colores solicitados para el dashboard de consumidor */
+.subcat-cons-1 {
+    background-color: #A7FFF3; /* color 1 */
+    color: #06202a;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+.subcat-cons-2 {
+    background-color: #FAD3CE; /* color 2 */
+    color: #06202a;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-weight: 600;
+}
+
+.subcat-cons-3 {
+    background-color: #FFD3B5; /* color 3 */
+    color: #06202a;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-weight: 600;
+}
+
 /* ========== PAGINACIÓN ========== */
 .pagination-container {
     display: flex;
@@ -652,4 +710,61 @@ button.btn-action { background:none; border:none; color:inherit; cursor:pointer;
         flex-wrap: wrap;
         justify-content: center;
     }
+}
+
+/* Estilos personalizados para botones en la vista de inventario */
+.btn-volver-tienda {
+    background-color: #FECC47; /* Amarillo solicitado */
+    color: #111111; /* texto oscuro para buen contraste */
+    border: 1px solid #e6b93a;
+    box-shadow: none;
+}
+
+.btn-volver-tienda:hover,
+.btn-volver-tienda:focus {
+    background-color: #e6b93a;
+    color: #111111;
+    text-decoration: none;
+}
+
+/* Botón Ver Productos (color solicitado #A4DDE6) */
+.btn-ver-productos {
+    background-color: #A4DDE6;
+    color: #072b33;
+    border: 1px solid #8fd4de;
+    box-shadow: none;
+}
+
+.btn-ver-productos:hover,
+.btn-ver-productos:focus {
+    background-color: #8fd4de;
+    color: #072b33;
+}
+
+.btn-editar-inventario {
+    background-color: #A4DDE6; /* Azul solicitado */
+    color: #072b33; /* texto oscuro para contraste */
+    border: 1px solid #8fd4de;
+    box-shadow: none;
+}
+
+.btn-editar-inventario:hover,
+.btn-editar-inventario:focus {
+    background-color: #8fd4de;
+    color: #072b33;
+}
+
+/* Alias global para botones de editar (reúsa el color azul definido) */
+.btn-editar {
+    /* Reutiliza el color del botón de editar en inventario */
+    background-color: #A4DDE6;
+    color: #072b33;
+    border: 1px solid #8fd4de;
+    box-shadow: none;
+}
+
+.btn-editar:hover,
+.btn-editar:focus {
+    background-color: #8fd4de;
+    color: #072b33;
 }

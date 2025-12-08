@@ -17,7 +17,7 @@
                 <span th:if="${tipoLista == 'mis_pqrs'}">Mis PQRS</span>
             </h2>
             <div class="list-header-actions">
-                <a th:href="@{/pqrs/crear}" class="btn btn-primary">
+                <a th:href="@{/pqrs/crear}" class="btn btn-store-green">
                     <i class="bi bi-plus-circle"></i> Nueva PQRS
                 </a>
                 <!-- Solo ADMIN ve el toggle -->
@@ -206,7 +206,7 @@
                             <!-- Responder: visible si el servicio marcó que el usuario puede responder y está pendiente -->
                             <a th:if="${pqrs.puede_responder} and ${pqrs.estado.name()} == 'PENDIENTE'"
                                th:href="@{/pqrs/responder/{id}(id=${pqrs.id_pqrs})}"
-                               class="btn-action btn-edit"
+                               class="btn-action btn-editar"
                                title="Responder PQRS">
                                 <i class="bi bi-chat-left-text"></i>
                             </a>

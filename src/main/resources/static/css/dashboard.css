@@ -240,6 +240,40 @@
     border-bottom: none;
 }
 
+/* Colores alternados para Subcategoría en el panel de inventario */
+/* Reemplaza el fondo verde oscuro; aplica solo al .badge dentro de la celda Subcategoría */
+#inventarioTable tbody tr:nth-child(4n+1) td[data-label="Subcategoría"] .badge {
+    background-color: #CEFFF0 !important; /* azul muy claro */
+    color: #0a2130 !important; /* texto oscuro para contraste */
+    border-radius: 12px !important;
+    padding: 0.35rem 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+#inventarioTable tbody tr:nth-child(4n+2) td[data-label="Subcategoría"] .badge {
+    background-color: #FA990E !important; /* naranja */
+    color: #ffffff !important; /* texto claro para contraste */
+    border-radius: 12px !important;
+    padding: 0.35rem 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+#inventarioTable tbody tr:nth-child(4n+3) td[data-label="Subcategoría"] .badge {
+    background-color: #FF7771 !important; /* salmón */
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 0.35rem 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+#inventarioTable tbody tr:nth-child(4n) td[data-label="Subcategoría"] .badge {
+    background-color: #DC7A91 !important; /* rosa */
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 0.35rem 0.75rem !important;
+    font-weight: 600 !important;
+}
+
 /* ========== GRÁFICAS Y VISUALIZACIONES ========== */
 .chart-container {
     position: relative;

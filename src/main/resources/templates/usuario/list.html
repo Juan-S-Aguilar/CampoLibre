@@ -138,7 +138,7 @@
                             <!-- Editar (solo si está activo) -->
                             <a th:if="${usuario.estado == 'ACTIVO'}"
                                th:href="@{/usuarios/editar/{id}(id=${usuario.id_usuario})}"
-                               class="btn-action btn-edit"
+                               class="btn-action btn-editar"
                                title="Editar usuario">
                                 <i class="bi bi-pencil"></i>
                             </a>

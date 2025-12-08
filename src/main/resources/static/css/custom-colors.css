@@ -1,0 +1,18 @@
+/* Custom colors and overrides for subcategory names */
+
+/* Forzar texto negro en badges de subcategoría */
+.badge-subcategoria,
+.data-table td[data-label="Subcategoría"] .badge,
+.data-table td[data-label="Subcategoría"] span {
+    color: #000 !important;
+}
+
+/* Si hay elementos inline simples que muestran la subcategoría */
+[data-label="Subcategoría"] {
+    color: #000;
+}
+
+/* Mantener contraste si un icono está dentro */
+[data-label="Subcategoría"] i {
+    color: inherit;
+}
