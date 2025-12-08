@@ -194,6 +194,7 @@ public class PedidoController {
 
     /**
      * Panel de ventas para proveedores - muestra las ventas de todas sus tiendas
+     * ACTUALIZADO: Usa el método optimizado obtenerPedidosPorProveedor
      */
     @GetMapping("/ventas")
     public String panelVentas(Authentication authentication, Model model, RedirectAttributes redirectAttributes) {
@@ -207,27 +208,16 @@ public class PedidoController {
             // Obtener las tiendas del proveedor
             List<TiendaDTO> misTiendas = tiendaService.obtenerTiendasPorUsuario(usuario.getId_usuario());
 
-            // Obtener pedidos que incluyan productos de las tiendas del proveedor
-            List<PedidoDTO> pedidos = new ArrayList<>();
+            // Obtener pedidos usando el método optimizado
+            List<PedidoDTO> pedidos = pedidoService.obtenerPedidosPorProveedor(usuario.getId_usuario());
+
+            // Calcular ganancias totales
             double gananciasTotales = 0.0;
-            int totalVentas = 0;
+            int totalVentas = pedidos.size();
 
-            // Por cada tienda del proveedor, obtener los pedidos relacionados
-            for (TiendaDTO tienda : misTiendas) {
-                try {
-                    List<PedidoDTO> pedidosTienda = pedidoService.obtenerPedidosPorTienda(tienda.getId_tienda());
-                    pedidos.addAll(pedidosTienda);
-
-                    // Calcular ganancias de esta tienda
-                    for (PedidoDTO pedido : pedidosTienda) {
-                        if (pedido.getTotal() != null) {
-                            gananciasTotales += pedido.getTotal();
-                            totalVentas++;
-                        }
-                    }
-                } catch (Exception e) {
-                    // Continuar con las demás tiendas si hay error
-                    continue;
+            for (PedidoDTO pedido : pedidos) {
+                if (pedido.getTotal() != null) {
+                    gananciasTotales += pedido.getTotal();
                 }
             }
 

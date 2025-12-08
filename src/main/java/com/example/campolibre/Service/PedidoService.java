@@ -57,4 +57,9 @@ public interface PedidoService {
      * Genera el siguiente número de pedido único
      */
     String generarNumeroPedido();
+
+    /**
+     * Obtiene todos los pedidos que contienen productos de las tiendas de un proveedor
+     */
+    List<PedidoDTO> obtenerPedidosPorProveedor(Long idUsuarioProveedor);
 }

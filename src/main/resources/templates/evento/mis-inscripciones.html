@@ -27,11 +27,16 @@
         </div>
 
         <!-- Mensajes -->
-        <div th:if="${mensaje}" class="alert alert-success" role="alert">
-            <i class="bi bi-check-circle"></i> <span th:text="${mensaje}"></span>
+        <!-- Mostrar mensaje de éxito si existe 'mensaje' o 'success' (comprobación segura para evitar errores de conversión nula) -->
+        <div th:if="${mensaje != null or success != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i>
+            <!-- Mostrar 'mensaje' si no es null, si no mostrar 'success' -->
+            <span th:text="${mensaje != null ? mensaje : success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger" role="alert">
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
         <!-- Estado vacío -->
@@ -89,6 +94,8 @@
                         </span>
 
                         <img th:if="${inscripcion.imagenEvento != null}"
+                             src="#"
+                             alt="Evento"
                              th:src="@{${inscripcion.imagenEvento}}"
                              class="card-img-top"
                              th:alt="${inscripcion.nombreEvento}">
@@ -142,7 +149,7 @@
                                     <i class="bi bi-x-circle"></i> Inscripción Cancelada
                                 </div>
 
-                                <div class="d-grid gap-2">
+                                <div class="d-flex gap-2 flex-wrap align-items-center">
                                     <a th:href="@{/eventos/ver/{id}(id=${inscripcion.id_evento})}"
                                        class="btn btn-outline-primary btn-sm">
                                         <i class="bi bi-eye"></i> Ver Detalles
@@ -159,24 +166,28 @@
                                        class="btn btn-success btn-sm">
                                         <i class="bi bi-qr-code"></i> Ver QR
                                     </a>
-                                </div>
 
-                            </div>
-                        </div>
+                                    <!-- Botón Cancelar con formulario POST -->
+                                    <form th:if="${inscripcion.estadoCupo == T(com.example.campolibre.Enum.EstadoCupo).CONFIRMADO}"
+                                          th:action="@{/eventos/cancelar-inscripcion/{id}(id=${inscripcion.id_inscripcion})}"
+                                          method="post"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Estás seguro de cancelar tu inscripción?\n\nInformación de reembolso:\n• Más de 48 horas antes: 70%\n• Entre 24-48 horas: 50%\n• Menos de 24 horas: Sin reembolso');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-x-circle"></i> Cancelar
+                                        </button>
+                                    </form>
+                                 </div>
+                             </div>
+                         </div>
 
                         <div class="card-footer bg-white border-top-0 pt-0 pb-3">
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <small class="text-muted" style="font-size: 0.75rem;">
                                     Inscrito: <span th:text="${inscripcion.fechaInscripcion != null ? #temporals.format(inscripcion.fechaInscripcion, 'dd/MM/yyyy') : ''}"></span>
                                 </small>
-                                <button th:if="${inscripcion.estadoCupo == T(com.example.campolibre.Enum.EstadoCupo).CONFIRMADO}"
-                                        class="btn btn-link btn-sm text-danger text-decoration-none p-0"
-                                        style="font-size: 0.8rem;"
-                                        onclick="confirmarCancelacion(this)"
-                                        th:data-inscripcion-id="${inscripcion.id_inscripcion}"
-                                        th:data-evento-nombre="${inscripcion.nombreEvento}">
-                                    Cancelar
-                                </button>
+                                <!-- Footer limpio: el botón Cancelar ahora está en el bloque de acciones para mejor UX -->
+                                <div></div>
                             </div>
                         </div>
 
@@ -199,33 +210,6 @@
     </div>
 </main>
 
-<div class="modal fade" id="modalCancelar" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle"></i> Cancelar Inscripción
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas cancelar tu inscripción a:</p>
-                <h6 id="eventoNombre" class="text-center text-primary fw-bold"></h6>
-                <hr>
-                <div class="alert alert-warning">
-                    <small><i class="bi bi-info-circle"></i> Esta acción es irreversible. Reembolso del 70% según términos.</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Mantener</button>
-                <form id="formCancelar" method="post">
-                    <button type="submit" class="btn btn-danger">Sí, Cancelar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -236,14 +220,6 @@
             button.innerHTML = '<i class="bi bi-check-lg text-success"></i>';
             setTimeout(() => { button.innerHTML = originalHtml; }, 2000);
         }).catch(err => alert('Error al copiar: ' + err));
-    }
-
-    function confirmarCancelacion(button) {
-        const inscripcionId = button.getAttribute('data-inscripcion-id');
-        const eventoNombre = button.getAttribute('data-evento-nombre');
-        document.getElementById('eventoNombre').textContent = eventoNombre;
-        document.getElementById('formCancelar').action = '/eventos/cancelar-inscripcion/' + inscripcionId;
-        new bootstrap.Modal(document.getElementById('modalCancelar')).show();
     }
 </script>
 

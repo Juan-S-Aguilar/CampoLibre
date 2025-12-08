@@ -186,4 +186,37 @@ public class PdfService {
 
         return stats;
     }
+
+    /**
+     * Genera un archivo PDF con la lista de proveedores inscritos a un evento
+     * @param inscripciones Lista de inscripciones a incluir en el reporte
+     * @param nombreEvento Nombre del evento
+     * @param fechaEvento Fecha del evento
+     * @return ByteArrayInputStream con el archivo PDF generado
+     */
+    public ByteArrayInputStream generarListaProveedores(List<Map<String, Object>> inscripciones,
+                                                        String nombreEvento,
+                                                        String fechaEvento) throws DocumentException, IOException {
+
+        // Preparar datos para la plantilla
+        Context context = new Context();
+        context.setVariable("inscripciones", inscripciones);
+        context.setVariable("nombreEvento", nombreEvento);
+        context.setVariable("fechaEvento", fechaEvento);
+        context.setVariable("fechaGeneracion", LocalDateTime.now().format(DATE_FORMATTER));
+        context.setVariable("totalProveedores", inscripciones.size());
+
+        // Renderizar HTML desde plantilla Thymeleaf
+        String htmlContent = templateEngine.process("reportes/proveedores-inscritos-pdf", context);
+
+        // Convertir HTML a PDF
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ITextRenderer renderer = new ITextRenderer();
+        renderer.setDocumentFromString(htmlContent);
+        renderer.layout();
+        renderer.createPDF(outputStream);
+        outputStream.close();
+
+        return new ByteArrayInputStream(outputStream.toByteArray());
+    }
 }

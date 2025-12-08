@@ -124,11 +124,15 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
+                            <!-- ✅ Editar solo si NO está FINALIZADO ni CANCELADO -->
+                            <a th:if="${evento.estado != T(com.example.campolibre.Enum.EstadoEvento).FINALIZADO and
+                                       evento.estado != T(com.example.campolibre.Enum.EstadoEvento).CANCELADO}"
+                               th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
                                class="btn btn-primary">
                                 <i class="bi bi-pencil"></i> Editar Evento
                             </a>
 
+                            <!-- Publicar solo si está en BORRADOR -->
                             <a th:if="${evento.estado == T(com.example.campolibre.Enum.EstadoEvento).BORRADOR}"
                                th:href="@{/eventos/aprobar/{id}(id=${evento.id_evento})}"
                                class="btn btn-success"
@@ -136,11 +140,27 @@
                                 <i class="bi bi-check-circle"></i> Publicar Evento
                             </a>
 
-                            <a th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
+                            <!-- ✅ Cancelar solo si NO está FINALIZADO ni CANCELADO -->
+                            <a th:if="${evento.estado != T(com.example.campolibre.Enum.EstadoEvento).FINALIZADO and
+                                       evento.estado != T(com.example.campolibre.Enum.EstadoEvento).CANCELADO}"
+                               th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
                                class="btn btn-danger"
                                onclick="return confirm('¿Estás seguro de cancelar este evento?')">
                                 <i class="bi bi-trash"></i> Cancelar Evento
                             </a>
+
+                            <!-- Mensaje para eventos finalizados o cancelados -->
+                            <div th:if="${evento.estado == T(com.example.campolibre.Enum.EstadoEvento).FINALIZADO or
+                                         evento.estado == T(com.example.campolibre.Enum.EstadoEvento).CANCELADO}"
+                                 class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                <span th:if="${evento.estado.name() == 'FINALIZADO'}">
+                                    Este evento ha finalizado y no puede editarse.
+                                </span>
+                                <span th:if="${evento.estado.name() == 'CANCELADO'}">
+                                    Este evento fue cancelado y no puede editarse.
+                                </span>
+                            </div>
 
                             <hr>
 
@@ -189,7 +209,8 @@
 
                         <hr>
 
-                        <div th:if="${!yaSeInscribio}">
+                        <!-- ✅ Botón Inscribirse - Solo si evento está PUBLICADO -->
+                        <div th:if="${!yaSeInscribio and evento.estado.name() == 'PUBLICADO'}">
                             <div th:if="${hayCupos}">
                                 <form th:action="@{/eventos/inscribir-proveedor/{id}(id=${evento.id_evento})}"
                                       method="post"
@@ -207,6 +228,18 @@
                                     <i class="bi bi-x-circle"></i> Sin Cupos Disponibles
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- ✅ Mensaje si evento NO está publicado -->
+                        <div th:if="${!yaSeInscribio and evento.estado.name() != 'PUBLICADO'}"
+                             class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <span th:switch="${evento.estado.name()}">
+                                <span th:case="'CANCELADO'">Este evento ha sido cancelado.</span>
+                                <span th:case="'FINALIZADO'">Este evento ya finalizó.</span>
+                                <span th:case="'EN_CURSO'">Este evento ya está en curso y no acepta nuevas inscripciones.</span>
+                                <span th:case="'BORRADOR'">Este evento aún no ha sido publicado.</span>
+                            </span>
                         </div>
 
                         <div th:if="${yaSeInscribio}">
@@ -273,6 +306,29 @@
                 </div>
             </div>
             <!-- ==================== FIN COLUMNA LATERAL ==================== -->
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <a th:href="@{/eventos}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Eventos
+                </a>
+
+                <!-- Botón específico para proveedores que vienen de mis-inscripciones -->
+                <a sec:authorize="hasAuthority('PROVEEDOR')"
+                   th:href="@{/eventos/mis-inscripciones}"
+                   class="btn btn-outline-primary ms-2">
+                    <i class="bi bi-calendar-check"></i> Mis Inscripciones
+                </a>
+
+                <!-- Botón específico para admin -->
+                <a sec:authorize="hasAuthority('ADMINISTRADOR')"
+                   th:href="@{/eventos/admin/todos}"
+                   class="btn btn-outline-primary ms-2">
+                    <i class="bi bi-gear"></i> Gestión de Eventos
+                </a>
+            </div>
         </div>
     </div>
 </main>

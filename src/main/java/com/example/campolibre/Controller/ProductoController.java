@@ -155,6 +155,12 @@ public class ProductoController {
                 return "redirect:/tiendas";
             }
 
+            // ✅ VALIDACIÓN: No permitir crear productos si la tienda está inactiva
+            if (!"ACTIVA".equals(tienda.getEstado().name())) {
+                redirectAttributes.addFlashAttribute("error", "No se pueden crear productos en una tienda inactiva o eliminada.");
+                return "redirect:/tiendas/ver/" + idTienda;
+            }
+
             // ✅ CREAR PRODUCTO CON VALORES POR DEFECTO ROBUSTOS
             ProductoDTO producto = new ProductoDTO();
             producto.setId_tienda(idTienda);
@@ -235,6 +241,12 @@ public class ProductoController {
             if (!tienePuedeGestionarProductos(authentication, tienda)) {
                 redirectAttributes.addFlashAttribute("error", "No tienes permisos para agregar productos a esta tienda.");
                 return "redirect:/tiendas";
+            }
+
+            // ✅ VALIDACIÓN: No permitir crear productos si la tienda está inactiva
+            if (!"ACTIVA".equals(tienda.getEstado().name())) {
+                redirectAttributes.addFlashAttribute("error", "No se pueden crear productos en una tienda inactiva o eliminada.");
+                return "redirect:/tiendas/ver/" + productoDTO.getId_tienda();
             }
 
             // ✅ GUARDAR IMAGEN
