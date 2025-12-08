@@ -555,7 +555,7 @@ public class PqrsController {
 
         try {
             pqrsService.registrarRespuesta(id, contenido, idUsuario);
-            redirectAttributes.addFlashAttribute("mensaje", "Respuesta registrada exitosamente. El consumidor ha sido notificado.");
+            redirectAttributes.addFlashAttribute("mensaje", "Respuesta registrada exitosamente. Se le ha notificado al usuario.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al registrar respuesta: " + e.getMessage());
         }

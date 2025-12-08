@@ -16,6 +16,8 @@ public interface TiendaService {
     TiendaDTO actualizarTienda(Long id, TiendaDTO tiendaDTO, MultipartFile imagen);
     void cambiarEstadoTienda(Long id, EstadoTienda estado);
     void eliminarTienda(Long id);
+    TiendaDTO activarTienda(Long idTienda);
+    TiendaDTO inactivarTienda(Long idTienda);
 
     // ========== NUEVOS MÉTODOS - BÚSQUEDA POR CATEGORÍA ==========
 

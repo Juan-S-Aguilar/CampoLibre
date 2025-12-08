@@ -4,6 +4,7 @@ import com.example.campolibre.DTO.ProductoDTO;
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
 import com.example.campolibre.Entity.Tienda;
+import com.example.campolibre.Enum.CategoriaTienda;
 import com.example.campolibre.Enum.SubcategoriaProducto;
 import com.example.campolibre.Enum.UnidadMedida;
 import com.example.campolibre.Service.ProductoService;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Controller
 @RequestMapping("/productos")
@@ -100,8 +102,15 @@ public class ProductoController {
         // mostrar vista de catálogo normal
         List<ProductoDTO> productos = productoService.obtenerProductosPorTienda(idTienda);
 
+        // Filtrar subcategorías según la categoría de la tienda
+        CategoriaTienda categoriaTienda = tienda.getCategoriaPrincipal();
+        List<SubcategoriaProducto> subcategoriasFiltradas = Arrays.stream(SubcategoriaProducto.values())
+                .filter(sub -> sub.perteneceA(categoriaTienda))
+                .collect(Collectors.toList());
+
         model.addAttribute("tienda", tienda);
         model.addAttribute("productos", productos);
+        model.addAttribute("subcategorias", subcategoriasFiltradas);
         return "producto/list_by_tienda";
     }
 
@@ -153,6 +162,12 @@ public class ProductoController {
             if (!tienePuedeGestionarProductos(authentication, tienda)) {
                 redirectAttributes.addFlashAttribute("error", "No tienes permisos para agregar productos a esta tienda.");
                 return "redirect:/tiendas";
+            }
+
+            // ✅ VALIDACIÓN: No permitir crear productos si la tienda está inactiva
+            if (!"ACTIVA".equals(tienda.getEstado().name())) {
+                redirectAttributes.addFlashAttribute("error", "No se pueden crear productos en una tienda inactiva o eliminada.");
+                return "redirect:/tiendas/ver/" + idTienda;
             }
 
             // ✅ CREAR PRODUCTO CON VALORES POR DEFECTO ROBUSTOS
@@ -235,6 +250,12 @@ public class ProductoController {
             if (!tienePuedeGestionarProductos(authentication, tienda)) {
                 redirectAttributes.addFlashAttribute("error", "No tienes permisos para agregar productos a esta tienda.");
                 return "redirect:/tiendas";
+            }
+
+            // ✅ VALIDACIÓN: No permitir crear productos si la tienda está inactiva
+            if (!"ACTIVA".equals(tienda.getEstado().name())) {
+                redirectAttributes.addFlashAttribute("error", "No se pueden crear productos en una tienda inactiva o eliminada.");
+                return "redirect:/tiendas/ver/" + productoDTO.getId_tienda();
             }
 
             // ✅ GUARDAR IMAGEN

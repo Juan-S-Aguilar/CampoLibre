@@ -20,17 +20,6 @@
                 <a th:href="@{/pqrs/crear}" class="btn btn-store-green">
                     <i class="bi bi-plus-circle"></i> Nueva PQRS
                 </a>
-                <!-- Solo ADMIN ve el toggle -->
-                <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
-                    <button class="view-toggle-btn" th:classappend="${tipoLista == 'todas'} ? 'active' : ''"
-                            th:onclick="'window.location.href=\'/pqrs\''">
-                        <i class="bi bi-list"></i> Todas
-                    </button>
-                    <button class="view-toggle-btn" th:classappend="${tipoLista == 'pendientes'} ? 'active' : ''"
-                            th:onclick="'window.location.href=\'/pqrs/pendientes\''">
-                        <i class="bi bi-clock-history"></i> Pendientes
-                    </button>
-                </div>
                 <!-- Botones de reportes (solo para ADMIN y PROVEEDOR) -->
                 <div sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')"
                      style="display: flex; gap: 0.5rem;">
@@ -41,6 +30,17 @@
 
                     <button onclick="descargarReportePdf()" class="btn btn-danger">
                         <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+                    </button>
+                </div>
+                <!-- Solo ADMIN ve el toggle -->
+                <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
+                    <button class="view-toggle-btn" th:classappend="${tipoLista == 'todas'} ? 'active' : ''"
+                            th:onclick="'window.location.href=\'/pqrs\''">
+                        <i class="bi bi-list"></i> Todas
+                    </button>
+                    <button class="view-toggle-btn" th:classappend="${tipoLista == 'pendientes'} ? 'active' : ''"
+                            th:onclick="'window.location.href=\'/pqrs/pendientes\''">
+                        <i class="bi bi-clock-history"></i> Pendientes
                     </button>
                 </div>
             </div>

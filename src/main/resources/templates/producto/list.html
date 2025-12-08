@@ -26,33 +26,6 @@
                    class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Volver a Tienda
                 </a>
-                <!-- ventas -->
-                <a th:if="${tienda != null}"
-                   th:th:href="@{/pedidos/ventas/tienda//{id}(id=${tienda.id_tienda})}"
-                   sec:authorize="hasAuthority('PROVEEDOR')"
-                   class="btn btn-secondary">
-                    <i class="bi bi-arrow-right"></i> Volver a Tienda
-                </a>
-
-                <a th:if="${tienda != null}"
-                   th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
-                   class="btn btn-primary"
-                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
-                    <i class="bi bi-plus-circle"></i> Nuevo Producto
-                </a>
-
-                <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
-                    <button class="view-toggle-btn"
-                            th:classappend="${tipoLista == 'todos' ? 'active' : ''}"
-                            th:onclick="'window.location.href=\'/productos\''">
-                        <i class="bi bi-list"></i> Activos
-                    </button>
-                    <button class="view-toggle-btn"
-                            th:classappend="${tipoLista == 'eliminados' ? 'active' : ''}"
-                            th:onclick="'window.location.href=\'/productos/eliminados\''">
-                        <i class="bi bi-trash"></i> Eliminados
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -68,7 +41,6 @@
         </div>
 
         <!-- Filtros y búsqueda -->
-        <!-- Filtros y búsqueda -->
         <div class="list-filters">
             <div class="search-box">
                 <input type="text"
@@ -79,7 +51,7 @@
             </div>
 
             <!-- ✅ FILTRO POR SUBCATEGORÍA (NUEVO) -->
-            <div class="filter-group">
+            <div class="filter-group" style="flex: 1;">
                 <label for="filterSubcategoria">Subcategoría</label>
                 <select id="filterSubcategoria" class="form-select" onchange="filterTable()">
                     <option value="">Todas</option>
@@ -186,8 +158,8 @@
                         </small>
                     </td>
 
-                    <!-- Subcategoría (restaurado al estado anterior) -->
-                    <td data-label="Subcategoría">
+                    <!-- ✅ SUBCATEGORÍA (NUEVO) -->
+                    <td data-label="Subcategoría" th:data-subcategoria="${producto.subcategoria.name()}">
                         <span class="badge"
                               style="padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.85rem; font-weight: 500; background-color: var(--color-bg-light); color: var(--color-primary); border: 1px solid var(--color-primary);"
                               th:text="${producto.subcategoria.displayName}">
@@ -229,7 +201,8 @@
                     </td>
 
                     <!-- ✅ STOCK (MEJORADO CON COLORES) -->
-                    <td data-label="Stock">
+                    <td data-label="Stock"
+                        th:data-stock="${producto.stock == 0 ? 'agotado' : (producto.stock <= producto.stockMinimo ? 'bajo' : 'disponible')}">
                         <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                             <span th:if="${producto.stock == 0}"
                                   style="color: var(--color-danger); font-weight: bold;">
@@ -266,7 +239,7 @@
                             <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
                                class="btn-action btn-editar"
                                title="Editar producto"
-                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                               sec:authorize="hasAnyAuthority('PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>
                             </a>
 
@@ -314,21 +287,14 @@
                 if (rows[i].getElementsByTagName('td').length === 1) continue; // Skip "no data" row
 
                 const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const subcategoria = rows[i].getElementsByTagName('td')[2].textContent.trim();
+                const subcategoriaCell = rows[i].getElementsByTagName('td')[2];
+                const subcategoria = subcategoriaCell.getAttribute('data-subcategoria') || '';
                 const stockCell = rows[i].getElementsByTagName('td')[6];
-                const stockText = stockCell.textContent.toLowerCase();
+                const stock = stockCell.getAttribute('data-stock') || '';
 
                 const matchSearch = nombre.includes(searchInput);
-                const matchSubcategoria = filterSubcategoria === '' || subcategoria.includes(filterSubcategoria);
-
-                let matchStock = true;
-                if (filterStock === 'agotado') {
-                    matchStock = stockText.includes('agotado');
-                } else if (filterStock === 'bajo') {
-                    matchStock = stockText.includes('exclamation-triangle');
-                } else if (filterStock === 'disponible') {
-                    matchStock = stockText.includes('check-circle');
-                }
+                const matchSubcategoria = filterSubcategoria === '' || subcategoria === filterSubcategoria;
+                const matchStock = filterStock === '' || stock === filterStock;
 
                 if (matchSearch && matchSubcategoria && matchStock) {
                     rows[i].style.display = '';

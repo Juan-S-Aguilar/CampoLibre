@@ -188,7 +188,8 @@
                                     <input type="date"
                                            class="form-control"
                                            id="fecha_evento"
-                                           th:field="*{fecha_evento}"
+                                           name="fecha_evento"
+                                           th:value="${evento.fecha_evento}"
                                            required>
                                     <div class="invalid-feedback">
                                         La fecha es obligatoria
@@ -204,7 +205,8 @@
                                     <input type="time"
                                            class="form-control"
                                            id="hora_evento"
-                                           th:field="*{hora_evento}"
+                                           name="hora_evento"
+                                           th:value="${evento.hora_evento}"
                                            required>
                                     <div class="invalid-feedback">
                                         La hora es obligatoria

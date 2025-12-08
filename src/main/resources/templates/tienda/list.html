@@ -28,11 +28,6 @@
 
                 <div class="view-toggle" sec:authorize="hasAuthority('PROVEEDOR')">
                     <button class="view-toggle-btn"
-                            th:classappend="${tipoLista == 'todas' ? 'active' : ''}"
-                            th:onclick="'window.location.href=\'/tiendas\''">
-                        <i class="bi bi-list"></i> Todas
-                    </button>
-                    <button class="view-toggle-btn btn-store-green"
                             th:classappend="${tipoLista == 'mis_tiendas' ? 'active' : ''}"
                             th:onclick="'window.location.href=\'/tiendas/mis-tiendas\''">
                         <i class="bi bi-shop"></i> Mis Tiendas
@@ -74,7 +69,7 @@
                 </select>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group" sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                 <label for="filterEstado">Estado</label>
                 <select id="filterEstado" class="form-select" onchange="filterTable()">
                     <option value="">Todos</option>
@@ -133,7 +128,7 @@
                     </td>
 
                     <!-- ✅ CATEGORÍA (ACTUALIZADO) -->
-                    <td data-label="Categoría">
+                    <td data-label="Categoría" th:data-categoria="${tienda.categoriaPrincipal.name()}">
                         <span class="badge"
                               style="padding: 0.5rem 1rem; border-radius: 20px; font-weight: 500;"
                               th:style="${tienda.categoriaPrincipal.name() == 'FRUTAS_VERDURAS' ? 'background-color: #dcfce7; color: #166534;' :
@@ -176,7 +171,7 @@
                     </td>
 
                     <!-- Estado -->
-                    <td data-label="Estado">
+                    <td data-label="Estado" th:data-estado="${tienda.estado.name()}">
                         <span class="status-badge active" th:if="${tienda.estado.name() == 'ACTIVA'}">
                             <i class="bi bi-check-circle"></i> Activa
                         </span>
@@ -203,6 +198,32 @@
                                sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>
                             </a>
+
+                            <!-- Botones Activar/Inactivar (solo ADMIN) -->
+                            <div sec:authorize="hasAuthority('ADMINISTRADOR')" style="display: inline;">
+                                <form th:action="@{/tiendas/inactivar/{id}(id=${tienda.id_tienda})}"
+                                      method="post"
+                                      style="display: inline;"
+                                      th:if="${tienda.estado.name() == 'ACTIVA'}"
+                                      onsubmit="return confirm('¿Está seguro de inactivar esta tienda? Los productos también se inactivarán.')">
+                                    <button type="submit"
+                                            class="btn-action btn-warning"
+                                            title="Inactivar tienda">
+                                        <i class="bi bi-pause-circle"></i>
+                                    </button>
+                                </form>
+
+                                <form th:action="@{/tiendas/activar/{id}(id=${tienda.id_tienda})}"
+                                      method="post"
+                                      style="display: inline;"
+                                      th:if="${tienda.estado.name() == 'INACTIVA'}">
+                                    <button type="submit"
+                                            class="btn-action btn-success"
+                                            title="Activar tienda">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                            </div>
 
                             <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
                                class="btn btn-success btn-sm"
@@ -239,16 +260,18 @@
                 if (rows[i].getElementsByTagName('td').length === 1) continue; // Skip "no data" row
 
                 const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const categoria = rows[i].getElementsByTagName('td')[2].textContent;
+                const categoriaCell = rows[i].getElementsByTagName('td')[2];
+                const categoria = categoriaCell.getAttribute('data-categoria') || '';
                 const ubicacion = rows[i].getElementsByTagName('td')[3].textContent.toLowerCase();
                 const contacto = rows[i].getElementsByTagName('td')[4].textContent.toLowerCase();
-                const estadoBadge = rows[i].querySelector('.status-badge').textContent.trim();
+                const estadoCell = rows[i].getElementsByTagName('td')[rows[i].getElementsByTagName('td').length - 2];
+                const estado = estadoCell.getAttribute('data-estado') || '';
 
                 const matchSearch = nombre.includes(searchInput) ||
                                    ubicacion.includes(searchInput) ||
                                    contacto.includes(searchInput);
-                const matchCategoria = filterCategoria === '' || categoria.includes(filterCategoria);
-                const matchEstado = filterEstado === '' || estadoBadge.includes(filterEstado);
+                const matchCategoria = filterCategoria === '' || categoria === filterCategoria;
+                const matchEstado = filterEstado === '' || estado === filterEstado;
 
                 if (matchSearch && matchCategoria && matchEstado) {
                     rows[i].style.display = '';

@@ -22,7 +22,7 @@
     <!-- Formulario -->
 
             <form
-                    th:action="${patrocinador.id_patrocinador}
+                    th:action="${patrocinador.id_patrocinador != null}
                         ? @{/admin/patrocinadores/actualizar/{id}(id=${patrocinador.id_patrocinador})}
                         : @{/admin/patrocinadores/crear}"
                     th:object="${patrocinador}"
@@ -101,7 +101,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i th:if="${patrocinador.id_patrocinador}" class="bi bi-save"></i>
                         <i th:unless="${patrocinador.id_patrocinador}" class="bi bi-plus-circle"></i>
-                        <span th:text="${patrocinador.id_patrocinador ? 'Guardar Cambios' : 'Crear Patrocinador'}">Guardar</span>
+                        <span th:text="${patrocinador.id_patrocinador != null ? 'Guardar Cambios' : 'Crear Patrocinador'}">Guardar</span>
                     </button>
                 </div>
 

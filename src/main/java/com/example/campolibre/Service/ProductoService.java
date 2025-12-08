@@ -87,4 +87,14 @@ public interface ProductoService {
      */
     List<ProductoMasVendidoDTO> obtenerProductosMasVendidos(Long idTienda, Integer limite);
 
+    /**
+     * Filtra productos de una tienda por estado, stock y subcategoría
+     */
+    List<ProductoDTO> filtrarProductosPorTienda(Long idTienda, String estado, Integer stock, SubcategoriaProducto subcategoria);
+
+    /**
+     * Obtiene productos activos de una tienda específica
+     */
+    List<ProductoDTO> obtenerProductosActivosPorTienda(Long idTienda);
+
 }

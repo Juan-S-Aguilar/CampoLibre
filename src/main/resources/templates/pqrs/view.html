@@ -43,6 +43,7 @@
                     </a>
 
                     <a th:if="${mostrarBotonContacto}"
+                       sec:authorize="hasAnyAuthority('PROVEEDOR', 'CONSUMIDOR')"
                        href="mailto:contactenos@campolibre.com"
                        class="btn btn-danger">
                         <i class="bi bi-person-rolodex"></i> Contáctenos

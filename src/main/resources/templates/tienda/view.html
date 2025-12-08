@@ -210,9 +210,10 @@
                     <i class="bi bi-pencil"></i> Editar Tienda
                 </a>
 
-                <a th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
-                   class="btn btn-success"
-                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                <!-- Solo mostrar botón "Agregar Producto" si la tienda está activa -->
+                <a th:if="${tienda.estado.name() == 'ACTIVA'}"
+                   th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
+                   class="btn btn-success">
                     <i class="bi bi-plus-circle"></i> Agregar Producto
                 </a>
 
@@ -220,6 +221,19 @@
                    class="btn btn-info">
                     <i class="bi bi-box-seam"></i> Ver Productos
                 </a>
+
+                <!-- Botón Eliminar Tienda (solo PROVEEDOR dueño) -->
+                <div th:if="${puedeEliminar}">
+                    <form th:action="@{/tiendas/eliminar/{id}(id=${tienda.id_tienda})}"
+                          method="post"
+                          style="display: inline;">
+                        <button type="submit"
+                                class="btn btn-danger"
+                                onclick="return confirm('⚠️ ADVERTENCIA: Esta acción es IRREVERSIBLE.\n\n¿Está seguro de eliminar esta tienda?\n\nLos productos asociados quedarán inactivos y no podrás recuperar la tienda.')">
+                            <i class="bi bi-trash"></i> Eliminar Tienda
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 

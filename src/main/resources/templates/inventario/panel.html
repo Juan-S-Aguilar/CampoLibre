@@ -17,15 +17,28 @@
                 Panel de Inventario
             </h2>
             <div class="list-header-actions">
-                <a th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}" class="btn btn-secondary btn-volver-tienda">
+                <a th:if="${tienda != null}"
+                   th:href="@{/tiendas/ver/{id}(id=${tienda.id_tienda})}"
+                   class="btn btn-secondary btn-volver-tienda">>
                     <i class="bi bi-arrow-left"></i> Volver a Tienda
                 </a>
-                <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
-                   class="btn btn-ver-productos">
-                    <i class="bi bi-box-seam"></i> Ver Productos
+                <a th:if="${viendoTodasTiendas}"
+                   th:href="@{/tiendas}"
+                   class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Tiendas
                 </a>
-                <a th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}" class="btn btn-primary">
+                <!-- Ocultar cuando la tienda esta inactiva -->
+                <a th:if="${tienda != null and tienda.estado.name() == 'ACTIVA'}"
+                   th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
+                   class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Nuevo Producto
+                </a>
+                <!-- Boton para ver el panel de ventas de la tienda -->
+                <a th:if="${tienda != null}"
+                   th:href="@{/pedidos/ventas/tienda/{id}(id=${tienda.id_tienda})}"
+                   class="btn btn-success"
+                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                    <i class="bi bi-bar-chart-line"></i> Panel de Ventas
                 </a>
             </div>
         </div>
@@ -41,8 +54,31 @@
             <span th:text="${error}">Error en la operación</span>
         </div>
 
-        <!-- Información de la tienda -->
-        <div style="padding: 1.5rem; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow-lg);">
+        <!-- Selector de Tienda (solo si hay múltiples tiendas) -->
+        <div th:if="${misTiendas != null and misTiendas.size() > 1}"
+             style="margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 12px; box-shadow: var(--shadow-md);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <label style="font-weight: 600; color: var(--color-text-dark); white-space: nowrap;">
+                    <i class="bi bi-funnel-fill"></i> Filtrar por tienda:
+                </label>
+                <select id="selectorTienda" class="form-select" onchange="cambiarTienda(this.value)"
+                        style="max-width: 400px;">
+                    <option value="todas" th:selected="${viendoTodasTiendas}">
+                        📦 Todas mis tiendas
+                    </option>
+                    <option th:each="t : ${misTiendas}"
+                            th:value="${t.id_tienda}"
+                            th:text="${t.nombre}"
+                            th:selected="${tienda != null && tienda.id_tienda == t.id_tienda}">
+                        Tienda
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Información de la tienda (solo cuando hay una tienda específica seleccionada) -->
+        <div th:if="${tienda != null}"
+             style="padding: 1.5rem; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: white; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow-lg);">
             <div style="display: flex; align-items: center; gap: 1.5rem;">
                 <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="bi bi-shop" style="font-size: 2.5rem;"></i>
@@ -52,6 +88,24 @@
                     <p style="margin: 0; opacity: 0.9; font-size: 1rem;">
                         <i class="bi bi-grid"></i> Categoría:
                         <strong th:text="${tienda.categoriaPrincipal.displayName}">Categoría</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información agregada (cuando se ven todas las tiendas) -->
+        <div th:if="${viendoTodasTiendas}"
+             style="padding: 1.5rem; background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 12px; margin-bottom: 2rem; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-shop-window" style="font-size: 2.5rem;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <h3 style="color: white; margin: 0 0 0.5rem 0;">Vista Consolidada</h3>
+                    <p style="margin: 0; opacity: 0.9; font-size: 1rem;">
+                        <i class="bi bi-collection"></i>
+                        <strong th:text="${misTiendas.size()}">0</strong> tienda(s) •
+                        <strong th:text="${productos.size()}">0</strong> producto(s) totales
                     </p>
                 </div>
             </div>
@@ -150,17 +204,21 @@
                     <i class="bi bi-funnel"></i> Filtrar por:
                 </label>
                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}"
+                    <!-- Filtros para tienda específica -->
+                    <a th:if="${tienda != null}"
+                       th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}"
                        class="btn"
                        th:classappend="${filtroActual == null ? 'btn-primary' : 'btn-outline-secondary'}">
                         <i class="bi bi-list"></i> Todos
                     </a>
-                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='activos')}"
+                    <a th:if="${tienda != null}"
+                       th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='activos')}"
                        class="btn"
                        th:classappend="${filtroActual == 'activos' ? 'btn-success' : 'btn-outline-success'}">
                         <i class="bi bi-check-circle"></i> Activos
                     </a>
-                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='stock_bajo')}"
+                    <a th:if="${tienda != null}"
+                       th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='stock_bajo')}"
                        class="btn"
                        th:classappend="${filtroActual == 'stock_bajo' ? 'btn-warning' : 'btn-outline-warning'}">
                         <i class="bi bi-exclamation-triangle"></i> Stock Bajo
@@ -169,7 +227,8 @@
                               style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
                               th:text="${resumen.productosConStockBajo}">0</span>
                     </a>
-                    <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='sin_stock')}"
+                    <a th:if="${tienda != null}"
+                       th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='sin_stock')}"
                        class="btn"
                        th:classappend="${filtroActual == 'sin_stock' ? 'btn-danger' : 'btn-outline-danger'}">
                         <i class="bi bi-x-circle"></i> Sin Stock
@@ -178,8 +237,84 @@
                               style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
                               th:text="${resumen.productosSinStock}">0</span>
                     </a>
+                    <a th:if="${tienda != null}"
+                       th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='eliminados')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'eliminados' ? 'btn-dark' : 'btn-outline-dark'}">
+                        <i class="bi bi-trash"></i> Eliminados
+                    </a>
+
+                    <!-- Filtros para todas las tiendas -->
+                    <a th:if="${viendoTodasTiendas}"
+                       th:href="@{/inventario/panel}"
+                       class="btn"
+                       th:classappend="${filtroActual == null ? 'btn-primary' : 'btn-outline-secondary'}">
+                        <i class="bi bi-list"></i> Todos
+                    </a>
+                    <a th:if="${viendoTodasTiendas}"
+                       th:href="@{/inventario/panel(filtro='activos')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'activos' ? 'btn-success' : 'btn-outline-success'}">
+                        <i class="bi bi-check-circle"></i> Activos
+                    </a>
+                    <a th:if="${viendoTodasTiendas}"
+                       th:href="@{/inventario/panel(filtro='stock_bajo')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'stock_bajo' ? 'btn-warning' : 'btn-outline-warning'}">
+                        <i class="bi bi-exclamation-triangle"></i> Stock Bajo
+                        <span th:if="${resumen.productosConStockBajo > 0}"
+                              class="badge"
+                              style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
+                              th:text="${resumen.productosConStockBajo}">0</span>
+                    </a>
+                    <a th:if="${viendoTodasTiendas}"
+                       th:href="@{/inventario/panel(filtro='sin_stock')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'sin_stock' ? 'btn-danger' : 'btn-outline-danger'}">
+                        <i class="bi bi-x-circle"></i> Sin Stock
+                        <span th:if="${resumen.productosSinStock > 0}"
+                              class="badge"
+                              style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
+                              th:text="${resumen.productosSinStock}">0</span>
+                    </a>
+                    <a th:if="${viendoTodasTiendas}"
+                       th:href="@{/inventario/panel(filtro='eliminados')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'eliminados' ? 'btn-dark' : 'btn-outline-dark'}">
+                        <i class="bi bi-trash"></i> Eliminados
+                    </a>
                 </div>
             </div>
+        </div>
+
+        <!-- ========== BÚSQUEDA Y FILTROS ADICIONALES ========== -->
+        <div class="list-filters" style="margin-bottom: 2rem;">
+            <div class="search-box" style="flex: 2;">
+                <input type="text"
+                       id="searchInput"
+                       placeholder="Buscar por nombre de producto..."
+                       onkeyup="filterTable()">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <!-- ✅ FILTRO POR SUBCATEGORÍA (FILTRADO DINÁMICO) -->
+            <div class="filter-group" style="flex: 1;">
+                <label for="filterSubcategoria">Subcategoría</label>
+                <select id="filterSubcategoria" class="form-select" onchange="filterTable()">
+                    <option value="">Todas</option>
+                    <option th:each="subcat : ${subcategorias}"
+                            th:value="${subcat.name()}"
+                            th:text="${subcat.displayName}">
+                        Subcategoría
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="results-count" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--color-bg-light); border-radius: 8px; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="bi bi-info-circle" style="color: var(--color-primary);"></i>
+            Mostrando <strong id="countVisible" th:text="${productos.size()}">0</strong> de <strong th:text="${productos.size()}">0</strong> producto(s)
         </div>
 
         <!-- Título del filtro actual -->
@@ -196,6 +331,7 @@
                 <thead>
                 <tr>
                     <th>Producto</th>
+                    <th th:if="${viendoTodasTiendas}">Tienda</th>
                     <th>Subcategoría</th>
                     <th>Precio</th>
                     <th style="text-align: center;">Stock Actual</th>
@@ -205,7 +341,11 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="producto : ${productos}">
+                <tr th:each="producto : ${productos}"
+                    th:data-subcategoria="${producto.subcategoria.name()}"
+                    th:data-stock-estado="${producto.sinStock != null and producto.sinStock ? 'agotado' : (producto.tieneStockBajo != null and producto.tieneStockBajo ? 'bajo' : 'disponible')}"
+                    th:data-nombre="${producto.nombre}"
+                    th:data-tienda="${producto.id_tienda}">
                     <!-- Producto -->
                     <td data-label="Producto">
                         <div style="display: flex; align-items: center; gap: 1rem;">
@@ -229,6 +369,14 @@
                                 </small>
                             </div>
                         </div>
+                    </td>
+
+                    <!-- Tienda (solo cuando se ven todas las tiendas) -->
+                    <td th:if="${viendoTodasTiendas}" data-label="Tienda">
+                        <span style="color: var(--color-text-dark); font-weight: 500;">
+                            <i class="bi bi-shop"></i>
+                            <span th:text="${tiendaNombres[producto.id_tienda]}">Tienda</span>
+                        </span>
                     </td>
 
                     <!-- Subcategoría -->
@@ -278,8 +426,9 @@
                     <!-- Acciones Rápidas -->
                     <td data-label="Acciones" style="text-align: center;">
                         <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                            <!-- Botón Incrementar -->
+                            <!-- Botón Incrementar (solo si no está eliminado) -->
                             <button type="button"
+                                    th:if="${producto.estado != 'ELIMINADO'}"
                                     class="btn btn-sm btn-success"
                                     th:data-url-incrementar="@{/inventario/incrementar/{id}(id=${producto.id_producto})}"
                                     th:data-producto-id="${producto.id_producto}"
@@ -290,8 +439,9 @@
                                 <i class="bi bi-plus-circle"></i> +
                             </button>
 
-                            <!-- Botón Reducir -->
+                            <!-- Botón Reducir (solo si no está eliminado) -->
                             <button type="button"
+                                    th:if="${producto.estado != 'ELIMINADO'}"
                                     class="btn btn-sm btn-warning"
                                     th:disabled="${producto.stock == 0}"
                                     th:data-url-reducir="@{/inventario/reducir/{id}(id=${producto.id_producto})}"
@@ -303,16 +453,17 @@
                                 <i class="bi bi-dash-circle"></i> -
                             </button>
 
-                            <!-- Botón Editar -->
-                            <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
+                            <!-- Botón Editar (solo si no está eliminado) -->
+                            <a th:if="${producto.estado != 'ELIMINADO'}"
+                               th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
                                class="btn btn-sm btn-primary btn-editar-inventario"
                                title="Editar producto">
                                 <i class="bi bi-pencil"></i>
                             </a>
 
-                            <!-- Botón Reactivar (solo si sin stock) -->
+                            <!-- Botón Reactivar (solo si sin stock y no está eliminado) -->
                             <button type="button"
-                                    th:if="${producto.sinStock != null and producto.sinStock}"
+                                    th:if="${producto.estado != 'ELIMINADO' and producto.sinStock != null and producto.sinStock}"
                                     class="btn btn-sm btn-info"
                                     th:data-url-reactivar="@{/inventario/reactivar/{id}(id=${producto.id_producto})}"
                                     th:data-producto-id="${producto.id_producto}"
@@ -320,6 +471,17 @@
                                     onclick="mostrarModalReactivar(this)"
                                     title="Reactivar producto">
                                 <i class="bi bi-arrow-clockwise"></i> Reactivar
+                            </button>
+
+                            <!-- Botón Eliminar (solo si no está eliminado) -->
+                            <button type="button"
+                                    th:if="${producto.estado != 'ELIMINADO'}"
+                                    class="btn btn-sm btn-danger"
+                                    th:data-producto-id="${producto.id_producto}"
+                                    th:data-producto-nombre="${producto.nombre}"
+                                    onclick="eliminarProducto(this)"
+                                    title="Eliminar producto">
+                                <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </td>
@@ -333,7 +495,14 @@
             <i class="bi bi-box-seam"></i>
             <h3>No hay productos en esta categoría</h3>
             <p th:text="${tituloFiltro}">Filtro activo</p>
-            <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}" class="btn btn-primary">
+            <a th:if="${tienda != null}"
+               th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}"
+               class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Ver Todos los Productos
+            </a>
+            <a th:if="${viendoTodasTiendas}"
+               th:href="@{/inventario/panel}"
+               class="btn btn-primary">
                 <i class="bi bi-arrow-left"></i> Ver Todos los Productos
             </a>
         </div>
@@ -539,6 +708,81 @@
             });
 
             modalReactivar.hide();
+        }
+
+        // Función para filtrar la tabla de productos
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const filterSubcategoria = document.getElementById('filterSubcategoria').value;
+            const table = document.getElementById('inventarioTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            let visibleCount = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+
+                // Obtener los datos de la fila
+                const nombre = row.getAttribute('data-nombre') || '';
+                const subcategoria = row.getAttribute('data-subcategoria') || '';
+
+                // Aplicar filtros
+                const matchSearch = nombre.toLowerCase().includes(searchInput);
+                const matchSubcategoria = filterSubcategoria === '' || subcategoria === filterSubcategoria;
+
+                // Mostrar u ocultar la fila según los filtros
+                if (matchSearch && matchSubcategoria) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+
+            // Actualizar el contador de resultados
+            document.getElementById('countVisible').textContent = visibleCount;
+        }
+
+        // Función para eliminar producto (soft delete)
+        function eliminarProducto(button) {
+            const idProducto = button.dataset.productoId;
+            const nombreProducto = button.dataset.productoNombre;
+
+            if (!confirm(`¿Está seguro de eliminar el producto "${nombreProducto}"?\n\nEsta acción marcará el producto como eliminado.`)) {
+                return;
+            }
+
+            // Crear headers con CSRF token
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/inventario/eliminar/' + idProducto, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al procesar la solicitud');
+                console.error('Error:', error);
+            });
+        }
+
+        // Función para cambiar de tienda
+        function cambiarTienda(idTienda) {
+            if (idTienda === 'todas') {
+                window.location.href = '/inventario/panel';
+            } else {
+                window.location.href = '/inventario/tienda/' + idTienda;
+            }
         }
     </script>
 </main>

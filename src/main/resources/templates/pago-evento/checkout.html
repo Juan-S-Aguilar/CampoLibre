@@ -150,166 +150,178 @@
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
                                     <i class="bi bi-credit-card"></i>
-                                    Selecciona tu método de pago
+                                    Método de Pago <span class="text-danger">*</span>
                                 </label>
 
                                 <div class="row g-3">
                                     <!-- Tarjeta de Crédito -->
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <input type="radio"
                                                class="btn-check"
                                                name="metodoPago"
-                                               id="tarjeta_credito"
+                                               id="metodo_credito"
                                                value="TARJETA_CREDITO"
-                                               checked
+                                               onchange="mostrarCamposMetodo('TARJETA')"
                                                required>
-                                        <label class="btn btn-outline-success w-100 p-3" for="tarjeta_credito">
+                                        <label class="btn btn-outline-primary w-100 p-3" for="metodo_credito">
                                             <i class="bi bi-credit-card fs-3"></i>
                                             <div class="mt-2">Tarjeta de Crédito</div>
-                                            <small class="text-muted">Visa, Mastercard</small>
                                         </label>
                                     </div>
 
-                                    <!-- Tarjeta Débito -->
-                                    <div class="col-md-6">
+                                    <!-- Tarjeta de Débito -->
+                                    <div class="col-md-4">
                                         <input type="radio"
                                                class="btn-check"
                                                name="metodoPago"
-                                               id="tarjeta_debito"
+                                               id="metodo_debito"
                                                value="TARJETA_DEBITO"
+                                               onchange="mostrarCamposMetodo('TARJETA')"
                                                required>
-                                        <label class="btn btn-outline-success w-100 p-3" for="tarjeta_debito">
-                                            <i class="bi bi-credit-card-2-front fs-3"></i>
-                                            <div class="mt-2">Tarjeta Débito</div>
-                                            <small class="text-muted">Débito</small>
+                                        <label class="btn btn-outline-success w-100 p-3" for="metodo_debito">
+                                            <i class="bi bi-wallet2 fs-3"></i>
+                                            <div class="mt-2">Tarjeta de Débito</div>
                                         </label>
                                     </div>
 
                                     <!-- PSE -->
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <input type="radio"
                                                class="btn-check"
                                                name="metodoPago"
-                                               id="pse"
+                                               id="metodo_pse"
                                                value="PSE"
+                                               onchange="mostrarCamposMetodo('PSE')"
                                                required>
-                                        <label class="btn btn-outline-success w-100 p-3" for="pse">
+                                        <label class="btn btn-outline-info w-100 p-3" for="metodo_pse">
                                             <i class="bi bi-bank fs-3"></i>
                                             <div class="mt-2">PSE</div>
-                                            <small class="text-muted">Pago en línea</small>
                                         </label>
                                     </div>
+                                </div>
 
-                                    <!-- Efectivo -->
-                                    <div class="col-md-6">
-                                        <input type="radio"
-                                               class="btn-check"
-                                               name="metodoPago"
-                                               id="efectivo"
-                                               value="EFECTIVO"
-                                               required>
-                                        <label class="btn btn-outline-success w-100 p-3" for="efectivo">
-                                            <i class="bi bi-cash-coin fs-3"></i>
-                                            <div class="mt-2">Efectivo</div>
-                                            <small class="text-muted">Pago en efectivo</small>
-                                        </label>
+                                <div class="invalid-feedback">
+                                    Selecciona un método de pago
+                                </div>
+                            </div>
+
+                            <!-- Campos para TARJETA (Crédito/Débito) -->
+                            <div id="campos-tarjeta" style="display: none;">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-bank"></i> Información Bancaria
+                                        </h6>
+
+                                        <!-- Entidad Bancaria para Tarjeta -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Entidad Bancaria</label>
+                                            <select class="form-select"
+                                                    name="entidadBancaria"
+                                                    id="entidad-tarjeta">
+                                                <option value="">-- Seleccione --</option>
+                                                <option value="BANCOLOMBIA">Bancolombia</option>
+                                                <option value="DAVIVIENDA">Davivienda</option>
+                                                <option value="BBVA">BBVA Colombia</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Número de Tarjeta -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Número de Tarjeta</label>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   placeholder="1234 5678 9012 3456"
+                                                   maxlength="19"
+                                                   id="numero-tarjeta">
+                                        </div>
+
+                                        <div class="row">
+                                            <!-- Fecha Vencimiento -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Fecha de Vencimiento</label>
+                                                <input type="text"
+                                                       class="form-control"
+                                                       placeholder="MM/AA"
+                                                       maxlength="5"
+                                                       id="fecha-vencimiento">
+                                            </div>
+
+                                            <!-- CVV -->
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">CVV</label>
+                                                <input type="text"
+                                                       class="form-control"
+                                                       placeholder="123"
+                                                       maxlength="4"
+                                                       id="cvv-tarjeta">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <hr>
+                            <!-- Campos para PSE -->
+                            <div id="campos-pse" style="display: none;">
+                                <div class="card bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-bank"></i> Información PSE
+                                        </h6>
 
-                            <!-- Información del Titular (Simulada) -->
-                            <div class="mb-4">
-                                <h6 class="fw-bold mb-3">
-                                    <i class="bi bi-person-badge"></i>
-                                    Información del Titular
-                                </h6>
+                                        <!-- Tipo de Persona -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Tipo de Persona</label>
+                                            <select class="form-select"
+                                                    name="tipoPersonaPSE"
+                                                    id="tipo-persona-pse">
+                                                <option value="">-- Seleccione --</option>
+                                                <option value="NATURAL">Persona Natural</option>
+                                                <option value="JURIDICA">Persona Jurídica</option>
+                                            </select>
+                                        </div>
 
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="nombreTitular" class="form-label">
-                                            Nombre Completo <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                               class="form-control"
-                                               id="nombreTitular"
-                                               th:value="${inscripcion.nombreProveedor}"
-                                               placeholder="Nombre del titular"
-                                               required>
-                                    </div>
+                                        <!-- Entidad Bancaria para PSE -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Entidad Financiera</label>
+                                            <select class="form-select"
+                                                    name="entidadBancaria"
+                                                    id="entidad-pse">
+                                                <option value="">-- Seleccione --</option>
+                                                <option value="NEQUI">Nequi</option>
+                                                <option value="DAVIPLATA">DaviPlata</option>
+                                            </select>
+                                        </div>
 
-                                    <div class="col-md-6 mb-3">
-                                        <label for="emailTitular" class="form-label">
-                                            Email <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="email"
-                                               class="form-control"
-                                               id="emailTitular"
-                                               placeholder="correo@ejemplo.com"
-                                               required>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="numeroTarjeta" class="form-label">
-                                            Número de Tarjeta <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                               class="form-control"
-                                               id="numeroTarjeta"
-                                               placeholder="1234 5678 9012 3456"
-                                               maxlength="19"
-                                               required>
-                                    </div>
-
-                                    <div class="col-md-3 mb-3">
-                                        <label for="fechaExpiracion" class="form-label">
-                                            Vencimiento <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                               class="form-control"
-                                               id="fechaExpiracion"
-                                               placeholder="MM/AA"
-                                               maxlength="5"
-                                               required>
-                                    </div>
-
-                                    <div class="col-md-3 mb-3">
-                                        <label for="cvv" class="form-label">
-                                            CVV <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text"
-                                               class="form-control"
-                                               id="cvv"
-                                               placeholder="123"
-                                               maxlength="4"
-                                               required>
+                                        <!-- Número de Documento -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Número de Documento</label>
+                                            <input type="text"
+                                                   class="form-control"
+                                                   name="numeroDocumentoPSE"
+                                                   placeholder="Ingrese su número de documento"
+                                                   id="documento-pse">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <hr>
 
                             <!-- Términos y Condiciones -->
-                            <div class="mb-4">
-                                <div class="form-check">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           id="aceptoTerminos"
-                                           required>
-                                    <label class="form-check-label" for="aceptoTerminos">
-                                        Acepto los
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalTerminos">
-                                            términos y condiciones
-                                        </a>
-                                        y las
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalPoliticas">
-                                            políticas de privacidad
-                                        </a>
-                                    </label>
-                                    <div class="invalid-feedback">
-                                        Debes aceptar los términos y condiciones
-                                    </div>
+                            <div class="form-check mb-4">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="terminos"
+                                       required
+                                       onchange="validarTerminos()">
+                                <label class="form-check-label" for="terminos">
+                                    Acepto los
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalTerminos">
+                                        términos y condiciones
+                                    </a>
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="invalid-feedback">
+                                    Debes aceptar los términos y condiciones
                                 </div>
                             </div>
 
@@ -317,7 +329,8 @@
                             <div class="d-grid gap-2">
                                 <button type="submit"
                                         class="btn btn-success btn-lg"
-                                        id="btnPagar">
+                                        id="btnPagar"
+                                        disabled>
                                     <i class="bi bi-lock"></i>
                                     Pagar $<span th:text="${#numbers.formatDecimal(inscripcion.costoPagado, 0, 'COMMA', 0, 'POINT')}">50,000</span>
                                 </button>
@@ -327,6 +340,57 @@
                                 </a>
                             </div>
                         </form>
+
+                        <!-- Script para manejar campos dinámicos -->
+                        <script>
+                        function mostrarCamposMetodo(tipo) {
+                            const camposTarjeta = document.getElementById('campos-tarjeta');
+                            const camposPSE = document.getElementById('campos-pse');
+
+                            if (tipo === 'TARJETA') {
+                                camposTarjeta.style.display = 'block';
+                                camposPSE.style.display = 'none';
+
+                                // Hacer campos de tarjeta requeridos
+                                document.getElementById('entidad-tarjeta').required = true;
+                                document.getElementById('numero-tarjeta').required = true;
+                                document.getElementById('fecha-vencimiento').required = true;
+                                document.getElementById('cvv-tarjeta').required = true;
+
+                                // Remover requerido de PSE
+                                document.getElementById('tipo-persona-pse').required = false;
+                                document.getElementById('entidad-pse').required = false;
+                                document.getElementById('documento-pse').required = false;
+                            } else if (tipo === 'PSE') {
+                                camposTarjeta.style.display = 'none';
+                                camposPSE.style.display = 'block';
+
+                                // Hacer campos PSE requeridos
+                                document.getElementById('tipo-persona-pse').required = true;
+                                document.getElementById('entidad-pse').required = true;
+                                document.getElementById('documento-pse').required = true;
+
+                                // Remover requerido de tarjeta
+                                document.getElementById('entidad-tarjeta').required = false;
+                                document.getElementById('numero-tarjeta').required = false;
+                                document.getElementById('fecha-vencimiento').required = false;
+                                document.getElementById('cvv-tarjeta').required = false;
+                            }
+                        }
+
+                        function validarTerminos() {
+                            const terminosCheck = document.getElementById('terminos');
+                            const btnPagar = document.getElementById('btnPagar');
+
+                            // ✅ Habilitar/deshabilitar botón según checkbox
+                            btnPagar.disabled = !terminosCheck.checked;
+                        }
+
+                        // Inicializar botón como deshabilitado
+                        document.addEventListener('DOMContentLoaded', function() {
+                            document.getElementById('btnPagar').disabled = true;
+                        });
+                        </script>
 
                         <!-- Información de Seguridad -->
                         <div class="alert alert-light mt-4 text-center small">

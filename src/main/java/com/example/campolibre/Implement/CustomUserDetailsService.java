@@ -28,6 +28,11 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario no encontrado: " + username);
         }
 
+        // Verificar que el usuario esté activo
+        if (!"ACTIVO".equals(usuario.getEstado())) {
+            throw new UsernameNotFoundException("Usuario no está activo. No puede iniciar sesión.");
+        }
+
         // Verificar que el usuario tenga un rol asignado
         if (usuario.getRol() == null) {
             throw new UsernameNotFoundException("Usuario sin rol asignado: " + username);
