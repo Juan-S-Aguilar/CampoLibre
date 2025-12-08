@@ -4,6 +4,8 @@ import com.example.campolibre.DTO.ProductoDTO;
 import com.example.campolibre.DTO.ResumenInventarioDTO;
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
+import com.example.campolibre.Enum.CategoriaTienda;
+import com.example.campolibre.Enum.SubcategoriaProducto;
 import com.example.campolibre.Service.ProductoService;
 import com.example.campolibre.Service.TiendaService;
 import com.example.campolibre.Service.UsuarioService;
@@ -16,6 +18,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +100,18 @@ public class InventarioController {
             Map<Long, String> tiendaNombres = misTiendas.stream()
                     .collect(Collectors.toMap(TiendaDTO::getId_tienda, TiendaDTO::getNombre));
 
+            // Obtener categorías únicas de todas las tiendas del proveedor
+            List<CategoriaTienda> categoriasDelProveedor = misTiendas.stream()
+                    .map(TiendaDTO::getCategoriaPrincipal)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // Filtrar subcategorías que pertenecen a las categorías de las tiendas del proveedor
+            List<SubcategoriaProducto> subcategoriasFiltradas = Arrays.stream(SubcategoriaProducto.values())
+                    .filter(subcat -> categoriasDelProveedor.stream()
+                            .anyMatch(cat -> subcat.perteneceA(cat)))
+                    .collect(Collectors.toList());
+
             model.addAttribute("tienda", null); // No hay tienda específica
             model.addAttribute("resumen", resumen);
             model.addAttribute("productos", productos);
@@ -105,6 +120,7 @@ public class InventarioController {
             model.addAttribute("misTiendas", misTiendas);
             model.addAttribute("tiendaNombres", tiendaNombres);
             model.addAttribute("viendoTodasTiendas", true);
+            model.addAttribute("subcategorias", subcategoriasFiltradas);
 
             return "inventario/panel";
         } catch (Exception e) {
@@ -166,6 +182,12 @@ public class InventarioController {
                 tituloFiltro = "Todos los productos";
             }
 
+            // Filtrar subcategorías según la categoría de la tienda
+            CategoriaTienda categoriaTienda = tienda.getCategoriaPrincipal();
+            List<SubcategoriaProducto> subcategoriasFiltradas = Arrays.stream(SubcategoriaProducto.values())
+                    .filter(sub -> sub.perteneceA(categoriaTienda))
+                    .collect(Collectors.toList());
+
             model.addAttribute("tienda", tienda);
             model.addAttribute("resumen", resumen);
             model.addAttribute("productos", productos);
@@ -173,6 +195,7 @@ public class InventarioController {
             model.addAttribute("tituloFiltro", tituloFiltro);
             model.addAttribute("misTiendas", misTiendas);
             model.addAttribute("viendoTodasTiendas", false);
+            model.addAttribute("subcategorias", subcategoriasFiltradas);
 
             return "inventario/panel";
         } catch (Exception e) {

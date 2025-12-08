@@ -51,6 +51,17 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
 
     private Random random = new Random();
 
+    // ==================== CONTADORES PARA ROTACIÓN DE IMÁGENES ====================
+    private int contadorMango = 0;
+    private int contadorPlatano = 0;
+    private int contadorNaranja = 0;
+    private int contadorLechuga = 0;
+    private int contadorPapa = 0;
+    private int contadorMermelada = 0;
+    private int contadorQueso = 0;
+    private int contadorPan = 0;
+    private int contadorSalsa = 0;
+
     @Override
     public void run(String... args) throws Exception {
         // Solo ejecutar si no hay datos
@@ -61,7 +72,7 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
         }
 
         System.out.println("\n╔════════════════════════════════════════════════════════════╗");
-        System.out.println("║   📦 INICIANDO CARGA DE DATOS DE PRUEBA - CAMPO LIBRE    ║");
+        System.out.println("║   📦 INICIANDO CARGA DE DATOS DE PRUEBA - CAMPO LIBRE      ║");
         System.out.println("╚════════════════════════════════════════════════════════════╝\n");
 
         long startTime = System.currentTimeMillis();
@@ -262,14 +273,14 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
 
         // 2 Patrocinadores INACTIVOS (para probar validaciones)
         patrocinadores.add(crearPatrocinador(
-            "Agro Export SA (Archivado)",
+            "Agro Export SA",
             "Empresa archivada por fusión con otra compañía.",
             "contacto@agroexport.com", "6011234567", "https://www.agroexport.com",
             "https://ejemplo.com/logos/agroexport.png", false
         ));
 
         patrocinadores.add(crearPatrocinador(
-            "Fondo Campesino (Inactivo)",
+            "Fondo Campesino",
             "Fondo cerrado temporalmente por reestructuración.",
             "info@fondocampesino.org", "6017654321", "https://www.fondocampesino.org",
             "https://ejemplo.com/logos/fondocampesino.png", false
@@ -325,7 +336,7 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
             LocalDate.now().plusDays(40), LocalTime.of(8, 0),
             TipoEvento.CAPACITACION, EstadoEvento.BORRADOR, null,
             admin, pat2, 100, 150000.0,
-            "https://ejemplo.com/congreso.jpg",
+            "/images/Congreso.jpg",
             "Evento en planificación. Pendiente confirmación de conferencistas."
         ));
 
@@ -407,7 +418,7 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
             LocalDate.now(), LocalTime.of(10, 0),
             TipoEvento.EXPOSICION, EstadoEvento.EN_CURSO, LocalDateTime.now().minusDays(14),
             admin, pat3, 60, 200000.0,
-            "https://ejemplo.com/expo-agro.jpg",
+            "/images/Expo.jpg",
             "1. Stand de 9m² con paredes y alfombra. 2. Conexión eléctrica incluida."
         ));
 
@@ -664,46 +675,46 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
         // Distribuir tiendas entre proveedores (cada proveedor tiene 1-2 tiendas)
         tiendas.add(crearTienda("El Huerto Fresco", "Frutas y verduras frescas directamente del campo",
             CategoriaTienda.FRUTAS_VERDURAS, "huerto@campolibre.com", "3101234567",
-            "Fusagasugá, Cundinamarca", proveedores.get(0), EstadoTienda.ACTIVA));
+            "Fusagasugá, Cundinamarca", proveedores.get(0), EstadoTienda.ACTIVA, "/images/Huerto.jpg"));
 
         tiendas.add(crearTienda("Delicias del Valle", "Productos artesanales con ingredientes naturales",
             CategoriaTienda.PROCESADOS_ARTESANALES, "delicias@campolibre.com", "3102345678",
-            "Cali, Valle del Cauca", proveedores.get(1), EstadoTienda.ACTIVA));
+            "Cali, Valle del Cauca", proveedores.get(1), EstadoTienda.ACTIVA, "/images/Delicias del valle.jpg"));
 
         tiendas.add(crearTienda("Semillas de Oro", "Granos, cereales y semillas de calidad",
             CategoriaTienda.GRANOS_SEMILLAS, "semillas@campolibre.com", "3103456789",
-            "Bogotá, Cundinamarca", proveedores.get(2), EstadoTienda.ACTIVA));
+            "Bogotá, Cundinamarca", proveedores.get(2), EstadoTienda.ACTIVA, "/images/semillas.jpg"));
 
         tiendas.add(crearTienda("Aromas del Campo", "Hierbas aromáticas y especias naturales",
             CategoriaTienda.HIERBAS_ESPECIAS, "aromas@campolibre.com", "3104567890",
-            "Pereira, Risaralda", proveedores.get(3), EstadoTienda.ACTIVA));
+            "Pereira, Risaralda", proveedores.get(3), EstadoTienda.ACTIVA, "/images/Aromas del campo.jpg"));
 
         tiendas.add(crearTienda("Lácteos La Pradera", "Productos lácteos artesanales del campo",
             CategoriaTienda.PROCESADOS_ARTESANALES, "lacteos@campolibre.com", "3105678901",
-            "Medellín, Antioquia", proveedores.get(4), EstadoTienda.ACTIVA));
+            "Medellín, Antioquia", proveedores.get(4), EstadoTienda.ACTIVA, "/images/Lacteos.jpg"));
 
         // Proveedor 5 con 2 tiendas
         tiendas.add(crearTienda("Café Premium del Eje", "Café especial del Eje Cafetero",
             CategoriaTienda.FRUTAS_VERDURAS, "cafe@campolibre.com", "3106789012",
-            "Armenia, Quindío", proveedores.get(5), EstadoTienda.ACTIVA));
+            "Armenia, Quindío", proveedores.get(5), EstadoTienda.ACTIVA, "/images/cafe.jpg"));
 
         tiendas.add(crearTienda("Panela del Trapiche", "Panela y derivados de la caña",
             CategoriaTienda.PROCESADOS_ARTESANALES, "panela@campolibre.com", "3107890123",
-            "Villeta, Cundinamarca", proveedores.get(5), EstadoTienda.ACTIVA));
+            "Villeta, Cundinamarca", proveedores.get(5), EstadoTienda.ACTIVA, "/images/Panela.jpg"));
 
         // Proveedor 6 con 2 tiendas
         tiendas.add(crearTienda("Hortalizas Frescas", "Verduras y hortalizas de la región",
             CategoriaTienda.FRUTAS_VERDURAS, "hortalizas@campolibre.com", "3108901234",
-            "Soacha, Cundinamarca", proveedores.get(6), EstadoTienda.ACTIVA));
+            "Soacha, Cundinamarca", proveedores.get(6), EstadoTienda.ACTIVA, "/images/Hortalizas.jpg"));
 
         tiendas.add(crearTienda("Granja Orgánica El Sol", "Productos 100% orgánicos certificados",
             CategoriaTienda.FRUTAS_VERDURAS, "granja@campolibre.com", "3109012345",
-            "Chía, Cundinamarca", proveedores.get(6), EstadoTienda.ACTIVA));
+            "Chía, Cundinamarca", proveedores.get(6), EstadoTienda.ACTIVA, "/images/Granja_1.jpg"));
 
         // 1 tienda INACTIVA (para pruebas)
-        tiendas.add(crearTienda("Tienda Temporal (Inactiva)", "Tienda temporalmente cerrada",
+        tiendas.add(crearTienda("Tienda Temporal ", "Tienda temporalmente cerrada",
             CategoriaTienda.GRANOS_SEMILLAS, "temporal@campolibre.com", "3100000000",
-            "Bogotá", proveedores.get(7), EstadoTienda.INACTIVA));
+            "Bogotá", proveedores.get(7), EstadoTienda.INACTIVA, "/images/temporal.jpg"));
 
         System.out.println("    ✓ " + tiendas.size() + " tiendas creadas");
         System.out.println("      - ACTIVAS: " + tiendas.stream().filter(t -> t.getEstado() == EstadoTienda.ACTIVA).count());
@@ -712,7 +723,7 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
 
     private Tienda crearTienda(String nombre, String descripcion, CategoriaTienda categoria,
                                String email, String telefono, String ubicacion,
-                               Usuario propietario, EstadoTienda estado) {
+                               Usuario propietario, EstadoTienda estado, String imagen) {
         Tienda t = new Tienda();
         t.setNombre(nombre);
         t.setDescripcion(descripcion);
@@ -722,6 +733,7 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
         t.setUbicacion(ubicacion);
         t.setUsuario(propietario);
         t.setEstado(estado);
+        t.setImagen_tienda(imagen);
         return tiendaRepository.save(t);
     }
 
@@ -756,60 +768,276 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
 
     private int crearProductosFrutasVerduras(Tienda tienda) {
         int count = 0;
-        count += crearProducto("Mango Tommy", "Mangos frescos y dulces", 5000.0, 50, 10,
-            SubcategoriaProducto.FRUTAS_TROPICALES, UnidadMedida.KILO, tienda);
-        count += crearProducto("Plátano Hartón", "Plátanos verdes para cocinar", 2500.0, 100, 15,
-            SubcategoriaProducto.FRUTAS_TROPICALES, UnidadMedida.LIBRA, tienda);
-        count += crearProducto("Naranja Valencia", "Naranjas jugosas ideales para jugo", 3000.0, 80, 10,
-            SubcategoriaProducto.FRUTAS_CITRICAS, UnidadMedida.KILO, tienda);
-        count += crearProducto("Lechuga Crespa", "Lechuga fresca y crujiente", 2000.0, 30, 5,
-            SubcategoriaProducto.VERDURAS_HOJA, UnidadMedida.UNIDAD, tienda);
-        count += crearProducto("Papa Criolla", "Papa criolla para freír", 4000.0, 60, 10,
-            SubcategoriaProducto.TUBERCULOS, UnidadMedida.LIBRA, tienda);
+
+        // Rotar imágenes de Mango (4 variantes con valores únicos)
+        String[] imagenesMango = {"/images/MangoTomy.jpg", "/images/MangoTomy2.webp", "/images/MangoTomy3.jpg", "/images/MangoTomy4.jpg"};
+        String[] descripcionesMango = {
+            "Mangos Tommy dulces y jugosos de primera calidad, cultivados en clima tropical",
+            "Mangos maduros de color amarillo intenso, perfectos para postres y batidos",
+            "Mangos premium cosechados en su punto óptimo de maduración",
+            "Mangos frescos con aroma intenso, ideales para consumo directo"
+        };
+        Double[] preciosMango = {4500.0, 5200.0, 5800.0, 4800.0};
+        Integer[] stockMango = {45, 60, 35, 52};
+        Integer[] stockMinMango = {8, 12, 7, 10};
+        count += crearProducto("Mango Tommy", descripcionesMango[contadorMango % 4], preciosMango[contadorMango % 4],
+            stockMango[contadorMango % 4], stockMinMango[contadorMango % 4],
+            SubcategoriaProducto.FRUTAS_TROPICALES, UnidadMedida.KILO, tienda, imagenesMango[contadorMango++ % 4]);
+
+        // Rotar imágenes de Plátano (4 variantes con valores únicos)
+        String[] imagenesPlatano = {"/images/Platano.jpg", "/images/Platano2.jpg", "/images/Platano3.webp", "/images/Platano4.jpg"};
+        String[] descripcionesPlatano = {
+            "Plátanos verdes hartón para freír, cocidos o asados. Tamaño grande",
+            "Plátano hartón verde de excelente calidad para preparaciones tradicionales",
+            "Plátanos frescos de la región, perfectos para patacones y bollos",
+            "Plátano hartón verde de primera, ideal para cocinar y freír"
+        };
+        Double[] preciosPlatano = {2300.0, 2800.0, 2500.0, 2650.0};
+        Integer[] stockPlatano = {95, 120, 80, 110};
+        Integer[] stockMinPlatano = {15, 20, 12, 18};
+        count += crearProducto("Plátano Hartón", descripcionesPlatano[contadorPlatano % 4], preciosPlatano[contadorPlatano % 4],
+            stockPlatano[contadorPlatano % 4], stockMinPlatano[contadorPlatano % 4],
+            SubcategoriaProducto.FRUTAS_TROPICALES, UnidadMedida.LIBRA, tienda, imagenesPlatano[contadorPlatano++ % 4]);
+
+        // Rotar imágenes de Naranja (4 variantes con valores únicos)
+        String[] imagenesNaranja = {"/images/Naranja.jpg", "/images/Naranja2.jpg", "/images/Naranja3.jpg", "/images/Naranja4.jpg"};
+        String[] descripcionesNaranja = {
+            "Naranjas Valencia jugosas y dulces, ideales para jugo natural recién exprimido",
+            "Naranjas frescas de clima cálido, ricas en vitamina C y antioxidantes",
+            "Naranjas premium de pulpa firme, perfectas para ensaladas y postres",
+            "Naranjas jugosas cultivadas orgánicamente, sabor dulce y refrescante"
+        };
+        Double[] preciosNaranja = {2800.0, 3200.0, 3500.0, 3100.0};
+        Integer[] stockNaranja = {75, 90, 65, 85};
+        Integer[] stockMinNaranja = {10, 15, 8, 12};
+        count += crearProducto("Naranja Valencia", descripcionesNaranja[contadorNaranja % 4], preciosNaranja[contadorNaranja % 4],
+            stockNaranja[contadorNaranja % 4], stockMinNaranja[contadorNaranja % 4],
+            SubcategoriaProducto.FRUTAS_CITRICAS, UnidadMedida.KILO, tienda, imagenesNaranja[contadorNaranja++ % 4]);
+
+        // Rotar imágenes de Lechuga (3 variantes con valores únicos)
+        String[] imagenesLechuga = {"/images/Lechuga.jpg", "/images/Lechuga2.jpg", "/images/Lechuga4.jpg"};
+        String[] descripcionesLechuga = {
+            "Lechuga crespa verde fresca y crujiente, perfecta para ensaladas y hamburguesas",
+            "Lechuga orgánica de hoja rizada, cultivada sin pesticidas ni químicos",
+            "Lechuga fresca de invernadero, hojas verdes y tiernas, ideal para wraps"
+        };
+        Double[] preciosLechuga = {1800.0, 2200.0, 2500.0};
+        Integer[] stockLechuga = {28, 35, 25};
+        Integer[] stockMinLechuga = {5, 7, 4};
+        count += crearProducto("Lechuga Crespa", descripcionesLechuga[contadorLechuga % 3], preciosLechuga[contadorLechuga % 3],
+            stockLechuga[contadorLechuga % 3], stockMinLechuga[contadorLechuga % 3],
+            SubcategoriaProducto.VERDURAS_HOJA, UnidadMedida.UNIDAD, tienda, imagenesLechuga[contadorLechuga++ % 3]);
+
+        // Rotar imágenes de Papa (4 variantes con valores únicos)
+        String[] imagenesPapa = {"/images/PapaCriolla.jpg", "/images/PapaCriolla2.jpg", "/images/PapaCriolla3.jpg", "/images/PapaCriolla4.jpg"};
+        String[] descripcionesPapa = {
+            "Papa criolla amarilla de primera calidad, perfecta para freír y dorar",
+            "Papa criolla fresca de la región andina, textura cremosa y sabor único",
+            "Papa criolla seleccionada, ideal para papas fritas y sopas tradicionales",
+            "Papa criolla de tamaño mediano, cultivada en tierra fértil de montaña"
+        };
+        Double[] preciosPapa = {3800.0, 4200.0, 4500.0, 3950.0};
+        Integer[] stockPapa = {55, 70, 50, 65};
+        Integer[] stockMinPapa = {10, 12, 8, 11};
+        count += crearProducto("Papa Criolla", descripcionesPapa[contadorPapa % 4], preciosPapa[contadorPapa % 4],
+            stockPapa[contadorPapa % 4], stockMinPapa[contadorPapa % 4],
+            SubcategoriaProducto.TUBERCULOS, UnidadMedida.LIBRA, tienda, imagenesPapa[contadorPapa++ % 4]);
+
         return count;
     }
 
     private int crearProductosProcesados(Tienda tienda) {
         int count = 0;
-        count += crearProducto("Mermelada de Mora", "Mermelada artesanal sin conservantes", 8000.0, 25, 5,
-            SubcategoriaProducto.MERMELADAS, UnidadMedida.UNIDAD, tienda);
-        count += crearProducto("Queso Campesino", "Queso fresco hecho en casa", 12000.0, 15, 3,
-            SubcategoriaProducto.QUESOS, UnidadMedida.LIBRA, tienda);
-        count += crearProducto("Pan Integral", "Pan artesanal con semillas", 6000.0, 20, 5,
-            SubcategoriaProducto.PAN_ARTESANAL, UnidadMedida.UNIDAD, tienda);
-        count += crearProducto("Salsa de Tomate Casera", "Salsa natural sin químicos", 7000.0, 30, 5,
-            SubcategoriaProducto.SALSAS, UnidadMedida.UNIDAD, tienda);
+
+        // Rotar imágenes de Mermelada (3 variantes con valores únicos)
+        String[] imagenesMermelada = {"/images/MermeladaMora.jpg", "/images/MermeladaMora2.jpg", "/images/MermeladaMora3.jpg"};
+        String[] descripcionesMermelada = {
+            "Mermelada artesanal de mora 100% natural, sin conservantes ni colorantes artificiales. 250g",
+            "Mermelada casera de mora con trozos de fruta, preparación tradicional. Frasco de 300g",
+            "Mermelada premium de mora orgánica, endulzada con panela. Presentación de 280g"
+        };
+        Double[] preciosMermelada = {7500.0, 8500.0, 9200.0};
+        Integer[] stockMermelada = {22, 28, 18};
+        Integer[] stockMinMermelada = {4, 6, 3};
+        count += crearProducto("Mermelada de Mora", descripcionesMermelada[contadorMermelada % 3],
+            preciosMermelada[contadorMermelada % 3], stockMermelada[contadorMermelada % 3],
+            stockMinMermelada[contadorMermelada % 3], SubcategoriaProducto.MERMELADAS, UnidadMedida.UNIDAD,
+            tienda, imagenesMermelada[contadorMermelada++ % 3]);
+
+        // Rotar imágenes de Queso (3 variantes con valores únicos)
+        String[] imagenesQueso = {"/images/QuesoCampesino.jpg", "/images/QuesoCampesino2.jpg", "/images/QuesoCampesino3.jpg"};
+        String[] descripcionesQueso = {
+            "Queso campesino fresco elaborado con leche de vaca de primera calidad, bajo en sal",
+            "Queso fresco artesanal de textura suave, perfecto para arepas y desayunos típicos",
+            "Queso campesino tradicional 100% natural, elaborado diariamente en la finca"
+        };
+        Double[] preciosQueso = {11500.0, 12800.0, 13500.0};
+        Integer[] stockQueso = {12, 18, 14};
+        Integer[] stockMinQueso = {2, 4, 3};
+        count += crearProducto("Queso Campesino", descripcionesQueso[contadorQueso % 3],
+            preciosQueso[contadorQueso % 3], stockQueso[contadorQueso % 3],
+            stockMinQueso[contadorQueso % 3], SubcategoriaProducto.QUESOS, UnidadMedida.LIBRA,
+            tienda, imagenesQueso[contadorQueso++ % 3]);
+
+        // Rotar imágenes de Pan (3 variantes con valores únicos)
+        String[] imagenesPan = {"/images/PanIntegral.jpg", "/images/PanIntegral2.jpg", "/images/PanIntegral3.jpg"};
+        String[] descripcionesPan = {
+            "Pan integral artesanal con semillas de girasol, ajonjolí y linaza. Horneado diariamente",
+            "Pan 100% integral de masa madre, alto en fibra y sin azúcar refinada. 450g",
+            "Pan integral casero con cereales y frutos secos, textura esponjosa. Unidad de 500g"
+        };
+        Double[] preciosPan = {5500.0, 6500.0, 7200.0};
+        Integer[] stockPan = {18, 25, 15};
+        Integer[] stockMinPan = {4, 6, 3};
+        count += crearProducto("Pan Integral", descripcionesPan[contadorPan % 3],
+            preciosPan[contadorPan % 3], stockPan[contadorPan % 3],
+            stockMinPan[contadorPan % 3], SubcategoriaProducto.PAN_ARTESANAL, UnidadMedida.UNIDAD,
+            tienda, imagenesPan[contadorPan++ % 3]);
+
+        // Rotar imágenes de Salsa (3 variantes con valores únicos)
+        String[] imagenesSalsa = {"/images/SalsaTomate.jpg", "/images/SalsaTomate2.jpg", "/images/SalsaTomate3.jpg"};
+        String[] descripcionesSalsa = {
+            "Salsa de tomate casera sin preservantes, preparada con tomates frescos y especias naturales. 350ml",
+            "Salsa de tomate artesanal con albahaca fresca, ideal para pastas y pizzas. Frasco de 400ml",
+            "Salsa de tomate orgánica con bajo contenido de sodio, receta tradicional. 380ml"
+        };
+        Double[] preciosSalsa = {6500.0, 7500.0, 8200.0};
+        Integer[] stockSalsa = {28, 35, 22};
+        Integer[] stockMinSalsa = {5, 7, 4};
+        count += crearProducto("Salsa de Tomate Casera", descripcionesSalsa[contadorSalsa % 3],
+            preciosSalsa[contadorSalsa % 3], stockSalsa[contadorSalsa % 3],
+            stockMinSalsa[contadorSalsa % 3], SubcategoriaProducto.SALSAS, UnidadMedida.UNIDAD,
+            tienda, imagenesSalsa[contadorSalsa++ % 3]);
+
         return count;
     }
 
     private int crearProductosGranos(Tienda tienda) {
         int count = 0;
-        count += crearProducto("Fríjol Rojo", "Fríjol de excelente calidad", 6000.0, 50, 10,
-            SubcategoriaProducto.GRANOS_SECOS, UnidadMedida.LIBRA, tienda);
-        count += crearProducto("Arroz Integral", "Arroz sin procesar", 5500.0, 60, 10,
-            SubcategoriaProducto.CEREALES, UnidadMedida.KILO, tienda);
-        count += crearProducto("Semillas de Chía", "Semillas nutritivas", 15000.0, 20, 5,
-            SubcategoriaProducto.SEMILLAS, UnidadMedida.BOLSA_1KG, tienda);
-        count += crearProducto("Lentejas", "Lentejas de grano grande", 7000.0, 35, 8,
-            SubcategoriaProducto.LEGUMINOSAS, UnidadMedida.LIBRA, tienda);
+
+        // Fríjol Rojo con valores variados
+        String[] descripcionesFrijol = {
+            "Fríjol rojo de grano grande, excelente para caldos y preparaciones tradicionales colombianas",
+            "Fríjol rojo seleccionado, cocción rápida y textura cremosa. Ideal para fríjoles antioqueños",
+            "Fríjol rojo de primera calidad, cultivado orgánicamente sin pesticidas"
+        };
+        Double[] preciosFrijol = {5800.0, 6300.0, 6800.0};
+        Integer[] stockFrijol = {48, 55, 42};
+        Integer[] stockMinFrijol = {9, 11, 8};
+        int indexFrijol = (int)(Math.random() * 3);
+        count += crearProducto("Fríjol Rojo", descripcionesFrijol[indexFrijol], preciosFrijol[indexFrijol],
+            stockFrijol[indexFrijol], stockMinFrijol[indexFrijol],
+            SubcategoriaProducto.GRANOS_SECOS, UnidadMedida.LIBRA, tienda, "/images/FrijolRojo.jpg");
+
+        // Arroz Integral con valores variados
+        String[] descripcionesArroz = {
+            "Arroz integral de grano largo, alto contenido de fibra y nutrientes naturales",
+            "Arroz integral orgánico sin pulir, conserva todas sus propiedades nutricionales",
+            "Arroz integral premium, textura firme y sabor a nuez. Excelente para dietas saludables"
+        };
+        Double[] preciosArroz = {5200.0, 5800.0, 6200.0};
+        Integer[] stockArroz = {58, 65, 52};
+        Integer[] stockMinArroz = {10, 12, 9};
+        int indexArroz = (int)(Math.random() * 3);
+        count += crearProducto("Arroz Integral", descripcionesArroz[indexArroz], preciosArroz[indexArroz],
+            stockArroz[indexArroz], stockMinArroz[indexArroz],
+            SubcategoriaProducto.CEREALES, UnidadMedida.KILO, tienda, "/images/ArrozIntregral.jpg");
+
+        // Semillas de Chía con valores variados
+        String[] descripcionesChia = {
+            "Semillas de chía orgánicas, ricas en omega-3 y fibra. Súper alimento natural 500g",
+            "Semillas de chía premium importadas, ideales para smoothies y postres saludables",
+            "Chía natural de alta calidad, perfecta para dietas veganas y vegetarianas. Bolsa de 450g"
+        };
+        Double[] preciosChia = {14500.0, 15800.0, 16500.0};
+        Integer[] stockChia = {18, 22, 16};
+        Integer[] stockMinChia = {4, 5, 3};
+        int indexChia = (int)(Math.random() * 3);
+        count += crearProducto("Semillas de Chía", descripcionesChia[indexChia], preciosChia[indexChia],
+            stockChia[indexChia], stockMinChia[indexChia],
+            SubcategoriaProducto.SEMILLAS, UnidadMedida.BOLSA_1KG, tienda, "/images/SemillasChia.jpg");
+
+        // Lentejas con valores variados
+        String[] descripcionesLentejas = {
+            "Lentejas de grano grande, cocción uniforme y alto valor proteico",
+            "Lentejas premium seleccionadas, perfectas para sopas y guisos nutritivos",
+            "Lentejas orgánicas de excelente calidad, ricas en hierro y proteína vegetal"
+        };
+        Double[] preciosLentejas = {6800.0, 7400.0, 7900.0};
+        Integer[] stockLentejas = {32, 38, 30};
+        Integer[] stockMinLentejas = {7, 9, 6};
+        int indexLentejas = (int)(Math.random() * 3);
+        count += crearProducto("Lentejas", descripcionesLentejas[indexLentejas], preciosLentejas[indexLentejas],
+            stockLentejas[indexLentejas], stockMinLentejas[indexLentejas],
+            SubcategoriaProducto.LEGUMINOSAS, UnidadMedida.LIBRA, tienda, "/images/Lentejas.jpg");
+
         return count;
     }
 
     private int crearProductosHierbas(Tienda tienda) {
         int count = 0;
-        count += crearProducto("Albahaca Fresca", "Albahaca aromática", 3000.0, 15, 3,
-            SubcategoriaProducto.HIERBAS_AROMATICAS, UnidadMedida.UNIDAD, tienda);
-        count += crearProducto("Canela en Rama", "Canela de alta calidad", 12000.0, 10, 2,
-            SubcategoriaProducto.ESPECIAS_SECAS, UnidadMedida.PAQUETE, tienda);
-        count += crearProducto("Té de Hierbabuena", "Infusión digestiva", 5000.0, 30, 5,
-            SubcategoriaProducto.INFUSIONES_TES, UnidadMedida.PAQUETE, tienda);
-        count += crearProducto("Romero Seco", "Romero para condimentar", 4000.0, 20, 4,
-            SubcategoriaProducto.ESPECIAS_SECAS, UnidadMedida.PAQUETE, tienda);
+
+        // Albahaca con valores variados
+        String[] descripcionesAlbahaca = {
+            "Albahaca fresca aromática, ideal para salsas pesto y ensaladas caprese. Manojo de 50g",
+            "Albahaca orgánica recién cortada, perfumada y de hojas verdes intensas",
+            "Albahaca fresca de cultivo hidropónico, sabor intenso y duración prolongada"
+        };
+        Double[] preciosAlbahaca = {2800.0, 3300.0, 3600.0};
+        Integer[] stockAlbahaca = {14, 18, 12};
+        Integer[] stockMinAlbahaca = {3, 4, 2};
+        int indexAlbahaca = (int)(Math.random() * 3);
+        count += crearProducto("Albahaca Fresca", descripcionesAlbahaca[indexAlbahaca], preciosAlbahaca[indexAlbahaca],
+            stockAlbahaca[indexAlbahaca], stockMinAlbahaca[indexAlbahaca],
+            SubcategoriaProducto.HIERBAS_AROMATICAS, UnidadMedida.UNIDAD, tienda, "/images/AlbahacaFresca.jpg");
+
+        // Canela con valores variados
+        String[] descripcionesCanela = {
+            "Canela en rama de Ceilán, aroma suave y dulce. Paquete de 100g con 8-10 ramas",
+            "Canela en rama premium de primera calidad, perfecta para postres y bebidas calientes",
+            "Canela en rama orgánica, sabor intenso y propiedades medicinales. Paquete de 80g"
+        };
+        Double[] preciosCanela = {11500.0, 12800.0, 13500.0};
+        Integer[] stockCanela = {9, 12, 8};
+        Integer[] stockMinCanela = {2, 3, 2};
+        int indexCanela = (int)(Math.random() * 3);
+        count += crearProducto("Canela en Rama", descripcionesCanela[indexCanela], preciosCanela[indexCanela],
+            stockCanela[indexCanela], stockMinCanela[indexCanela],
+            SubcategoriaProducto.ESPECIAS_SECAS, UnidadMedida.PAQUETE, tienda, "/images/CanelaRama.jpg");
+
+        // Té de Hierbabuena con valores variados
+        String[] descripcionesTe = {
+            "Té de hierbabuena natural, digestivo y refrescante. Caja con 20 sobres",
+            "Infusión de hierbabuena orgánica, ideal para después de comidas. 25 bolsitas",
+            "Té de hierbabuena premium cultivado artesanalmente. Paquete de 30g hojas sueltas"
+        };
+        Double[] preciosTe = {4800.0, 5500.0, 6200.0};
+        Integer[] stockTe = {28, 35, 25};
+        Integer[] stockMinTe = {5, 6, 4};
+        int indexTe = (int)(Math.random() * 3);
+        count += crearProducto("Té de Hierbabuena", descripcionesTe[indexTe], preciosTe[indexTe],
+            stockTe[indexTe], stockMinTe[indexTe],
+            SubcategoriaProducto.INFUSIONES_TES, UnidadMedida.PAQUETE, tienda, "/images/TeHiervuena.jpg");
+
+        // Romero con valores variados
+        String[] descripcionesRomero = {
+            "Romero seco de aroma intenso, perfecto para condimentar carnes y asados. 30g",
+            "Romero deshidratado orgánico, propiedades antioxidantes. Paquete de 40g",
+            "Romero seco premium para infusiones y gastronomía. Presentación de 35g"
+        };
+        Double[] preciosRomero = {3800.0, 4400.0, 4800.0};
+        Integer[] stockRomero = {18, 22, 16};
+        Integer[] stockMinRomero = {4, 5, 3};
+        int indexRomero = (int)(Math.random() * 3);
+        count += crearProducto("Romero Seco", descripcionesRomero[indexRomero], preciosRomero[indexRomero],
+            stockRomero[indexRomero], stockMinRomero[indexRomero],
+            SubcategoriaProducto.ESPECIAS_SECAS, UnidadMedida.PAQUETE, tienda, "/images/Romero.jpg");
+
         return count;
     }
 
     private int crearProducto(String nombre, String descripcion, Double precio, Integer stock,
-                              Integer stockMin, SubcategoriaProducto subcat, UnidadMedida unidad, Tienda tienda) {
+                              Integer stockMin, SubcategoriaProducto subcat, UnidadMedida unidad, Tienda tienda, String imagen) {
         Producto p = new Producto();
         p.setNombre(nombre);
         p.setDescripcion(descripcion);
@@ -820,6 +1048,7 @@ public class ComprehensiveDataSeeder implements CommandLineRunner {
         p.setUnidadMedida(unidad);
         p.setTienda(tienda);
         p.setEstado("ACTIVO");
+        p.setImagen_producto(imagen);
         productoRepository.save(p);
         return 1;
     }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout/base :: layout(~{::title}, ~{::content})}">
 <head>
     <title>PQRS Pendientes - Campo Libre</title>
@@ -15,10 +16,15 @@
                 <i class="bi bi-clock-history"></i>
                 PQRS Pendientes de Respuesta
             </h2>
-            <div class="list-header-actions">
-                <a th:href="@{/pqrs}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Ver Todas
-                </a>
+            <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
+                <button class="view-toggle-btn" th:classappend="${tipoLista == 'todas'} ? 'active' : ''"
+                        th:onclick="'window.location.href=\'/pqrs\''">
+                    <i class="bi bi-list"></i> Todas
+                </button>
+                <button class="view-toggle-btn" th:classappend="${tipoLista == 'pendientes'} ? 'active' : ''"
+                        th:onclick="'window.location.href=\'/pqrs/pendientes\''">
+                    <i class="bi bi-clock-history"></i> Pendientes
+                </button>
             </div>
         </div>
 

@@ -297,37 +297,16 @@
                 <i class="bi bi-search"></i>
             </div>
 
+            <!-- ✅ FILTRO POR SUBCATEGORÍA (FILTRADO DINÁMICO) -->
             <div class="filter-group" style="flex: 1;">
                 <label for="filterSubcategoria">Subcategoría</label>
                 <select id="filterSubcategoria" class="form-select" onchange="filterTable()">
                     <option value="">Todas</option>
-                    <optgroup label="🍎 Frutas y Verduras">
-                        <option value="FRUTAS_TROPICALES">Frutas Tropicales</option>
-                        <option value="FRUTAS_CITRICAS">Frutas Cítricas</option>
-                        <option value="VERDURAS_HOJA">Verduras de Hoja</option>
-                        <option value="TUBERCULOS">Tubérculos</option>
-                        <option value="HORTALIZAS">Hortalizas</option>
-                    </optgroup>
-                    <optgroup label="🧀 Procesados Artesanales">
-                        <option value="MERMELADAS">Mermeladas</option>
-                        <option value="QUESOS">Quesos</option>
-                        <option value="PAN_ARTESANAL">Pan Artesanal</option>
-                        <option value="SALSAS">Salsas</option>
-                        <option value="CONSERVAS">Conservas</option>
-                    </optgroup>
-                    <optgroup label="🌾 Granos y Semillas">
-                        <option value="GRANOS_SECOS">Granos Secos</option>
-                        <option value="CEREALES">Cereales</option>
-                        <option value="SEMILLAS">Semillas</option>
-                        <option value="HARINAS_ARTESANALES">Harinas Artesanales</option>
-                        <option value="LEGUMINOSAS">Leguminosas</option>
-                    </optgroup>
-                    <optgroup label="🌿 Hierbas y Especias">
-                        <option value="HIERBAS_AROMATICAS">Hierbas Aromáticas</option>
-                        <option value="ESPECIAS_SECAS">Especias Secas</option>
-                        <option value="MEZCLAS_CONDIMENTOS">Mezclas y Condimentos</option>
-                        <option value="INFUSIONES_TES">Infusiones y Tés</option>
-                    </optgroup>
+                    <option th:each="subcat : ${subcategorias}"
+                            th:value="${subcat.name()}"
+                            th:text="${subcat.displayName}">
+                        Subcategoría
+                    </option>
                 </select>
             </div>
         </div>
@@ -447,8 +426,9 @@
                     <!-- Acciones Rápidas -->
                     <td data-label="Acciones" style="text-align: center;">
                         <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                            <!-- Botón Incrementar -->
+                            <!-- Botón Incrementar (solo si no está eliminado) -->
                             <button type="button"
+                                    th:if="${producto.estado != 'ELIMINADO'}"
                                     class="btn btn-sm btn-success"
                                     th:data-url-incrementar="@{/inventario/incrementar/{id}(id=${producto.id_producto})}"
                                     th:data-producto-id="${producto.id_producto}"
@@ -459,8 +439,9 @@
                                 <i class="bi bi-plus-circle"></i> +
                             </button>
 
-                            <!-- Botón Reducir -->
+                            <!-- Botón Reducir (solo si no está eliminado) -->
                             <button type="button"
+                                    th:if="${producto.estado != 'ELIMINADO'}"
                                     class="btn btn-sm btn-warning"
                                     th:disabled="${producto.stock == 0}"
                                     th:data-url-reducir="@{/inventario/reducir/{id}(id=${producto.id_producto})}"
@@ -472,16 +453,17 @@
                                 <i class="bi bi-dash-circle"></i> -
                             </button>
 
-                            <!-- Botón Editar -->
-                            <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
+                            <!-- Botón Editar (solo si no está eliminado) -->
+                            <a th:if="${producto.estado != 'ELIMINADO'}"
+                               th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
                                class="btn btn-sm btn-primary"
                                title="Editar producto">
                                 <i class="bi bi-pencil"></i>
                             </a>
 
-                            <!-- Botón Reactivar (solo si sin stock) -->
+                            <!-- Botón Reactivar (solo si sin stock y no está eliminado) -->
                             <button type="button"
-                                    th:if="${producto.sinStock != null and producto.sinStock}"
+                                    th:if="${producto.estado != 'ELIMINADO' and producto.sinStock != null and producto.sinStock}"
                                     class="btn btn-sm btn-info"
                                     th:data-url-reactivar="@{/inventario/reactivar/{id}(id=${producto.id_producto})}"
                                     th:data-producto-id="${producto.id_producto}"
