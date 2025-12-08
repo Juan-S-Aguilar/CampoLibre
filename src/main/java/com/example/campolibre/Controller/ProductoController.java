@@ -4,6 +4,7 @@ import com.example.campolibre.DTO.ProductoDTO;
 import com.example.campolibre.DTO.TiendaDTO;
 import com.example.campolibre.DTO.UsuarioDTO;
 import com.example.campolibre.Entity.Tienda;
+import com.example.campolibre.Enum.CategoriaTienda;
 import com.example.campolibre.Enum.SubcategoriaProducto;
 import com.example.campolibre.Enum.UnidadMedida;
 import com.example.campolibre.Service.ProductoService;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Controller
 @RequestMapping("/productos")
@@ -100,8 +102,15 @@ public class ProductoController {
         // mostrar vista de catálogo normal
         List<ProductoDTO> productos = productoService.obtenerProductosPorTienda(idTienda);
 
+        // Filtrar subcategorías según la categoría de la tienda
+        CategoriaTienda categoriaTienda = tienda.getCategoriaPrincipal();
+        List<SubcategoriaProducto> subcategoriasFiltradas = Arrays.stream(SubcategoriaProducto.values())
+                .filter(sub -> sub.perteneceA(categoriaTienda))
+                .collect(Collectors.toList());
+
         model.addAttribute("tienda", tienda);
         model.addAttribute("productos", productos);
+        model.addAttribute("subcategorias", subcategoriasFiltradas);
         return "producto/list_by_tienda";
     }
 

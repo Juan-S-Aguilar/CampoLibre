@@ -14,10 +14,8 @@
         <div class="list-header">
             <h2>
                 <i class="bi bi-basket"></i>
-                <span th:if="${tipoLista == 'todos'}">Todos los Productos</span>
-                <span th:if="${tipoLista == 'eliminados'}">Productos Eliminados</span>
-                <span th:if="${tienda != null}">
-                    Productos de: <strong th:text="${tienda.nombre}">Tienda</strong>
+                <span th:if="${tienda == null}">
+                    Productos de Todas las Tienda
                 </span>
             </h2>
             <div class="list-header-actions">
@@ -26,33 +24,6 @@
                    class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Volver a Tienda
                 </a>
-                <!-- ventas -->
-                <a th:if="${tienda != null}"
-                   th:th:href="@{/pedidos/ventas/tienda//{id}(id=${tienda.id_tienda})}"
-                   sec:authorize="hasAuthority('PROVEEDOR')"
-                   class="btn btn-secondary">
-                    <i class="bi bi-arrow-right"></i> Volver a Tienda
-                </a>
-
-                <a th:if="${tienda != null}"
-                   th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
-                   class="btn btn-primary"
-                   sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
-                    <i class="bi bi-plus-circle"></i> Nuevo Producto
-                </a>
-
-                <div class="view-toggle" sec:authorize="hasAuthority('ADMINISTRADOR')">
-                    <button class="view-toggle-btn"
-                            th:classappend="${tipoLista == 'todos' ? 'active' : ''}"
-                            th:onclick="'window.location.href=\'/productos\''">
-                        <i class="bi bi-list"></i> Activos
-                    </button>
-                    <button class="view-toggle-btn"
-                            th:classappend="${tipoLista == 'eliminados' ? 'active' : ''}"
-                            th:onclick="'window.location.href=\'/productos/eliminados\''">
-                        <i class="bi bi-trash"></i> Eliminados
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -67,7 +38,6 @@
             <span th:text="${error}">Error en la operación</span>
         </div>
 
-        <!-- Filtros y búsqueda -->
         <!-- Filtros y búsqueda -->
         <div class="list-filters">
             <div class="search-box">
@@ -267,7 +237,7 @@
                             <a th:href="@{/productos/editar/{id}(id=${producto.id_producto})}"
                                class="btn-action btn-edit"
                                title="Editar producto"
-                               sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
+                               sec:authorize="hasAnyAuthority('PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>
                             </a>
 

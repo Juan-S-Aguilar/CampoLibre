@@ -86,38 +86,16 @@
                 <i class="bi bi-search"></i>
             </div>
 
-            <!-- ✅ FILTRO POR SUBCATEGORÍA (NUEVO) -->
+            <!-- ✅ FILTRO POR SUBCATEGORÍA (FILTRADO DINÁMICO) -->
             <div class="filter-group" style="flex: 1;">
                 <label for="filterSubcategoria">Subcategoría</label>
                 <select id="filterSubcategoria" class="form-select" onchange="filterTable()">
                     <option value="">Todas</option>
-                    <optgroup label="🍎 Frutas y Verduras">
-                        <option value="FRUTAS_TROPICALES">Frutas Tropicales</option>
-                        <option value="FRUTAS_CITRICAS">Frutas Cítricas</option>
-                        <option value="VERDURAS_HOJA">Verduras de Hoja</option>
-                        <option value="TUBERCULOS">Tubérculos</option>
-                        <option value="HORTALIZAS">Hortalizas</option>
-                    </optgroup>
-                    <optgroup label="🧀 Procesados Artesanales">
-                        <option value="MERMELADAS">Mermeladas</option>
-                        <option value="QUESOS">Quesos</option>
-                        <option value="PAN_ARTESANAL">Pan Artesanal</option>
-                        <option value="SALSAS">Salsas</option>
-                        <option value="CONSERVAS">Conservas</option>
-                    </optgroup>
-                    <optgroup label="🌾 Granos y Semillas">
-                        <option value="GRANOS_SECOS">Granos Secos</option>
-                        <option value="CEREALES">Cereales</option>
-                        <option value="SEMILLAS">Semillas</option>
-                        <option value="HARINAS_ARTESANALES">Harinas Artesanales</option>
-                        <option value="LEGUMINOSAS">Leguminosas</option>
-                    </optgroup>
-                    <optgroup label="🌿 Hierbas y Especias">
-                        <option value="HIERBAS_AROMATICAS">Hierbas Aromáticas</option>
-                        <option value="ESPECIAS_SECAS">Especias Secas</option>
-                        <option value="MEZCLAS_CONDIMENTOS">Mezclas y Condimentos</option>
-                        <option value="INFUSIONES_TES">Infusiones y Tés</option>
-                    </optgroup>
+                    <option th:each="subcat : ${subcategorias}"
+                            th:value="${subcat.name()}"
+                            th:text="${subcat.displayName}">
+                        Subcategoría
+                    </option>
                 </select>
             </div>
 
@@ -155,7 +133,10 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="producto : ${productos}">
+                <tr th:each="producto : ${productos}"
+                    th:data-subcategoria="${producto.subcategoria.name()}"
+                    th:data-stock-estado="${producto.sinStock != null and producto.sinStock ? 'agotado' : (producto.tieneStockBajo != null and producto.tieneStockBajo ? 'bajo' : 'disponible')}"
+                    th:data-nombre="${producto.nombre}">
                     <!-- Imagen -->
                     <td data-label="Imagen">
                         <div style="position: relative; width: 60px; height: 60px;">
@@ -311,30 +292,35 @@
             let visibleCount = 0;
 
             for (let i = 0; i < rows.length; i++) {
-                if (rows[i].getElementsByTagName('td').length === 1) continue; // Skip "no data" row
+                const row = rows[i];
 
-                const nombre = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
-                const subcategoria = rows[i].getElementsByTagName('td')[2].textContent.trim();
-                const stockCell = rows[i].getElementsByTagName('td')[6];
-                const stockText = stockCell.textContent.toLowerCase();
+                // Skip "no data" row
+                if (row.getElementsByTagName('td').length === 1) continue;
 
-                const matchSearch = nombre.includes(searchInput);
-                const matchSubcategoria = filterSubcategoria === '' || subcategoria.includes(filterSubcategoria);
+                // Obtener los datos de los atributos data-*
+                const nombre = row.getAttribute('data-nombre') || '';
+                const subcategoria = row.getAttribute('data-subcategoria') || '';
+                const stockEstado = row.getAttribute('data-stock-estado') || '';
+
+                // Aplicar filtros
+                const matchSearch = nombre.toLowerCase().includes(searchInput);
+                const matchSubcategoria = filterSubcategoria === '' || subcategoria === filterSubcategoria;
 
                 let matchStock = true;
                 if (filterStock === 'agotado') {
-                    matchStock = stockText.includes('agotado');
+                    matchStock = stockEstado === 'agotado';
                 } else if (filterStock === 'bajo') {
-                    matchStock = stockText.includes('exclamation-triangle');
+                    matchStock = stockEstado === 'bajo';
                 } else if (filterStock === 'disponible') {
-                    matchStock = stockText.includes('check-circle');
+                    matchStock = stockEstado === 'disponible';
                 }
 
+                // Mostrar u ocultar la fila según los filtros
                 if (matchSearch && matchSubcategoria && matchStock) {
-                    rows[i].style.display = '';
+                    row.style.display = '';
                     visibleCount++;
                 } else {
-                    rows[i].style.display = 'none';
+                    row.style.display = 'none';
                 }
             }
 
