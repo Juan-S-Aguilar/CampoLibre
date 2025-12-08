@@ -259,6 +259,7 @@
                             <td class="text-end pe-4">
                                 <div class="btn-group">
 
+                                    <!-- Ver Proveedores Inscritos -->
                                     <a th:href="@{/eventos/admin/reporte-inscripciones/{id}(id=${evento.id_evento})}"
                                        class="btn btn-sm btn-outline-info"
                                        title="Ver Proveedores Inscritos"
@@ -266,27 +267,56 @@
                                         <i class="bi bi-people-fill"></i>
                                     </a>
 
-                                    <a th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
-                                       class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <!-- ✅ Botón Editar - OCULTO para eventos CANCELADOS y FINALIZADOS -->
+                                    <a th:if="${evento.estado.name() != 'CANCELADO' and evento.estado.name() != 'FINALIZADO'}"
+                                       th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
+                                    <!-- Publicar (solo BORRADOR) -->
                                     <a th:if="${evento.estado.name() == 'BORRADOR'}"
                                        th:href="@{/eventos/aprobar/{id}(id=${evento.id_evento})}"
-                                       class="btn btn-sm btn-success" title="Publicar"
-                                       onclick="return confirm('¿Publicar este evento?')">
+                                       class="btn btn-sm btn-success"
+                                       title="Publicar"
+                                       onclick="return confirm('¿Publicar este evento? Se notificará a todos los proveedores.')">
                                         <i class="bi bi-rocket-takeoff"></i>
                                     </a>
 
-                                    <a th:if="${evento.estado.name() == 'PUBLICADO' || evento.estado.name() == 'EN_CURSO'}"
-                                       href="#" class="btn btn-sm btn-outline-dark" title="Finalizar Evento">
-                                        <i class="bi bi-flag"></i>
-                                    </a>
+                                    <!-- ✅ Iniciar Evento (PUBLICADO → EN_CURSO) -->
+                                    <form th:if="${evento.estado.name() == 'PUBLICADO'}"
+                                          th:action="@{/eventos/admin/iniciar-evento/{id}(id=${evento.id_evento})}"
+                                          method="post"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Marcar este evento como En Curso?')">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-info"
+                                                title="Iniciar Evento (Cambiar a En Curso)">
+                                            <i class="bi bi-play-circle"></i>
+                                        </button>
+                                    </form>
 
-                                    <a th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
-                                       class="btn btn-sm btn-outline-danger" title="Eliminar"
-                                       onclick="return confirm('¿Eliminar este evento permanentemente?')">
-                                        <i class="bi bi-trash"></i>
+                                    <!-- ✅ Finalizar Evento (EN_CURSO → FINALIZADO) -->
+                                    <form th:if="${evento.estado.name() == 'EN_CURSO'}"
+                                          th:action="@{/eventos/admin/finalizar-evento/{id}(id=${evento.id_evento})}"
+                                          method="post"
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Marcar este evento como Finalizado? Esta acción no se puede revertir.')">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-secondary"
+                                                title="Finalizar Evento">
+                                            <i class="bi bi-flag-fill"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- ✅ Cancelar/Eliminar - OCULTO para eventos CANCELADOS y FINALIZADOS -->
+                                    <a th:if="${evento.estado.name() != 'CANCELADO' and evento.estado.name() != 'FINALIZADO'}"
+                                       th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
+                                       class="btn btn-sm btn-outline-danger"
+                                       title="Cancelar evento"
+                                       onclick="return confirm('¿Cancelar este evento? Esta acción no se puede revertir.')">
+                                        <i class="bi bi-x-circle"></i>
                                     </a>
                                 </div>
                             </td>

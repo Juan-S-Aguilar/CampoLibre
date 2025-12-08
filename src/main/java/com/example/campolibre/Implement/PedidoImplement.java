@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +37,9 @@ public class PedidoImplement implements PedidoService {
 
     @Autowired
     private ProductoRepository productoRepository;
+
+    @Autowired
+    private TiendaRepository tiendaRepository;
 
     @Override
     @Transactional
@@ -207,6 +212,34 @@ public class PedidoImplement implements PedidoService {
         int siguienteNumero = (cantidad != null ? cantidad.intValue() : 0) + 1;
 
         return String.format("PED-%d-%05d", year, siguienteNumero);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PedidoDTO> obtenerPedidosPorProveedor(Long idUsuarioProveedor) {
+        // Obtener todas las tiendas del proveedor
+        List<Tienda> tiendas = tiendaRepository.findByUsuarioId(idUsuarioProveedor);
+
+        Set<Long> pedidosIds = new HashSet<>();
+        List<Pedido> todosPedidos = new ArrayList<>();
+
+        // Para cada tienda, obtener pedidos
+        for (Tienda tienda : tiendas) {
+            List<Pedido> pedidosTienda = pedidoRepository.findPedidosConProductosDeTienda(tienda.getId_tienda());
+            for (Pedido p : pedidosTienda) {
+                if (!pedidosIds.contains(p.getId_pedido())) {
+                    pedidosIds.add(p.getId_pedido());
+                    todosPedidos.add(p);
+                }
+            }
+        }
+
+        // Ordenar por fecha descendente
+        todosPedidos.sort((p1, p2) -> p2.getFecha_pedido().compareTo(p1.getFecha_pedido()));
+
+        return todosPedidos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     // ========== MÉTODOS PRIVADOS HELPER ==========

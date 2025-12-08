@@ -27,7 +27,8 @@
                    class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Volver a Tiendas
                 </a>
-                <a th:if="${tienda != null}"
+                <!-- Ocultar cuando la tienda esta inactiva -->
+                <a th:if="${tienda != null and tienda.estado.name() == 'ACTIVA'}"
                    th:href="@{/productos/nuevo(idTienda=${tienda.id_tienda})}"
                    class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Nuevo Producto
@@ -236,6 +237,12 @@
                               style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
                               th:text="${resumen.productosSinStock}">0</span>
                     </a>
+                    <a th:if="${tienda != null}"
+                       th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda}, filtro='eliminados')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'eliminados' ? 'btn-dark' : 'btn-outline-dark'}">
+                        <i class="bi bi-trash"></i> Eliminados
+                    </a>
 
                     <!-- Filtros para todas las tiendas -->
                     <a th:if="${viendoTodasTiendas}"
@@ -269,6 +276,12 @@
                               class="badge"
                               style="background: var(--color-danger); color: white; margin-left: 0.25rem;"
                               th:text="${resumen.productosSinStock}">0</span>
+                    </a>
+                    <a th:if="${viendoTodasTiendas}"
+                       th:href="@{/inventario/panel(filtro='eliminados')}"
+                       class="btn"
+                       th:classappend="${filtroActual == 'eliminados' ? 'btn-dark' : 'btn-outline-dark'}">
+                        <i class="bi bi-trash"></i> Eliminados
                     </a>
                 </div>
             </div>
@@ -477,6 +490,17 @@
                                     title="Reactivar producto">
                                 <i class="bi bi-arrow-clockwise"></i> Reactivar
                             </button>
+
+                            <!-- Botón Eliminar (solo si no está eliminado) -->
+                            <button type="button"
+                                    th:if="${producto.estado != 'ELIMINADO'}"
+                                    class="btn btn-sm btn-danger"
+                                    th:data-producto-id="${producto.id_producto}"
+                                    th:data-producto-nombre="${producto.nombre}"
+                                    onclick="eliminarProducto(this)"
+                                    title="Eliminar producto">
+                                <i class="bi bi-trash"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -489,7 +513,14 @@
             <i class="bi bi-box-seam"></i>
             <h3>No hay productos en esta categoría</h3>
             <p th:text="${tituloFiltro}">Filtro activo</p>
-            <a th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}" class="btn btn-primary">
+            <a th:if="${tienda != null}"
+               th:href="@{/inventario/tienda/{id}(id=${tienda.id_tienda})}"
+               class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Ver Todos los Productos
+            </a>
+            <a th:if="${viendoTodasTiendas}"
+               th:href="@{/inventario/panel}"
+               class="btn btn-primary">
                 <i class="bi bi-arrow-left"></i> Ver Todos los Productos
             </a>
         </div>
@@ -701,7 +732,6 @@
         function filterTable() {
             const searchInput = document.getElementById('searchInput').value.toLowerCase();
             const filterSubcategoria = document.getElementById('filterSubcategoria').value;
-            const filterStockEstado = document.getElementById('filterStockEstado').value;
             const table = document.getElementById('inventarioTable');
             const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
             let visibleCount = 0;
@@ -712,15 +742,13 @@
                 // Obtener los datos de la fila
                 const nombre = row.getAttribute('data-nombre') || '';
                 const subcategoria = row.getAttribute('data-subcategoria') || '';
-                const stockEstado = row.getAttribute('data-stock-estado') || '';
 
                 // Aplicar filtros
                 const matchSearch = nombre.toLowerCase().includes(searchInput);
                 const matchSubcategoria = filterSubcategoria === '' || subcategoria === filterSubcategoria;
-                const matchStockEstado = filterStockEstado === '' || stockEstado === filterStockEstado;
 
                 // Mostrar u ocultar la fila según los filtros
-                if (matchSearch && matchSubcategoria && matchStockEstado) {
+                if (matchSearch && matchSubcategoria) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -730,6 +758,40 @@
 
             // Actualizar el contador de resultados
             document.getElementById('countVisible').textContent = visibleCount;
+        }
+
+        // Función para eliminar producto (soft delete)
+        function eliminarProducto(button) {
+            const idProducto = button.dataset.productoId;
+            const nombreProducto = button.dataset.productoNombre;
+
+            if (!confirm(`¿Está seguro de eliminar el producto "${nombreProducto}"?\n\nEsta acción marcará el producto como eliminado.`)) {
+                return;
+            }
+
+            // Crear headers con CSRF token
+            const headers = {};
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/inventario/eliminar/' + idProducto, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al procesar la solicitud');
+                console.error('Error:', error);
+            });
         }
 
         // Función para cambiar de tienda

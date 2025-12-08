@@ -2,6 +2,7 @@ package com.example.campolibre.Controller;
 
 // ⚠️ CAMBIO: Importar los nuevos DTOs y Servicios
 import com.example.campolibre.DTO.*;
+import com.example.campolibre.Enum.EstadoCupo;
 import com.example.campolibre.Enum.EstadoEvento;
 import com.example.campolibre.Enum.MetodoPago;
 import com.example.campolibre.Enum.TipoEvento;
@@ -16,8 +17,19 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 @Controller
 @RequestMapping("/eventos")
@@ -33,6 +45,7 @@ public class EventoController {
     // ⚠️ NUEVAS INYECCIONES
     @Autowired private PatrocinadorService patrocinadorService;
     @Autowired private InscripcionProveedorService inscripcionProveedorService;
+    @Autowired private PdfService pdfService;
 
     @Autowired private PagoEventoService pagoEventoService;
 
@@ -50,8 +63,8 @@ public class EventoController {
             return "redirect:/eventos";
         }
 
-        // Cargar patrocinadores para el dropdown
-        List<PatrocinadorDTO> patrocinadores = patrocinadorService.obtenerTodosLosPatrocinadores();
+        // ✅ Cargar solo patrocinadores ACTIVOS para el dropdown
+        List<PatrocinadorDTO> patrocinadores = patrocinadorService.obtenerPatrocinadoresActivos();
 
         model.addAttribute("evento", new EventoCreacionDTO()); // ⚠️ Usar el DTO de Creación
         model.addAttribute("tiposEvento", TipoEvento.values());
@@ -105,7 +118,8 @@ public class EventoController {
         }
 
         EventoDTO evento = eventoService.obtenerEventoPorId(id);
-        List<PatrocinadorDTO> patrocinadores = patrocinadorService.obtenerTodosLosPatrocinadores();
+        // ✅ Cargar solo patrocinadores ACTIVOS para el dropdown
+        List<PatrocinadorDTO> patrocinadores = patrocinadorService.obtenerPatrocinadoresActivos();
 
         // Mapeo completo
         EventoCreacionDTO eventoEdit = new EventoCreacionDTO();
@@ -117,6 +131,7 @@ public class EventoController {
         eventoEdit.setNombre(evento.getNombre());
         eventoEdit.setDescripcion(evento.getDescripcion());
         eventoEdit.setUbicacion(evento.getUbicacion());
+        eventoEdit.setDireccionCompleta(evento.getDireccionCompleta());
         eventoEdit.setFecha_evento(evento.getFecha_evento());
         eventoEdit.setHora_evento(evento.getHora_evento());
         eventoEdit.setTipo_evento(evento.getTipo_evento());
@@ -195,6 +210,36 @@ public class EventoController {
         eventoService.cambiarEstadoEvento(id, EstadoEvento.CANCELADO);
         redirectAttributes.addFlashAttribute("mensaje", "Evento rechazado.");
         return "redirect:/eventos/pendientes";
+    }
+
+    /**
+     * ✅ NUEVO: Iniciar evento (solo ADMIN)
+     */
+    @PostMapping("/admin/iniciar-evento/{id}")
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public String iniciarEvento(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            eventoService.cambiarEstadoEvento(id, EstadoEvento.EN_CURSO);
+            redirectAttributes.addFlashAttribute("success", "Evento iniciado exitosamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al iniciar evento: " + e.getMessage());
+        }
+        return "redirect:/eventos/admin/todos";
+    }
+
+    /**
+     * ✅ NUEVO: Finalizar evento (solo ADMIN)
+     */
+    @PostMapping("/admin/finalizar-evento/{id}")
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public String finalizarEvento(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            eventoService.cambiarEstadoEvento(id, EstadoEvento.FINALIZADO);
+            redirectAttributes.addFlashAttribute("success", "Evento finalizado exitosamente");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al finalizar evento: " + e.getMessage());
+        }
+        return "redirect:/eventos/admin/todos";
     }
 
     // ⚠️ CAMBIO: Eliminar solo ADMIN
@@ -341,12 +386,12 @@ public class EventoController {
         String email = authentication.getName();
         UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-        // ⚠️ CAMBIO: Usar el servicio de Inscripción
-        var inscripciones = inscripcionProveedorService.obtenerEventosConfirmadosDeProveedor(usuario.getId_usuario());
+        // ✅ Obtener TODAS las inscripciones (incluye PENDIENTES, CONFIRMADAS y CANCELADAS)
+        var inscripciones = inscripcionProveedorService.obtenerTodasLasInscripcionesDeProveedor(usuario.getId_usuario());
 
-        model.addAttribute("inscripciones", inscripciones); // Se debe adaptar la vista
+        model.addAttribute("inscripciones", inscripciones);
         model.addAttribute("tipoLista", "mis_inscripciones");
-        return "evento/mis-inscripciones"; // ⚠️ Vista nueva o adaptada
+        return "evento/mis-inscripciones";
     }
 
     /**
@@ -390,27 +435,28 @@ public class EventoController {
      * Proveedor cancela su inscripción (si está PENDIENTE_PAGO o CONFIRMADO).
      */
     @PostMapping("/cancelar-inscripcion/{idInscripcion}")
+    @PreAuthorize("hasAuthority('PROVEEDOR')")
     public String cancelarInscripcion(@PathVariable Long idInscripcion,
                                       Authentication authentication,
                                       RedirectAttributes redirectAttributes) {
-        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("PROVEEDOR"))) {
-            return "redirect:/login";
-        }
-
         try {
             String email = authentication.getName();
-            UsuarioDTO proveedor = usuarioService.obtenerUsuarioPorEmail(email);
+            UsuarioDTO usuario = usuarioService.obtenerUsuarioPorEmail(email);
 
-            // Validar que la inscripción pertenece al proveedor
+            // Obtener inscripción para validar propiedad
             InscripcionProveedorDTO inscripcion = inscripcionProveedorService.obtenerInscripcionPorId(idInscripcion);
 
-            if (!inscripcion.getId_proveedor().equals(proveedor.getId_usuario())) {
-                redirectAttributes.addFlashAttribute("error", "No puedes cancelar una inscripción que no es tuya.");
+            if (!inscripcion.getId_proveedor().equals(usuario.getId_usuario())) {
+                redirectAttributes.addFlashAttribute("error", "No tienes permiso para cancelar esta inscripción");
                 return "redirect:/eventos/mis-inscripciones";
             }
 
+            // Cancelar con reembolso
             inscripcionProveedorService.cancelarInscripcion(idInscripcion, "Cancelado por el proveedor");
-            redirectAttributes.addFlashAttribute("mensaje", "Inscripción cancelada correctamente.");
+
+            // ✅ MENSAJE DE ÉXITO CON INFORMACIÓN DE REEMBOLSO
+            redirectAttributes.addFlashAttribute("success",
+                "Inscripción cancelada exitosamente. El proceso de reembolso se llevará a cabo mediante correo electrónico en los próximos 5-7 días hábiles.");
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al cancelar: " + e.getMessage());
@@ -483,16 +529,73 @@ public class EventoController {
         try {
             // 2. Obtener el reporte completo desde el servicio
             ReporteInscripcionesEventoDTO reporte = eventoService.obtenerReporteInscripciones(idEvento);
+            EventoDTO evento = eventoService.obtenerEventoPorId(idEvento);
 
             // 3. Enviar datos a la vista
             model.addAttribute("reporte", reporte);
+            model.addAttribute("evento", evento);
 
-            return "evento/reporte-inscripciones"; // Vista que crearás después
+            return "evento/reporte-inscripciones";
 
         } catch (Exception e) {
             System.err.println("❌ Error al obtener reporte de inscripciones: " + e.getMessage());
             redirectAttributes.addFlashAttribute("error", "Error al cargar el reporte: " + e.getMessage());
             return "redirect:/eventos/admin/todos";
         }
+    }
+
+    /**
+     * ✅ NUEVO: Descargar PDF con la lista de proveedores inscritos
+     */
+    @GetMapping("/admin/reporte-inscripciones/{idEvento}/pdf")
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public ResponseEntity<InputStreamResource> descargarPdfProveedores(@PathVariable Long idEvento)
+            throws Exception {
+
+        // 1. Obtener el reporte de inscripciones
+        ReporteInscripcionesEventoDTO reporte = eventoService.obtenerReporteInscripciones(idEvento);
+        EventoDTO evento = eventoService.obtenerEventoPorId(idEvento);
+
+        // 2. Preparar datos para el PDF (solo proveedores CONFIRMADOS)
+        List<Map<String, Object>> inscripciones = new ArrayList<>();
+        int contador = 1;
+
+        // ✅ Filtrar solo inscripciones confirmadas
+        List<InscripcionProveedorDTO> confirmados = reporte.getProveedoresInscritos().stream()
+                .filter(insc -> insc.getEstadoCupo() == EstadoCupo.CONFIRMADO)
+                .collect(Collectors.toList());
+
+        for (InscripcionProveedorDTO insc : confirmados) {
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("numero", contador++);
+            datos.put("nombre", insc.getNombreProveedor());
+            datos.put("email", insc.getEmailProveedor());
+            datos.put("telefono", insc.getTelefonoProveedor() != null ? insc.getTelefonoProveedor() : "N/A");
+            datos.put("fechaInscripcion", insc.getFechaInscripcion() != null ?
+                    insc.getFechaInscripcion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "N/A");
+            datos.put("codigoConfirmacion", insc.getCodigoConfirmacion());
+            inscripciones.add(datos);
+        }
+
+        // 3. Generar PDF
+        String fechaEvento = evento.getFecha_evento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + " " + evento.getHora_evento().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        ByteArrayInputStream bais = pdfService.generarListaProveedores(
+                inscripciones,
+                evento.getNombre(),
+                fechaEvento
+        );
+
+        // 4. Configurar respuesta HTTP
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=proveedores_" +
+                evento.getNombre().replaceAll("[^a-zA-Z0-9]", "_") + ".pdf");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(bais));
     }
 }

@@ -223,8 +223,9 @@
                                                 <i class="bi bi-eye"></i>
                                             </a>
 
-                                            <!-- Editar -->
-                                            <a th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
+                                            <!-- ✅ Editar - Solo si NO está cancelado o finalizado -->
+                                            <a th:if="${evento.estado != T(com.example.campolibre.Enum.EstadoEvento).CANCELADO and evento.estado != T(com.example.campolibre.Enum.EstadoEvento).FINALIZADO}"
+                                               th:href="@{/eventos/editar/{id}(id=${evento.id_evento})}"
                                                class="btn btn-outline-primary"
                                                title="Editar">
                                                 <i class="bi bi-pencil"></i>
@@ -239,8 +240,9 @@
                                                 <i class="bi bi-check-circle"></i>
                                             </a>
 
-                                            <!-- Cancelar -->
-                                            <a th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
+                                            <!-- ✅ Cancelar - Solo si NO está cancelado o finalizado -->
+                                            <a th:if="${evento.estado != T(com.example.campolibre.Enum.EstadoEvento).CANCELADO and evento.estado != T(com.example.campolibre.Enum.EstadoEvento).FINALIZADO}"
+                                               th:href="@{/eventos/eliminar/{id}(id=${evento.id_evento})}"
                                                class="btn btn-outline-danger"
                                                title="Cancelar evento"
                                                onclick="return confirm('¿Estás seguro de cancelar este evento?')">

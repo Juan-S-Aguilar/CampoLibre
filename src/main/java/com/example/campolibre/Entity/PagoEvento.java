@@ -1,7 +1,9 @@
 package com.example.campolibre.Entity;
 
+import com.example.campolibre.Enum.EntidadBancaria;
 import com.example.campolibre.Enum.EstadoPago;
 import com.example.campolibre.Enum.MetodoPago;
+import com.example.campolibre.Enum.TipoPersonaPSE;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -39,6 +41,21 @@ public class PagoEvento {
 
     @Column(name = "mensaje_error", length = 500)
     private String mensajeError;
+
+    // ✅ Campos para PSE
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entidad_bancaria")
+    private EntidadBancaria entidadBancaria;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_persona_pse")
+    private TipoPersonaPSE tipoPersonaPSE;
+
+    @Column(name = "numero_documento_pse", length = 20)
+    private String numeroDocumentoPSE;
+
+    @Column(name = "observaciones", length = 500)
+    private String observaciones;
 
     @PrePersist
     protected void onCreate() {

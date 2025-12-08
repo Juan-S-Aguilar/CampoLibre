@@ -88,6 +88,11 @@ public class EventoImplement implements EventoService {
         Patrocinador patrocinador = patrocinadorRepository.findById(eventoCreacionDTO.getId_patrocinador())
                 .orElseThrow(() -> new CustomException("Patrocinador no encontrado"));
 
+        // ✅ VALIDAR QUE EL PATROCINADOR ESTÉ ACTIVO
+        if (!patrocinador.getActivo()) {
+            throw new CustomException("No se puede asignar un patrocinador archivado/inactivo a un evento");
+        }
+
         // 3. Mapeo y Asignación de Entidades
         Evento evento = modelMapper.map(eventoCreacionDTO, Evento.class);
 
@@ -194,6 +199,12 @@ public class EventoImplement implements EventoService {
         if (!eventoExistente.getPatrocinador().getId_patrocinador().equals(eventoCreacionDTO.getId_patrocinador())) {
             Patrocinador nuevoPatrocinador = patrocinadorRepository.findById(eventoCreacionDTO.getId_patrocinador())
                     .orElseThrow(() -> new CustomException("Nuevo Patrocinador no encontrado"));
+
+            // ✅ VALIDAR QUE EL NUEVO PATROCINADOR ESTÉ ACTIVO
+            if (!nuevoPatrocinador.getActivo()) {
+                throw new CustomException("No se puede asignar un patrocinador archivado/inactivo a un evento");
+            }
+
             eventoExistente.setPatrocinador(nuevoPatrocinador);
         }
 
@@ -230,6 +241,27 @@ public class EventoImplement implements EventoService {
     public void cambiarEstadoEvento(Long id, EstadoEvento estado) {
         Evento evento = eventoRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Evento no encontrado"));
+
+        // ✅ VALIDAR QUE NO SE MODIFIQUEN EVENTOS FINALIZADOS O CANCELADOS
+        if (evento.getEstado() == EstadoEvento.FINALIZADO) {
+            throw new CustomException("No se puede modificar un evento finalizado");
+        }
+        if (evento.getEstado() == EstadoEvento.CANCELADO && estado != EstadoEvento.BORRADOR) {
+            throw new CustomException("Un evento cancelado solo puede volver a borrador");
+        }
+
+        // ✅ VALIDAR TRANSICIONES DE ESTADO
+        if (estado == EstadoEvento.EN_CURSO) {
+            if (evento.getEstado() != EstadoEvento.PUBLICADO) {
+                throw new CustomException("Solo se puede iniciar un evento que esté PUBLICADO");
+            }
+        }
+
+        if (estado == EstadoEvento.FINALIZADO) {
+            if (evento.getEstado() != EstadoEvento.EN_CURSO) {
+                throw new CustomException("Solo se puede finalizar un evento que esté EN CURSO");
+            }
+        }
 
         // VALIDACIONES ANTES DE PUBLICAR
         if (estado == EstadoEvento.PUBLICADO) {

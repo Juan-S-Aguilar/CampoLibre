@@ -1,7 +1,8 @@
     package com.example.campolibre.Enum;
 
     public enum EstadoPago {
-        EXITOSO,   // Pago procesado correctamente
-        FALLIDO,   // Pago rechazado o con error
-        PENDIENTE  // Pago en proceso (simulación)
+        PENDIENTE,     // Pago iniciado
+        EXITOSO,       // Pago confirmado
+        FALLIDO,       // Pago rechazado
+        REEMBOLSADO    // Pago reembolsado por cancelación
     }

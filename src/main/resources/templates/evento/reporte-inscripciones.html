@@ -150,9 +150,12 @@
                 <a th:href="@{/eventos/admin/todos}" class="btn btn-outline-success shadow-sm">
                     <i class="bi bi-arrow-left"></i> Volver
                 </a>
-                <button onclick="window.print()" class="btn btn-success shadow-sm text-white">
-                    <i class="bi bi-printer"></i> Imprimir
-                </button>
+                <a th:href="@{/eventos/admin/reporte-inscripciones/{id}/pdf(id=${evento.id_evento})}"
+                   class="btn btn-danger shadow-sm text-white"
+                   target="_blank"
+                   title="Descargar lista en PDF">
+                    <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+                </a>
             </div>
         </div>
 

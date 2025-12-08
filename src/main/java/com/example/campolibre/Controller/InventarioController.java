@@ -65,14 +65,19 @@ public class InventarioController {
             List<ProductoDTO> productos;
             String tituloFiltro = "Todos los productos";
 
-            if ("sin_stock".equals(filtro)) {
+            if ("eliminados".equals(filtro)) {
                 productos = todosProductos.stream()
-                        .filter(p -> p.getSinStock() != null && p.getSinStock())
+                        .filter(p -> "ELIMINADO".equals(p.getEstado()))
+                        .collect(Collectors.toList());
+                tituloFiltro = "Productos eliminados";
+            } else if ("sin_stock".equals(filtro)) {
+                productos = todosProductos.stream()
+                        .filter(p -> !"ELIMINADO".equals(p.getEstado()) && p.getSinStock() != null && p.getSinStock())
                         .collect(Collectors.toList());
                 tituloFiltro = "Productos sin stock";
             } else if ("stock_bajo".equals(filtro)) {
                 productos = todosProductos.stream()
-                        .filter(p -> p.getTieneStockBajo() != null && p.getTieneStockBajo())
+                        .filter(p -> !"ELIMINADO".equals(p.getEstado()) && p.getTieneStockBajo() != null && p.getTieneStockBajo())
                         .collect(Collectors.toList());
                 tituloFiltro = "Productos con stock bajo";
             } else if ("activos".equals(filtro)) {
@@ -81,7 +86,10 @@ public class InventarioController {
                         .collect(Collectors.toList());
                 tituloFiltro = "Productos activos";
             } else {
-                productos = todosProductos;
+                // Por defecto, excluir productos eliminados
+                productos = todosProductos.stream()
+                        .filter(p -> !"ELIMINADO".equals(p.getEstado()))
+                        .collect(Collectors.toList());
                 tituloFiltro = "Todos los productos";
             }
 
@@ -131,7 +139,13 @@ public class InventarioController {
             List<ProductoDTO> productos;
             String tituloFiltro = "Todos los productos";
 
-            if ("sin_stock".equals(filtro)) {
+            if ("eliminados".equals(filtro)) {
+                productos = productoService.obtenerProductosPorTienda(idTienda)
+                        .stream()
+                        .filter(p -> "ELIMINADO".equals(p.getEstado()))
+                        .collect(Collectors.toList());
+                tituloFiltro = "Productos eliminados";
+            } else if ("sin_stock".equals(filtro)) {
                 productos = productoService.obtenerProductosSinStock(idTienda);
                 tituloFiltro = "Productos sin stock";
             } else if ("stock_bajo".equals(filtro)) {
@@ -144,7 +158,11 @@ public class InventarioController {
                         .collect(Collectors.toList());
                 tituloFiltro = "Productos activos";
             } else {
-                productos = productoService.obtenerProductosPorTienda(idTienda);
+                // Por defecto, excluir productos eliminados
+                productos = productoService.obtenerProductosPorTienda(idTienda)
+                        .stream()
+                        .filter(p -> !"ELIMINADO".equals(p.getEstado()))
+                        .collect(Collectors.toList());
                 tituloFiltro = "Todos los productos";
             }
 
@@ -307,6 +325,36 @@ public class InventarioController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al reactivar producto: " + e.getMessage());
             return "redirect:/productos";
+        }
+    }
+
+    // ========== ELIMINAR PRODUCTO (SOFT DELETE) ==========
+
+    @PostMapping("/eliminar/{idProducto}")
+    @ResponseBody
+    public ResponseEntity<?> eliminarProducto(@PathVariable Long idProducto,
+                                              Authentication authentication) {
+        try {
+            ProductoDTO productoActual = productoService.obtenerProductoPorId(idProducto);
+
+            // Verificar permisos
+            if (!puedeGestionarInventario(authentication, productoActual.getId_tienda())) {
+                return ResponseEntity.status(403).body(
+                        Map.of("success", false, "message", "No tienes permisos para eliminar este producto")
+                );
+            }
+
+            productoService.eliminarProducto(idProducto);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Producto eliminado exitosamente");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("success", false, "message", e.getMessage())
+            );
         }
     }
 

@@ -28,11 +28,6 @@
 
                 <div class="view-toggle" sec:authorize="hasAuthority('PROVEEDOR')">
                     <button class="view-toggle-btn"
-                            th:classappend="${tipoLista == 'todas' ? 'active' : ''}"
-                            th:onclick="'window.location.href=\'/tiendas\''">
-                        <i class="bi bi-list"></i> Todas
-                    </button>
-                    <button class="view-toggle-btn"
                             th:classappend="${tipoLista == 'mis_tiendas' ? 'active' : ''}"
                             th:onclick="'window.location.href=\'/tiendas/mis-tiendas\''">
                         <i class="bi bi-shop"></i> Mis Tiendas
@@ -74,7 +69,7 @@
                 </select>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group" sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                 <label for="filterEstado">Estado</label>
                 <select id="filterEstado" class="form-select" onchange="filterTable()">
                     <option value="">Todos</option>
@@ -203,6 +198,32 @@
                                sec:authorize="hasAnyAuthority('ADMINISTRADOR', 'PROVEEDOR')">
                                 <i class="bi bi-pencil"></i>
                             </a>
+
+                            <!-- Botones Activar/Inactivar (solo ADMIN) -->
+                            <div sec:authorize="hasAuthority('ADMINISTRADOR')" style="display: inline;">
+                                <form th:action="@{/tiendas/inactivar/{id}(id=${tienda.id_tienda})}"
+                                      method="post"
+                                      style="display: inline;"
+                                      th:if="${tienda.estado.name() == 'ACTIVA'}"
+                                      onsubmit="return confirm('¿Está seguro de inactivar esta tienda? Los productos también se inactivarán.')">
+                                    <button type="submit"
+                                            class="btn-action btn-warning"
+                                            title="Inactivar tienda">
+                                        <i class="bi bi-pause-circle"></i>
+                                    </button>
+                                </form>
+
+                                <form th:action="@{/tiendas/activar/{id}(id=${tienda.id_tienda})}"
+                                      method="post"
+                                      style="display: inline;"
+                                      th:if="${tienda.estado.name() == 'INACTIVA'}">
+                                    <button type="submit"
+                                            class="btn-action btn-success"
+                                            title="Activar tienda">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                            </div>
 
                             <a th:href="@{/productos/tienda/{id}(id=${tienda.id_tienda})}"
                                class="btn btn-success btn-sm"

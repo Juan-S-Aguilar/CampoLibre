@@ -249,6 +249,11 @@ public class ProductoImplement implements ProductoService {
         Producto producto = productoRepository.findById(idProducto)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
 
+        // VALIDACIÓN NUEVA: No se puede modificar stock de productos inactivos o eliminados
+        if ("INACTIVO".equals(producto.getEstado()) || "ELIMINADO".equals(producto.getEstado())) {
+            throw new CustomException("No se puede modificar el stock de un producto inactivo o eliminado");
+        }
+
         if (cantidad <= 0) {
             throw new CustomException("La cantidad debe ser mayor a 0");
         }
@@ -269,6 +274,11 @@ public class ProductoImplement implements ProductoService {
     public ProductoDTO reducirStock(Long idProducto, Integer cantidad) {
         Producto producto = productoRepository.findById(idProducto)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
+
+        // VALIDACIÓN NUEVA: No se puede modificar stock de productos inactivos o eliminados
+        if ("INACTIVO".equals(producto.getEstado()) || "ELIMINADO".equals(producto.getEstado())) {
+            throw new CustomException("No se puede modificar el stock de un producto inactivo o eliminado");
+        }
 
         if (cantidad <= 0) {
             throw new CustomException("La cantidad debe ser mayor a 0");
@@ -294,6 +304,11 @@ public class ProductoImplement implements ProductoService {
     public ProductoDTO actualizarStock(Long idProducto, Integer nuevoStock) {
         Producto producto = productoRepository.findById(idProducto)
                 .orElseThrow(() -> new CustomException("Producto no encontrado"));
+
+        // VALIDACIÓN NUEVA: No se puede modificar stock de productos inactivos o eliminados
+        if ("INACTIVO".equals(producto.getEstado()) || "ELIMINADO".equals(producto.getEstado())) {
+            throw new CustomException("No se puede modificar el stock de un producto inactivo o eliminado");
+        }
 
         if (nuevoStock < 0) {
             throw new CustomException("El stock no puede ser negativo");
@@ -434,6 +449,54 @@ public class ProductoImplement implements ProductoService {
 
                     return dto;
                 })
+                .collect(Collectors.toList());
+    }
+
+    // ========== NUEVOS MÉTODOS - FILTRADO Y BÚSQUEDA AVANZADA ==========
+
+    @Override
+    public List<ProductoDTO> filtrarProductosPorTienda(Long idTienda, String estado, Integer stock, SubcategoriaProducto subcategoria) {
+        List<Producto> productos = productoRepository.findAllByTiendaId(idTienda);
+
+        // Filtrar por estado
+        if (estado != null && !estado.isEmpty() && !"TODOS".equals(estado)) {
+            productos = productos.stream()
+                    .filter(p -> estado.equals(p.getEstado()))
+                    .collect(Collectors.toList());
+        }
+
+        // Filtrar por stock
+        if (stock != null) {
+            if (stock == 0) {
+                // Sin stock
+                productos = productos.stream()
+                        .filter(p -> p.getStock() == 0)
+                        .collect(Collectors.toList());
+            } else if (stock == -1) {
+                // Stock bajo
+                productos = productos.stream()
+                        .filter(Producto::tieneStockBajo)
+                        .collect(Collectors.toList());
+            }
+        }
+
+        // Filtrar por subcategoría
+        if (subcategoria != null) {
+            productos = productos.stream()
+                    .filter(p -> subcategoria.equals(p.getSubcategoria()))
+                    .collect(Collectors.toList());
+        }
+
+        return productos.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductoDTO> obtenerProductosActivosPorTienda(Long idTienda) {
+        List<Producto> productos = productoRepository.findByTiendaIdAndEstadoActivo(idTienda);
+        return productos.stream()
+                .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
 

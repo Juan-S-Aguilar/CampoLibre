@@ -70,9 +70,14 @@ public class TiendaController {
 
     // Ver detalle de tienda + productos
     @GetMapping("/ver/{id}")
-    public String verTienda(@PathVariable Long id, Model model) {
+    public String verTienda(@PathVariable Long id, Model model, Authentication authentication) {
         TiendaDTO tienda = tiendaService.obtenerTiendaPorId(id);
         model.addAttribute("tienda", tienda);
+
+        // Verificar si el usuario actual puede eliminar la tienda
+        boolean puedeEliminar = puedeEditarTienda(authentication, tienda);
+        model.addAttribute("puedeEliminar", puedeEliminar);
+
         return "tienda/view";
     }
 
@@ -166,6 +171,42 @@ public class TiendaController {
             redirectAttributes.addFlashAttribute("mensaje", "Estado actualizado.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al cambiar estado: " + e.getMessage());
+        }
+        return "redirect:/tiendas";
+    }
+
+    // Activar tienda (ADMIN)
+    @PostMapping("/activar/{id}")
+    public String activarTienda(@PathVariable Long id,
+                                Authentication authentication,
+                                RedirectAttributes redirectAttributes) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
+            return "redirect:/tiendas";
+        }
+
+        try {
+            tiendaService.activarTienda(id);
+            redirectAttributes.addFlashAttribute("mensaje", "Tienda activada correctamente. Los productos han sido actualizados.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al activar tienda: " + e.getMessage());
+        }
+        return "redirect:/tiendas";
+    }
+
+    // Inactivar tienda (ADMIN)
+    @PostMapping("/inactivar/{id}")
+    public String inactivarTienda(@PathVariable Long id,
+                                  Authentication authentication,
+                                  RedirectAttributes redirectAttributes) {
+        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ADMINISTRADOR"))) {
+            return "redirect:/tiendas";
+        }
+
+        try {
+            tiendaService.inactivarTienda(id);
+            redirectAttributes.addFlashAttribute("mensaje", "Tienda inactivada correctamente. Los productos han sido inactivados.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error al inactivar tienda: " + e.getMessage());
         }
         return "redirect:/tiendas";
     }
