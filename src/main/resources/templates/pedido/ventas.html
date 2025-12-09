@@ -39,32 +39,48 @@
 
         <!-- Tarjetas de estadísticas -->
         <div class="row mb-4">
-            <div class="col-md-4 mb-3">
+            <!-- Ganancias Confirmadas -->
+            <div class="col-lg-3 col-md-6 mb-3">
                 <div class="card shadow-sm border-success">
                     <div class="card-body text-center">
                         <i class="fas fa-dollar-sign fa-3x text-success mb-3"></i>
                         <h3 class="text-success mb-2" th:text="'$' + ${#numbers.formatDecimal(gananciasTotales, 0, 'COMMA', 0, 'POINT')}">
                             $0
                         </h3>
-                        <p class="text-muted mb-0">Ganancias Totales</p>
+                        <p class="text-muted mb-0">Ganancias Confirmadas</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="card shadow-sm border-primary">
+
+            <!-- Ventas Pagadas -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card shadow-sm border-success">
                     <div class="card-body text-center">
-                        <i class="fas fa-shopping-bag fa-3x text-primary mb-3"></i>
-                        <h3 class="text-primary mb-2" th:text="${totalVentas}">0</h3>
-                        <p class="text-muted mb-0">Ventas Realizadas</p>
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h3 class="text-success mb-2" th:text="${ventasPagadas}">0</h3>
+                        <p class="text-muted mb-0">Ventas Pagadas</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
-                <div class="card shadow-sm border-info">
+
+            <!-- Ventas Pendientes -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card shadow-sm border-warning">
                     <div class="card-body text-center">
-                        <i class="fas fa-store fa-3x text-info mb-3"></i>
-                        <h3 class="text-info mb-2" th:text="${misTiendas.size()}">0</h3>
-                        <p class="text-muted mb-0">Tiendas Activas</p>
+                        <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                        <h3 class="text-warning mb-2" th:text="${ventasPendientes}">0</h3>
+                        <p class="text-muted mb-0">Pendientes de Pago</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ventas Canceladas -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card shadow-sm border-danger">
+                    <div class="card-body text-center">
+                        <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                        <h3 class="text-danger mb-2" th:text="${ventasCanceladas}">0</h3>
+                        <p class="text-muted mb-0">Canceladas</p>
                     </div>
                 </div>
             </div>
@@ -121,6 +137,7 @@
                                 <th>Fecha</th>
                                 <th>Cliente</th>
                                 <th class="text-center">Productos</th>
+                                <th class="text-center">Estado</th>
                                 <th class="text-end">Total</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
@@ -144,8 +161,20 @@
                                 <td class="text-center">
                                     <span class="badge bg-secondary" th:text="${pedido.items.size()}">0</span>
                                 </td>
+                                <td class="text-center">
+                                    <span class="badge"
+                                          th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-success' :
+                                                          (pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-warning text-dark' : 'bg-danger')}">
+                                        <i class="fas"
+                                           th:classappend="${pedido.estado.name() == 'PAGADO' ? 'fa-check-circle' :
+                                                           (pedido.estado.name() == 'PENDIENTE_PAGO' ? 'fa-clock' : 'fa-times-circle')}"></i>
+                                        <span th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
+                                                       (pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente' : 'Cancelado')}">Estado</span>
+                                    </span>
+                                </td>
                                 <td class="text-end">
-                                    <strong class="text-success"
+                                    <strong th:classappend="${pedido.estado.name() == 'PAGADO' ? 'text-success' :
+                                                             (pedido.estado.name() == 'PENDIENTE_PAGO' ? 'text-warning' : 'text-danger')}"
                                             th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
                                         $0
                                     </strong>
@@ -167,6 +196,19 @@
                     <p class="text-muted">Los pedidos que incluyan tus productos aparecerán aquí</p>
                 </div>
             </div>
+        </div>
+
+        <!-- Información importante -->
+        <div class="alert alert-info mt-4">
+            <h6 class="alert-heading">
+                <i class="fas fa-info-circle"></i> Información sobre las Ganancias
+            </h6>
+            <hr>
+            <ul class="mb-0">
+                <li><strong>Ganancias Confirmadas:</strong> Solo incluyen pedidos con estado <span class="badge bg-success">Pagado</span></li>
+                <li><strong>Pendientes de Pago:</strong> Estos pedidos <strong>no se suman</strong> a las ganancias hasta que el cliente complete el pago</li>
+                <li><strong>Canceladas:</strong> Pedidos cancelados o con pago fallido. <strong>No generan ganancias</strong></li>
+            </ul>
         </div>
     </div>
 </main>

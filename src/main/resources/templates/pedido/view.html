@@ -8,20 +8,25 @@
 <body>
 
 <main th:fragment="content">
-<div class="container my-5">
-    <!-- Encabezado -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2>
-                <i class="bi bi-receipt"></i>
-                Pedido <span th:text="${pedido.numero_pedido}">PED-2025-00001</span>
-            </h2>
-            <p class="text-muted">
-                Realizado el <span th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</span>
-                a las <span th:text="${#temporals.format(pedido.fecha_pedido, 'HH:mm')}">10:00</span>
-            </p>
-        </div>
-        <div class="col-md-4 text-md-end">
+    <div class="container my-5">
+        <!-- Encabezado -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2>
+                    <i class="bi bi-receipt"></i>
+                    Pedido <span th:text="${pedido.numero_pedido}">PED-2025-00001</span>
+                </h2>
+                <p class="text-muted">
+                    Realizado el <span th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</span>
+                    a las <span th:text="${#temporals.format(pedido.fecha_pedido, 'HH:mm')}">10:00</span>
+                </p>
+                <!-- Alerta para proveedores -->
+                <div th:if="${esVistaProveedor}" class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Vista de Proveedor:</strong> Solo se muestran los productos de tus tiendas en este pedido.
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
                 <span class="badge fs-5"
                       th:classappend="${pedido.estado.name() == 'PAGADO' ? 'bg-success' :
                                       pedido.estado.name() == 'PENDIENTE_PAGO' ? 'bg-warning text-dark' :
@@ -34,217 +39,247 @@
                                    pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente de Pago' :
                                    'Cancelado'}">Estado</span>
                 </span>
+            </div>
         </div>
-    </div>
 
-    <div class="row">
-        <!-- Información principal -->
-        <div class="col-lg-8">
-            <!-- Productos -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-box-seam"></i> Productos del Pedido</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                            <tr>
-                                <th>Producto</th>
-                                <th class="text-center">Precio</th>
-                                <th class="text-center">Cantidad</th>
-                                <th class="text-center">Subtotal</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="item : ${pedido.items}">
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img th:if="${item.imagen_producto != null and !item.imagen_producto.isEmpty()}"
-                                             th:src="@{${item.imagen_producto}}"
-                                             th:alt="${item.nombre_producto}"
-                                             class="me-3"
-                                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;"
-                                             onerror="this.onerror=null; this.src='/images/no-image.png';">
-                                        <img th:if="${item.imagen_producto == null or item.imagen_producto.isEmpty()}"
-                                             src="/images/no-image.png"
-                                             alt="Sin imagen"
-                                             class="me-3"
-                                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
-                                        <div>
-                                            <strong th:text="${item.nombre_producto}">Producto</strong>
-                                            <br>
-                                            <small class="text-muted">
-                                                <i class="bi bi-shop"></i>
-                                                <span th:text="${item.nombre_tienda}">Tienda</span>
-                                            </small>
+        <div class="row">
+            <!-- Información principal -->
+            <div class="col-lg-8">
+                <!-- Productos -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-box-seam"></i> Productos del Pedido</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Precio</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-center">Subtotal</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="item : ${pedido.items}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img th:if="${item.imagen_producto != null and !item.imagen_producto.isEmpty()}"
+                                                 th:src="@{${item.imagen_producto}}"
+                                                 th:alt="${item.nombre_producto}"
+                                                 class="me-3"
+                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;"
+                                                 onerror="this.onerror=null; this.src='/images/no-image.png';">
+                                            <img th:if="${item.imagen_producto == null or item.imagen_producto.isEmpty()}"
+                                                 src="/images/no-image.png"
+                                                 alt="Sin imagen"
+                                                 class="me-3"
+                                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+                                            <div>
+                                                <strong th:text="${item.nombre_producto}">Producto</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-shop"></i>
+                                                    <span th:text="${item.nombre_tienda}">Tienda</span>
+                                                </small>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="text-center align-middle">
+                                    </td>
+                                    <td class="text-center align-middle">
                                             <span th:text="'$' + ${#numbers.formatDecimal(item.precio_unitario, 0, 'COMMA', 0, 'POINT')}">
                                                 $0
                                             </span>
-                                </td>
-                                <td class="text-center align-middle">
-                                    <span th:text="${item.cantidad}">1</span>
-                                </td>
-                                <td class="text-center align-middle">
-                                    <strong class="text-success"
-                                            th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">
-                                        $0
-                                    </strong>
-                                </td>
-                            </tr>
-                            </tbody>
-                            <tfoot class="table-light">
-                            <tr>
-                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                                <td class="text-center">
-                                    <h5 class="text-success mb-0"
-                                        th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
-                                        $0
-                                    </h5>
-                                </td>
-                            </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Datos de entrega -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-truck"></i> Información de Entrega</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="mb-2">
-                                <i class="bi bi-person text-muted"></i>
-                                <strong>Contacto:</strong>
-                                <span th:text="${pedido.nombre_contacto}">Nombre</span>
-                            </p>
-                            <p class="mb-2">
-                                <i class="bi bi-telephone text-muted"></i>
-                                <strong>Teléfono:</strong>
-                                <span th:text="${pedido.telefono_contacto}">Teléfono</span>
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-2">
-                                <i class="bi bi-geo-alt text-muted"></i>
-                                <strong>Dirección:</strong>
-                                <span th:text="${pedido.direccion_entrega}">Dirección</span>
-                            </p>
-                            <p class="mb-2" th:if="${pedido.ciudad != null}">
-                                <i class="bi bi-building text-muted"></i>
-                                <strong>Ciudad:</strong>
-                                <span th:text="${pedido.ciudad}">Ciudad</span>
-                            </p>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <span th:text="${item.cantidad}">1</span>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <strong class="text-success"
+                                                th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')}">
+                                            $0
+                                        </strong>
+                                    </td>
+                                </tr>
+                                </tbody>
+                                <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="3" class="text-end">
+                                        <strong th:text="${esVistaProveedor ? 'Total de tus productos:' : 'Total:'}">Total:</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <h5 class="text-success mb-0"
+                                            th:text="'$' + ${#numbers.formatDecimal(esVistaProveedor ? totalProveedor : pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                                            $0
+                                        </h5>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
-                    <div th:if="${pedido.notas_adicionales != null and !pedido.notas_adicionales.isEmpty()}"
-                         class="alert alert-info mt-3 mb-0">
-                        <strong><i class="bi bi-sticky"></i> Notas:</strong>
-                        <p class="mb-0" th:text="${pedido.notas_adicionales}">Notas adicionales</p>
+                </div>
+
+                <!-- Datos de entrega (solo para consumidores) -->
+                <div th:if="${!esVistaProveedor}" class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-truck"></i> Información de Entrega</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <i class="bi bi-person text-muted"></i>
+                                    <strong>Contacto:</strong>
+                                    <span th:text="${pedido.nombre_contacto}">Nombre</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-telephone text-muted"></i>
+                                    <strong>Teléfono:</strong>
+                                    <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <i class="bi bi-geo-alt text-muted"></i>
+                                    <strong>Dirección:</strong>
+                                    <span th:text="${pedido.direccion_entrega}">Dirección</span>
+                                </p>
+                                <p class="mb-2" th:if="${pedido.ciudad != null}">
+                                    <i class="bi bi-building text-muted"></i>
+                                    <strong>Ciudad:</strong>
+                                    <span th:text="${pedido.ciudad}">Ciudad</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div th:if="${pedido.notas_adicionales != null and !pedido.notas_adicionales.isEmpty()}"
+                             class="alert alert-info mt-3 mb-0">
+                            <strong><i class="bi bi-sticky"></i> Notas:</strong>
+                            <p class="mb-0" th:text="${pedido.notas_adicionales}">Notas adicionales</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Información de pago -->
-            <div th:if="${pedido.pago != null}" class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h5>
+                <!-- Información de contacto limitada para proveedores -->
+                <div th:if="${esVistaProveedor}" class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-person-circle"></i> Información del Cliente</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <i class="bi bi-person text-muted"></i>
+                            <strong>Contacto:</strong>
+                            <span th:text="${pedido.nombre_contacto}">Nombre</span>
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-telephone text-muted"></i>
+                            <strong>Teléfono:</strong>
+                            <span th:text="${pedido.telefono_contacto}">Teléfono</span>
+                        </p>
+                        <div class="alert alert-info mb-0 mt-3">
+                            <small>
+                                <i class="bi bi-shield-lock"></i>
+                                Por privacidad, no se muestra la dirección completa de entrega.
+                            </small>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="mb-2">
-                                <strong>Método:</strong>
-                                <span th:text="${pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).TARJETA_CREDITO ? 'Tarjeta de Crédito' :
+
+                <!-- Información de pago (solo para consumidores) -->
+                <div th:if="${!esVistaProveedor and pedido.pago != null}" class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-credit-card"></i> Información de Pago</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Método:</strong>
+                                    <span th:text="${pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).TARJETA_CREDITO ? 'Tarjeta de Crédito' :
                                                    pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).TARJETA_DEBITO ? 'Tarjeta Débito' :
                                                    pedido.pago.metodo_pago == T(com.example.campolibre.Enum.MetodoPago).PSE ? 'PSE' :
                                                    'Efectivo'}">Método</span>
-                            </p>
-                            <p class="mb-2">
-                                <strong>Transacción:</strong>
-                                <code th:text="${pedido.pago.numero_transaccion}">TRX-202501-XXXX</code>
-                            </p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-2">
-                                <strong>Fecha de Pago:</strong>
-                                <span th:text="${#temporals.format(pedido.pago.fecha_pago, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
-                            </p>
-                            <p class="mb-0">
-                                <strong>Estado:</strong>
-                                <span class="badge"
-                                      th:classappend="${pedido.pago.estado.name() == 'EXITOSO' ? 'bg-success' :
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Transacción:</strong>
+                                    <code th:text="${pedido.pago.numero_transaccion}">TRX-202501-XXXX</code>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Fecha de Pago:</strong>
+                                    <span th:text="${#temporals.format(pedido.pago.fecha_pago, 'dd/MM/yyyy HH:mm')}">01/01/2025</span>
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Estado:</strong>
+                                    <span class="badge"
+                                          th:classappend="${pedido.pago.estado.name() == 'EXITOSO' ? 'bg-success' :
                                                           pedido.pago.estado.name() == 'PENDIENTE' ? 'bg-warning text-dark' :
                                                           'bg-danger'}">
                                         <span th:text="${pedido.pago.estado.name() == 'EXITOSO' ? 'Exitoso' :
                                                        pedido.pago.estado.name() == 'PENDIENTE' ? 'Pendiente' :
                                                        'Fallido'}">Estado</span>
                                     </span>
-                            </p>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Resumen lateral -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm sticky-top" style="top: 20px;">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Resumen</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Estado:</span>
-                        <strong th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
+            <!-- Resumen lateral -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Resumen</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Estado:</span>
+                            <strong th:text="${pedido.estado.name() == 'PAGADO' ? 'Pagado' :
                                              pedido.estado.name() == 'PENDIENTE_PAGO' ? 'Pendiente' :
                                              'Cancelado'}">Estado</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Productos:</span>
-                        <strong th:text="${pedido.items.size()}">0</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Fecha:</span>
-                        <strong th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</strong>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-3">
-                        <h5>Total:</h5>
-                        <h5 class="text-success" th:text="'$' + ${#numbers.formatDecimal(pedido.total, 0, 'COMMA', 0, 'POINT')}">
-                            $0
-                        </h5>
-                    </div>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Productos:</span>
+                            <strong th:text="${pedido.items.size()}">0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Fecha:</span>
+                            <strong th:text="${#temporals.format(pedido.fecha_pedido, 'dd/MM/yyyy')}">01/01/2025</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5 th:text="${esVistaProveedor ? 'Total de tus productos:' : 'Total:'}">Total:</h5>
+                            <h5 class="text-success" th:text="'$' + ${#numbers.formatDecimal(esVistaProveedor ? totalProveedor : pedido.total, 0, 'COMMA', 0, 'POINT')}">
+                                $0
+                            </h5>
+                        </div>
 
-                    <!-- Acciones -->
-                    <div th:if="${pedido.estado.name() == 'PENDIENTE_PAGO'}" class="d-grid gap-2">
-                        <a th:href="@{/pedidos/pagar/{id}(id=${pedido.id_pedido})}"
-                           class="btn btn-warning">
-                            <i class="bi bi-credit-card"></i> Pagar Ahora
-                        </a>
-                        <a th:href="@{/pedidos/cancelar/{id}(id=${pedido.id_pedido})}"
-                           class="btn btn-outline-danger"
-                           onclick="return confirm('¿Cancelar este pedido?')">
-                            <i class="bi bi-x"></i> Cancelar Pedido
+                        <!-- Acciones solo para consumidores -->
+                        <div th:if="${!esVistaProveedor and pedido.estado.name() == 'PENDIENTE_PAGO'}" class="d-grid gap-2">
+                            <a th:href="@{/pedidos/pagar/{id}(id=${pedido.id_pedido})}"
+                               class="btn btn-warning">
+                                <i class="bi bi-credit-card"></i> Pagar Ahora
+                            </a>
+                            <a th:href="@{/pedidos/cancelar/{id}(id=${pedido.id_pedido})}"
+                               class="btn btn-outline-danger"
+                               onclick="return confirm('¿Cancelar este pedido?')">
+                                <i class="bi bi-x"></i> Cancelar Pedido
+                            </a>
+                        </div>
+
+                        <!-- Botón volver según el rol -->
+                        <a th:href="${esVistaProveedor ? '/pedidos/ventas' : '/pedidos/mis-pedidos'}"
+                           class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="bi bi-arrow-left"></i>
+                            <span th:text="${esVistaProveedor ? 'Volver a Ventas' : 'Volver a Mis Pedidos'}">Volver a Mis Pedidos</span>
                         </a>
                     </div>
-
-                    <a th:href="@{/pedidos/mis-pedidos}" class="btn btn-outline-secondary w-100 mt-2">
-                        <i class="bi bi-arrow-left"></i> Volver a Mis Pedidos
-                    </a>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </main>
 
 </body>
